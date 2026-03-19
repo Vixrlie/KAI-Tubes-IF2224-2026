@@ -1,0 +1,178 @@
+\section{Pengantar}
+Apa itu \textbf{Bahasa Pemrograman?} Bahasa pemrograman adalah cara agar kita dapat menuliskan program komputer tanpa perlu menghadapi sulitnya menulis dalam bahasa mesin. Bahasa mesin (biner 1 dan 0) adalah satu-satunya bahasa yang dapat dipahami dan dijalankan oleh CPU, namun sangat sulit dibaca oleh manusia. Oleh karena itu, bahasa pemrograman sering kali dibedakan dengan istilah low-level atau high-level. High-level artinya bahasa lebih mendekati bahasa manusia dan sebaliknya low-level lebih mendekati bahasa mesin. Semakin mendekati bahasa manusia, maka akan semakin banyak proses yang diperlukan untuk mengubahnya menjadi kode mesin.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{01-pendahuluan/tipe-bahasa.png}
+    \caption{Tipe-tipe bahasa pemrograman (Sumber: Asisten IF2224)}
+\end{figure}
+Terdapat dua macam cara mengubah/memproses bahasa pemrograman menjadi machine code, yaitu \textbf{compiler} dan \textbf{interpreter}. Compiler adalah program yang menerjemahkan seluruh source code menjadi kode mesin (dalam bentuk file e.g. Object File) sebelum program dijalankan. Compiler secara umum terdiri dari 4 tahapan, mulai dari Lexical Analysis, Syntax Analysis, Semantic Analysis hingga Intermediate Code Generation.
+
+Di sisi lain adalah Interpreter yang memproses source code baris per baris secara langsung. Interpreter membaca, menerjemahkan, dan langsung mengeksekusi kode mesin baris per baris sehingga jika terdapat error pada baris ke 10, program akan tetap berjalan normal untuk 9 baris awal, dibandingkan dengan compiler yang akan gagal dijalankan jika terdeteksi terdapat error di dalam source code. Namun dibalik itu, interpreter sebenarnya memiliki tahapan yang sama seperti compiler.
+
+Pada Tugas Besar Teori Bahasa Formal dan Automata, Mahasiswa diminta untuk membuat Compiler beserta Interpreter untuk bahasa pemrograman  \textit{Arion}, suatu bahasa pemrograman baru yang akan Anda kembangkan. Tugas besar ini dibagi menjadi 4 Milestone, yaitu Lexical Analysis, Syntax Analysis, Semantic Analysis, Intermediate Code Generation dan Interpreter. Setiap Milestone akan memiliki pengumpulannya dan penilaiannya tersendiri.
+
+Pada \textbf{milestone pertama}, Mahasiswa diminta untuk membuat tahapan Lexical Analysis dari suatu compiler.
+
+\section{Spesifikasi Program}
+Pada milestone 1, Mahasiswa diminta untuk membuat \textbf{lexer} atau \textbf{lexical analyzer} dalam C/C++ yang menggunakan Deterministic Finite Automata (DFA) untuk menghasilkan token dari source code bahasa pemrograman Arion.
+
+Dalam milestone ini, Mahasiswa diminta untuk membuat program Lexer dalam bahasa pemrograman C/C++ GNU. Mahasiswa \textbf{DILARANG} menggunakan library atau tools apapun yang dapat membantu menghasilkan lexical analyzer. Anda wajib menggunakan \textbf{MAKEFILE} untuk mempermudah pengembangan dalam bahasa C/C++.
+
+Program Lexer harus berfungsi selayaknya suatu DFA. Program Lexer \textbf{HANYA BOLEH} membaca satu demi satu karakter dari input source code dan memprosesnya sesuai dengan aturan pada DFA. Program harus dapat menerima input source code dalam bentuk \texttt{.txt}. Program kemudian memproses source code dengan aturan DFA dan mengeluarkan output \texttt{daftar token} dalam format \texttt{.txt}.
+
+\begin{enumerate}
+    \item Masukan : Kode Sumber (\texttt{.txt})
+    \item Keluaran : Daftar Token (\texttt{.txt})
+    \item Otomata : Deterministic Finite Automata
+\end{enumerate}
+
+\textbf{Catatan}: Untuk mempermudah pengerjaan pada milestone-milestone selanjutnya, khususnya pada milestone 4 (pembuatan interpreter), SANGAT DISARANKAN agar program dikembangkan secara modular (terpisah antara komponen Lexer, Semantic, Syntax, dan Intermediate Code Generation). Hal ini supaya komponen dapat dimodifikasi sesuai keperluan tanpa mempengaruhi komponen lainnya, serta dapat dengan mudah dijalankan dalam satu pipeline: lexer - syntax - semantic - intermediate code generation.
+
+\subsection{Daftar Token Bahasa Pemrograman Arion}
+Lexer bertujuan untuk mengubah source code dari kumpulan karakter mentah menjadi unit-unit bermakna yang disebut token. Setiap token memiliki jenis (type) dan nilai (value) yang akan digunakan untuk tahap selanjutnya dalam proses kompilasi. Lexer diharapkan dapat menerima source code dan mengeluarkan daftar token yang dihasilkan. Berikut merupakan daftar token yang harus dapat dibaca oleh lexical analyzer.
+
+\begin{center}
+    \small
+    \setlength{\extrarowheight}{2pt}
+    \begin{longtable}{p{0.06\linewidth} p{0.18\linewidth} p{0.40\linewidth} p{0.26\linewidth}}
+        \caption{Daftar token bahasa Arion}                                                                                                                                             \\
+        \toprule
+        No & Token       & Definisi                                                                                                                    & Contoh Pemakaian               \\
+        \midrule
+        \endfirsthead
+        \toprule
+        No & Token       & Definisi                                                                                                                    & Contoh Pemakaian               \\
+        \midrule
+        \endhead
+        \bottomrule
+        \endfoot
+
+        1  & intcon      & Konstanta integer                                                                                                           & \texttt{1, 3, 48}              \\
+        2  & realcon     & Konstanta bilangan riil                                                                                                     & \texttt{3.14, 26.7}            \\
+        3  & charcon     & Konstanta karakter singular, diapit dengan tanda petik tunggal                                                              & \texttt{'j', 'k', 't'}         \\
+        4  & string      & Sekuens karakter, diapit dengan tanda petik tunggal                                                                         & \texttt{'IRK', 'TBFO'}         \\
+        5  & notsy       & Operator logika NOT (negasi)                                                                                                & \texttt{NOT}                   \\
+        6  & plus        & Operator aritmatika pertambahan                                                                                             & \texttt{+}                     \\
+        7  & minus       & Operator aritmatika pengurangan                                                                                             & \texttt{-}                     \\
+        8  & times       & Operator aritmatika perkalian                                                                                               & \texttt{*}                     \\
+        9  & idiv        & Operator aritmatika pembagian Integer                                                                                       & \texttt{div}                   \\
+        10 & rdiv        & Operator aritmatika pembagian Riil                                                                                          & \texttt{/}                     \\
+        11 & imod        & Operator aritmatika modulo                                                                                                  & \texttt{MOD}                   \\
+        12 & andsy       & Operator logika AND                                                                                                         & \texttt{AND}                   \\
+        13 & orsy        & Operator logika OR                                                                                                          & \texttt{OR}                    \\
+        14 & eql         & equal                                                                                                                       & \texttt{==}                    \\
+        15 & neq         & Not equal                                                                                                                   & \texttt{<>}                    \\
+        16 & gtr         & Greater than                                                                                                                & \texttt{>}                     \\
+        17 & geq         & Greater than or equal                                                                                                       & \texttt{>=}                    \\
+        18 & lss         & Less than                                                                                                                   & \texttt{<}                     \\
+        19 & leq         & Less than or equal                                                                                                          & \texttt{<=}                    \\
+        20 & lparent     & Left parentheses                                                                                                            & \texttt{(}                     \\
+        21 & rparent     & Right parantheses                                                                                                           & \texttt{)}                     \\
+        22 & lbrack      & Kurung siku kiri                                                                                                            & \texttt{[}                     \\
+        23 & rbrack      & Kurung siku kanan                                                                                                           & \texttt{]}                     \\
+        24 & comma       & Koma                                                                                                                        & \texttt{,}                     \\
+        25 & semicolon   & Titik koma                                                                                                                  & \texttt{;}                     \\
+        26 & period      & Titik                                                                                                                       & \texttt{.}                     \\
+        27 & colon       & Titik dua                                                                                                                   & \texttt{:}                     \\
+        28 & becomes     & Assignment operator                                                                                                         & \texttt{:=}                    \\
+        29 & constsy     & Deklarasi konstanta                                                                                                         & \texttt{const}                 \\
+        30 & typesy      & Deklarasi tipe data                                                                                                         & \texttt{type}                  \\
+        31 & varsy       & Deklarasi variabel                                                                                                          & \texttt{var}                   \\
+        32 & functionsy  & Deklarasi fungsi                                                                                                            & \texttt{function}              \\
+        33 & proceduresy & Deklarasi prosedur                                                                                                          & \texttt{procedure}             \\
+        34 & arraysy     & Deklarasi array                                                                                                             & \texttt{array}                 \\
+        35 & recordsy    & Deklarasi record                                                                                                            & \texttt{record}                \\
+        36 & programsy   & Deklarasi program                                                                                                           & \texttt{program}               \\
+        37 & ident       & Nama yang menunjukkan konstanta, tipe, variabel, prosedur, dan fungsi; diawali huruf, diikuti huruf/angka; case-insensitive & {\ttfamily x, PI, MyInt, h4g}  \\
+        38 & beginsy     & Keyword begin                                                                                                               & \texttt{begin}                 \\
+        39 & ifsy        & Keyword if                                                                                                                  & \texttt{if}                    \\
+        40 & casesy      & Keyword case                                                                                                                & \texttt{case}                  \\
+        41 & repeatsy    & Keyword repeat                                                                                                              & \texttt{repeat}                \\
+        42 & whilesy     & Keyword while                                                                                                               & \texttt{while}                 \\
+        43 & forsy       & Keyword for                                                                                                                 & \texttt{for}                   \\
+        44 & endsy       & Keyword end                                                                                                                 & \texttt{end}                   \\
+        45 & elsesy      & Keyword else                                                                                                                & \texttt{else}                  \\
+        46 & untilsy     & Keyword until                                                                                                               & \texttt{until}                 \\
+        47 & ofsy        & Keyword of                                                                                                                  & \texttt{of}                    \\
+        48 & dosy        & Keyword do                                                                                                                  & \texttt{do}                    \\
+        49 & tosy        & Keyword to                                                                                                                  & \texttt{to}                    \\
+        50 & downtosy    & Keyword downto                                                                                                              & \texttt{downto}                \\
+        51 & thensy      & Keyword then                                                                                                                & \texttt{then}                  \\
+        52 & comment     & Dimulai dengan  \{ atau (* (bukan di dalam tanda kutip) dan diakhiri dengan \} atau *)                                      & {\ttfamily \{ Ini komentar \}}
+    \end{longtable}
+\end{center}
+
+\subsection{Contoh Input/Output}
+
+\begin{tcolorbox}[title=Input,colback=gray!5,colframe=black!60,boxrule=0.5pt,arc=2mm,breakable]
+    \begin{verbatim}
+program Hello;
+
+var
+    a, b: integer;
+
+begin
+    a := 5;
+    b := a + 10;
+    writeln('Result = ', b);
+end.
+\end{verbatim}
+\end{tcolorbox}
+
+
+\begin{tcolorbox}[title=Visualisasi Pemrosesan (DFA),colback=gray!5,colframe=black!60,boxrule=0.5pt,arc=2mm,breakable]
+    \begin{verbatim}
+p => State 1
+r => State 1
+.
+m => State 2 => Gotten: program
+.
+H => State 3
+e
+.
+; => char => State 0 => Gotten: ident(Hello) & semicolon
+.
+.
+.
+\end{verbatim}
+\end{tcolorbox}
+
+\begin{tcolorbox}[title=Output,colback=gray!5,colframe=black!60,boxrule=0.5pt,arc=2mm,breakable]
+    \begin{verbatim}
+programsy
+ident (Hello)
+semicolon
+
+varsy
+ident (a)
+comma
+ident (b)
+colon
+ident (integer)
+semicolon
+
+beginsy
+ident (a)
+becomes
+intcon (5)
+semicolon
+ident (b)
+becomes
+ident (a)
+plus
+intcon (10)
+semicolon
+ident (writeln)
+lparent
+string ('Result = ')
+comma
+ident (b)
+rparent
+semicolon
+
+endsy
+period
+\end{verbatim}
+\end{tcolorbox}
+
+
