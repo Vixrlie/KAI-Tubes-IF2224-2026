@@ -14,3 +14,48 @@ build/
 
 # OS files
 Thumbs.db
+# LaTeX build artifacts
+*.aux
+*.bbl
+*.blg
+*.brf
+*.fls
+*.log
+*.out
+*.toc
+*.fdb_latexmk
+*.synctex.gz
+*.synctex(busy)
+*.nav
+*.snm
+*.xdv
+*.lof
+*.lot
+*.lol
+*.maf
+*.mtc?
+*.mtc0
+*.run.xml
+*.thm
+*.dvi
+*.ps
+*.spl
+*.idx
+*.ilg
+*.ind
+
+# Temporary and backup files
+*~
+*.bak
+*.backup
+
+# Common build directories
+_build/
+build/
+output/
+
+# latexmk logs
+latexmk.log
+
+# Ignore generated PDFs? Uncomment if you want to ignore them
+# *.pdf
