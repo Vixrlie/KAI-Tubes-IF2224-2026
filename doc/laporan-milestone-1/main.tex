@@ -26,6 +26,10 @@
 \usepackage{array} % untuk menentukan lebar kolom
 \usepackage{booktabs} % gaya tabel lebih elegan
 \usepackage[table]{xcolor}
+\usepackage{tabularx}
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
 
 
 
@@ -87,43 +91,43 @@
 \begin{document}
 
 \begin{titlepage}
-	\thispagestyle{empty}
-	\centering
+    \thispagestyle{empty}
+    \centering
 
-	% ---------- Judul utama ----------
-	{\LARGE \textbf{Tugas Besar}\par}
-	\vspace{0.2cm}
-	{\LARGE \textbf{Milestone 1}\par}
-	\vspace{0.8cm}
-	{\large IF2224 Teori Bahasa Formal dan Otomata\par}
-	\vspace{0.2cm}
-	{\large Lexical Analysis\par}
-	\vspace{0.2cm}
-	{\large Semester 2 Tahun 2025/2026\par}
+    % ---------- Judul utama ----------
+    {\LARGE \textbf{Tugas Besar}\par}
+    \vspace{0.2cm}
+    {\LARGE \textbf{Milestone 1}\par}
+    \vspace{0.8cm}
+    {\large IF2224 Teori Bahasa Formal dan Otomata\par}
+    \vspace{0.2cm}
+    {\large Lexical Analysis\par}
+    \vspace{0.2cm}
+    {\large Semester 2 Tahun 2025/2026\par}
 
-	% ---------- Gambar tengah ----------
-	\vspace{1.8cm}
-	\includegraphics[width=0.9\textwidth]{foto-kelompok}\par
+    % ---------- Gambar tengah ----------
+    \vspace{1.8cm}
+    \includegraphics[width=0.9\textwidth]{foto-kelompok}\par
 
-	% ---------- Disusun oleh ----------
-	\vspace{0.8cm}
-	{\bfseries Disusun oleh:\par}
-	\vspace{0.2cm}
-	\textbf{Kai}
-	\vspace{0.5cm} \\
-	\begin{tabular}{l l}
-		Jonathan Kris Wicaksono     & (13524023) \\
-		Vincent Rionarlie           & (13524031) \\
-		Muhammad Aufar Rizqi Kusuam & (13524061) \\
-		Bryan Pratama Putra Hendra  & (13524067)
-	\end{tabular}
+    % ---------- Disusun oleh ----------
+    \vspace{0.8cm}
+    {\bfseries Disusun oleh:\par}
+    \vspace{0.2cm}
+    \textbf{Kai}
+    \vspace{0.5cm} \\
+    \begin{tabular}{l l}
+        Jonathan Kris Wicaksono     & (13524023) \\
+        Vincent Rionarlie           & (13524031) \\
+        Muhammad Aufar Rizqi Kusuam & (13524061) \\
+        Bryan Pratama Putra Hendra  & (13524067)
+    \end{tabular}
 
-	% ---------- Institusi ----------
-	\vspace{2.0cm}
-	Laboratorium Ilmu dan Rekayasa Komputasi\par
-	Program Studi Teknik Informatika\par
-	Sekolah Teknik Elektro dan Informatika\par
-	Institut Teknologi Bandung\par
+    % ---------- Institusi ----------
+    \vspace{2.0cm}
+    Laboratorium Ilmu dan Rekayasa Komputasi\par
+    Program Studi Teknik Informatika\par
+    Sekolah Teknik Elektro dan Informatika\par
+    Institut Teknologi Bandung\par
 
 \end{titlepage}
 
@@ -151,6 +155,6 @@
 \chapter{Lampiran}
 \input{sections/06-lampiran}
 
-\bibliography{dafpus}
+% \bibliography{dafpus}
 
 \end{document}
