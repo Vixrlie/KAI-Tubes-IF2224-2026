@@ -1,0 +1,164 @@
+programsy
+ident (AllKeywords)
+semicolon
+
+typesy
+ident (MyInt)
+error (Unexpected '=' (expected '=='))
+ident (integer)
+semicolon
+
+constsy
+ident (N)
+error (Unexpected '=' (expected '=='))
+intcon (10)
+semicolon
+
+varsy
+ident (i)
+colon
+ident (integer)
+semicolon
+ident (arr)
+colon
+arraysy
+lbrack
+intcon (1)
+period
+period
+intcon (10)
+rbrack
+ofsy
+ident (integer)
+semicolon
+
+functionsy
+ident (add)
+lparent
+ident (a)
+comma
+ident (b)
+colon
+ident (integer)
+rparent
+colon
+ident (integer)
+semicolon
+beginsy
+ident (add)
+becomes
+ident (a)
+plus
+ident (b)
+semicolon
+endsy
+semicolon
+
+proceduresy
+ident (doWork)
+semicolon
+varsy
+ident (r)
+colon
+recordsy
+ident (x)
+colon
+ident (integer)
+semicolon
+endsy
+semicolon
+beginsy
+forsy
+ident (i)
+becomes
+intcon (1)
+tosy
+intcon (10)
+dosy
+ident (arr)
+lbrack
+ident (i)
+rbrack
+becomes
+ident (i)
+semicolon
+forsy
+ident (i)
+becomes
+intcon (10)
+downtosy
+intcon (1)
+dosy
+ident (writeln)
+lparent
+ident (arr)
+lbrack
+ident (i)
+rbrack
+rparent
+semicolon
+ident (i)
+becomes
+intcon (0)
+semicolon
+whilesy
+ident (i)
+lss
+intcon (10)
+dosy
+beginsy
+ident (i)
+becomes
+ident (i)
+plus
+intcon (1)
+semicolon
+endsy
+semicolon
+repeatsy
+ident (i)
+becomes
+ident (i)
+minus
+intcon (1)
+semicolon
+untilsy
+ident (i)
+eql
+intcon (0)
+semicolon
+ifsy
+ident (i)
+eql
+intcon (0)
+thensy
+ident (writeln)
+lparent
+string ('zero')
+rparent
+elsesy
+ident (writeln)
+lparent
+string ('not zero')
+rparent
+semicolon
+casesy
+ident (i)
+ofsy
+intcon (0)
+colon
+ident (writeln)
+lparent
+string ('zero')
+rparent
+semicolon
+endsy
+semicolon
+endsy
+semicolon
+
+beginsy
+ident (doWork)
+semicolon
+endsy
+period

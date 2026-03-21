@@ -1,0 +1,80 @@
+programsy
+ident (CaseInsensitive)
+semicolon
+beginsy
+ifsy
+notsy
+lparent
+ident (x)
+eql
+intcon (0)
+rparent
+thensy
+ident (WRITELN)
+lparent
+string ('ok')
+rparent
+semicolon
+whilesy
+ident (x)
+gtr
+intcon (0)
+dosy
+ident (x)
+becomes
+ident (x)
+minus
+intcon (1)
+semicolon
+repeatsy
+ident (x)
+becomes
+ident (x)
+plus
+intcon (1)
+semicolon
+untilsy
+ident (x)
+eql
+intcon (10)
+semicolon
+forsy
+ident (i)
+becomes
+intcon (1)
+tosy
+intcon (10)
+dosy
+ident (arr)
+lbrack
+ident (i)
+rbrack
+becomes
+ident (i)
+semicolon
+forsy
+ident (i)
+becomes
+intcon (10)
+downtosy
+intcon (1)
+dosy
+ident (writeln)
+lparent
+ident (i)
+rparent
+semicolon
+casesy
+ident (x)
+ofsy
+intcon (0)
+colon
+ident (writeln)
+lparent
+charcon ('z')
+rparent
+semicolon
+endsy
+semicolon
+endsy
+period

@@ -1,0 +1,62 @@
+programsy
+ident (Literals)
+semicolon
+constsy
+ident (PI)
+error (Unexpected '=' (expected '=='))
+realcon (3.14)
+semicolon
+ident (MAX)
+error (Unexpected '=' (expected '=='))
+intcon (100)
+semicolon
+ident (CH)
+error (Unexpected '=' (expected '=='))
+charcon ('A')
+semicolon
+ident (STR)
+error (Unexpected '=' (expected '=='))
+string ('Hello World')
+semicolon
+varsy
+ident (x)
+colon
+ident (real)
+semicolon
+ident (n)
+colon
+ident (integer)
+semicolon
+beginsy
+ident (x)
+becomes
+realcon (3.14)
+semicolon
+ident (n)
+becomes
+intcon (42)
+semicolon
+ident (writeln)
+lparent
+string ('Value: ')
+comma
+ident (x)
+rparent
+semicolon
+ident (writeln)
+lparent
+string ('Char: ')
+comma
+charcon ('Z')
+rparent
+semicolon
+ident (x)
+becomes
+realcon (0.5)
+semicolon
+ident (n)
+becomes
+intcon (999)
+semicolon
+endsy
+period

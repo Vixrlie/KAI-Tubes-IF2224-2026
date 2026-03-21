@@ -1,0 +1,110 @@
+programsy
+ident (Operators)
+semicolon
+varsy
+ident (x)
+comma
+ident (y)
+colon
+ident (integer)
+semicolon
+beginsy
+ident (x)
+becomes
+intcon (10)
+plus
+intcon (5)
+minus
+intcon (3)
+times
+intcon (2)
+semicolon
+ident (y)
+becomes
+ident (x)
+idiv
+intcon (2)
+semicolon
+ident (x)
+becomes
+ident (y)
+imod
+intcon (3)
+semicolon
+ident (x)
+becomes
+intcon (10)
+rdiv
+intcon (2)
+semicolon
+ifsy
+lparent
+ident (x)
+gtr
+intcon (5)
+rparent
+andsy
+lparent
+ident (y)
+leq
+intcon (10)
+rparent
+thensy
+ident (writeln)
+lparent
+string ('OK')
+rparent
+semicolon
+ifsy
+ident (x)
+eql
+ident (y)
+thensy
+ident (writeln)
+lparent
+string ('Equal')
+rparent
+semicolon
+ifsy
+ident (x)
+neq
+ident (y)
+thensy
+ident (writeln)
+lparent
+string ('Not Equal')
+rparent
+semicolon
+ifsy
+lparent
+ident (x)
+geq
+intcon (1)
+rparent
+orsy
+lparent
+ident (y)
+lss
+intcon (100)
+rparent
+thensy
+ident (writeln)
+lparent
+string ('Pass')
+rparent
+semicolon
+ifsy
+notsy
+lparent
+ident (x)
+eql
+intcon (0)
+rparent
+thensy
+ident (writeln)
+lparent
+string ('NonZero')
+rparent
+semicolon
+endsy
+period

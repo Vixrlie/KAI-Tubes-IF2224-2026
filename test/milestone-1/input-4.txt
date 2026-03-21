@@ -1,0 +1,17 @@
+program Literals;
+const
+  PI = 3.14;
+  MAX = 100;
+  CH = 'A';
+  STR = 'Hello World';
+var
+  x: real;
+  n: integer;
+begin
+  x := 3.14;
+  n := 42;
+  writeln('Value: ', x);
+  writeln('Char: ', 'Z');
+  x := 0.5;
+  n := 999;
+end.

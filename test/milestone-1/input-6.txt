@@ -1,0 +1,8 @@
+program EdgeCases;
+begin
+  writeln('A');
+  writeln('');
+  writeln(3.14);
+  writeln(100);
+  writeln(0.5);
+end.
