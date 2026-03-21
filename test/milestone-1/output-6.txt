@@ -1,0 +1,31 @@
+programsy
+ident (EdgeCases)
+semicolon
+beginsy
+ident (writeln)
+lparent
+charcon ('A')
+rparent
+semicolon
+ident (writeln)
+lparent
+string ('')
+rparent
+semicolon
+ident (writeln)
+lparent
+realcon (3.14)
+rparent
+semicolon
+ident (writeln)
+lparent
+intcon (100)
+rparent
+semicolon
+ident (writeln)
+lparent
+realcon (0.5)
+rparent
+semicolon
+endsy
+period

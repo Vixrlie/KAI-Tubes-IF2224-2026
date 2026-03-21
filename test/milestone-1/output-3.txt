@@ -1,0 +1,20 @@
+programsy
+ident (Comments)
+semicolon
+comment ({ This is a brace comment })
+beginsy
+comment ((* This is a paren-star comment *))
+ident (writeln)
+lparent
+string ('Hello')
+rparent
+semicolon
+comment ({ Multi-line
+    comment here })
+ident (writeln)
+lparent
+string ('World')
+rparent
+semicolon
+endsy
+period

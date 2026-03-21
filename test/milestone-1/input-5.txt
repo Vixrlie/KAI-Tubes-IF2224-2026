@@ -1,0 +1,46 @@
+program AllKeywords;
+
+type
+  MyInt = integer;
+
+const
+  N = 10;
+
+var
+  i: integer;
+  arr: array[1..10] of integer;
+
+function add(a, b: integer): integer;
+begin
+  add := a + b;
+end;
+
+procedure doWork;
+var r: record
+  x: integer;
+end;
+begin
+  for i := 1 to 10 do
+    arr[i] := i;
+  for i := 10 downto 1 do
+    writeln(arr[i]);
+  i := 0;
+  while i < 10 do
+  begin
+    i := i + 1;
+  end;
+  repeat
+    i := i - 1;
+  until i == 0;
+  if i == 0 then
+    writeln('zero')
+  else
+    writeln('not zero');
+  case i of
+    0: writeln('zero');
+  end;
+end;
+
+begin
+  doWork;
+end.

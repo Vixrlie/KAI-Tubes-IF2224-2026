@@ -1,0 +1,9 @@
+program Comments;
+{ This is a brace comment }
+begin
+  (* This is a paren-star comment *)
+  writeln('Hello');
+  { Multi-line
+    comment here }
+  writeln('World');
+end.
