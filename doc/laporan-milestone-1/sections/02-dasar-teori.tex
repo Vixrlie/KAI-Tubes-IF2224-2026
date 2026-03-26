@@ -11,6 +11,57 @@ Komponen pembangun DFA pada implementasi lexer dapat dipetakan langsung dari def
 
 Aplikasi DFA sangat luas pada perangkat lunak sistem, dan pada konteks tugas besar ini aplikasi utamanya adalah lexical analyzer/compiler front-end. DFA dipakai untuk mengenali lexeme seperti keyword, identifier, integer, real, operator, dan komentar secara efisien dalam waktu linear terhadap panjang input. Di luar compiler, konsep yang sama juga digunakan pada mesin pencocokan pola berbasis regular expression, penyaring teks, validasi format masukan, hingga sebagian mekanisme inspeksi paket pada jaringan yang membutuhkan klasifikasi string secara cepat dan deterministik. Karena kesederhanaan model serta jaminan performanya, DFA menjadi fondasi praktis yang menjembatani teori bahasa formal dengan implementasi perangkat lunak nyata \cite{aho2007compilers,hopcroft2006automata}.
 
+Sebagai ilustrasi konkret, perhatikan DFA sederhana yang dirancang untuk menerima semua string yang dimulai dengan ``01'' (atas alfabet biner $\{0, 1\}$). DFA ini memiliki empat state: state awal $q_0$, state setelah membaca `0' yaitu $q_1$, state penerima $q_2$ yang dicapai setelah membaca ``01'', dan \textit{dead state} $q_3$ yang merepresentasikan penolakan (karena pola tidak cocok).
+
+Diagram transisi DFA tersebut dapat divisualisasikan sebagai berikut.
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[scale=1.2, auto, node distance=2.8cm]
+        % Node definitions
+        \node[state, initial] (q0) {$q_0$};
+        \node[state, right of=q0] (q1) {$q_1$};
+        \node[state, accepting, right of=q1] (q2) {$q_2$};
+        \node[state, below of=q0] (q3) {$q_3$};
+
+        % Transitions
+        \draw (q0) edge[above] node{0} (q1);
+        \draw (q0) edge[below left] node{1} (q3);
+        \draw (q1) edge[above] node{1} (q2);
+        \draw (q1) edge[below] node{0} (q3);
+        \draw (q2) edge[loop above] node{0, 1} (q2);
+        \draw (q3) edge[loop below] node{0, 1} (q3);
+    \end{tikzpicture}
+    \caption{Diagram transisi DFA untuk menerima string dimulai dengan ``01'' (dengan dead state)}
+    \label{fig:dfa-starts-with-01}
+\end{figure}
+
+Diagram transisi di atas juga dapat direpresentasikan dengan menggunakan sebuah tabel transisi. Semua kombinasi state dan simbol masukan memiliki transisi yang jelas (sesuai dengan konsep DFA itu sendiri). Berikut adalah tabelnya.
+
+\begin{center}
+    \small
+    \setlength{\extrarowheight}{2pt}
+    \begin{tabular}{|c|c|c|}
+        \hline
+        \textbf{State}    & \textbf{0} & \textbf{1} \\
+        \hline
+        $\rightarrow q_0$ & $q_1$      & $q_3$      \\
+        \hline
+        $q_1$             & $q_3$      & $q_2$      \\
+        \hline
+        $q_2\star$        & $q_2$      & $q_2$      \\
+        \hline
+        $q_3$             & $q_3$      & $q_3$      \\
+        \hline
+    \end{tabular}
+    \captionof{table}{Tabel transisi DFA untuk string dimulai dengan ``01''}
+\end{center}
+
+\textit{Dead state} (atau \textit{reject state}) adalah state yang bukan penerima dan dari mana mesin tidak dapat keluar menuju state penerima. Setelah mesin memasuki dead state, ia akan tetap berada di state tersebut untuk semua input yang tersisa, sehingga string otomatis ditolak. Dalam kasus ini, $q_3$ merupakan sebuah dead state. Sekali mesin tersebut masuk ke dalam state $q_3$, maka apapun masukan selanjutnya akan tetap membuat mesin berada pada $q_3$. Penggunaan dead state penting untuk menjamin bahwa fungsi transisi $\delta$ selalu terdefinisi untuk setiap kombinasi state dan simbol masukan, sesuai dengan definisi formal DFA.
+
+Proses penerimaan string dapat diikuti langkah demi langkah. Sebagai contoh, Untuk string masukan ``\texttt{0110}'': dimulai dari $q_0$, karakter `0' membawa ke $q_1$; karakter `1' membawa ke $q_2$ (state penerima); karakter `1' tetap di $q_2$; karakter `0' tetap di $q_2$. Pada akhir string, mesin berada di state penerima $q_2$, sehingga ``\texttt{0110}'' diterima.
+
+Contoh yang lain, Untuk string ``\texttt{10}'' yang dimulai dengan `1', mesin membaca `1' dari $q_0$ dan berpindah ke dead state $q_3$; kemudian membaca `0' dari $q_3$ dan tetap di $q_3$. Pada akhir string, mesin berada di dead state $q_3$, sehingga string ditolak.
 \subsection{Token}
 
 \subsection{Lexical Analysis dan Lexer}
