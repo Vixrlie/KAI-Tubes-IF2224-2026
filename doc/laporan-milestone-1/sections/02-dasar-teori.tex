@@ -1,4 +1,6 @@
-\subsection{Deterministic Finite Automata (DFA)}
+\section{Deterministic Finite Automata (DFA)}
+
+\subsection{Intuisi dan Definisi Formal}
 
 Secara intuitif, \textit{Deterministic Finite Automata} (DFA) dapat dipahami sebagai "mesin pembaca" yang bergerak langkah demi langkah saat menerima karakter masukan. Pada setiap langkah, mesin selalu berada tepat pada satu keadaan (\textit{state}) tertentu, lalu berpindah ke keadaan berikutnya berdasarkan karakter yang sedang dibaca. Sifat paling penting dari DFA adalah deterministik: untuk setiap pasangan keadaan dan simbol masukan, hanya ada satu perpindahan yang mungkin. Karena itu, perilaku DFA dapat diprediksi dan sangat cocok digunakan pada tahap lexical analysis yang menuntut keputusan cepat serta konsisten untuk setiap karakter yang dibaca dari kiri ke kanan \cite{hopcroft2006automata,sipser2012introduction}.
 
@@ -7,9 +9,13 @@ Secara formal, sebuah DFA didefinisikan sebagai \textit{quintuple} di bawah ini
 
 Lewat quintuple ini, dapat dimodelkan sebuah mesin yang dapat menerima sejumlah input karakter $\Sigma$, dengan state awal dari mesin adalah $q_0$, yang memiliki sejumlah state mesin disimpan dalam $Q$ dan dapat berpindah-pindah dari satu state ke state yang lain menggunakan fungsi transisi $\delta$. Sejumlah input karakter merupakan sebuah "bahasa" yang valid jika state akhir dari mesin tersebut berada pada himpunan state final $F$.
 
+\subsection{Komponen dan Aplikasi DFA}
+
 Komponen pembangun DFA pada implementasi lexer dapat dipetakan langsung dari definisi formal tersebut. State merepresentasikan konteks pembacaan token, misalnya state awal, state saat membaca identifier, state saat membaca bilangan, atau state saat berada di dalam komentar. Alfabet masukan berupa karakter-karakter source code yang relevan (huruf, digit, operator, delimiter, dan simbol khusus lain). Fungsi transisi diwujudkan sebagai aturan \textit{if/switch} yang menentukan state berikutnya untuk setiap karakter yang masuk. State awal dipakai ketika belum ada token yang sedang dibangun, sedangkan state penerima menandai bahwa pola token valid telah lengkap dan token siap di-\textit{emit}. Dengan pemetaan ini, desain DFA tidak hanya teoretis, tetapi langsung menjadi kerangka arsitektur program lexer yang modular dan mudah diuji \cite{aho2007compilers,grune2012modern}.
 
 Aplikasi DFA sangat luas pada perangkat lunak sistem, dan pada konteks tugas besar ini aplikasi utamanya adalah lexical analyzer/compiler front-end. DFA dipakai untuk mengenali lexeme seperti keyword, identifier, integer, real, operator, dan komentar secara efisien dalam waktu linear terhadap panjang input. Di luar compiler, konsep yang sama juga digunakan pada mesin pencocokan pola berbasis regular expression, penyaring teks, validasi format masukan, hingga sebagian mekanisme inspeksi paket pada jaringan yang membutuhkan klasifikasi string secara cepat dan deterministik. Karena kesederhanaan model serta jaminan performanya, DFA menjadi fondasi praktis yang menjembatani teori bahasa formal dengan implementasi perangkat lunak nyata \cite{aho2007compilers,hopcroft2006automata}.
+
+\subsection{Contoh DFA dan Tabel Transisi}
 
 Sebagai ilustrasi konkret, perhatikan DFA sederhana yang dirancang untuk menerima semua string yang dimulai dengan ``01'' (atas alfabet biner $\{0, 1\}$). DFA ini memiliki empat state: state awal $q_0$, state setelah membaca `0' yaitu $q_1$, state penerima $q_2$ yang dicapai setelah membaca ``01'', dan \textit{dead state} $q_3$ yang merepresentasikan penolakan (karena pola tidak cocok).
 
@@ -59,27 +65,44 @@ Diagram transisi di atas juga dapat direpresentasikan dengan menggunakan sebuah 
 
 \textit{Dead state} (atau \textit{reject state}) adalah state yang bukan penerima dan dari mana mesin tidak dapat keluar menuju state penerima. Setelah mesin memasuki dead state, ia akan tetap berada di state tersebut untuk semua input yang tersisa, sehingga string otomatis ditolak. Dalam kasus ini, $q_3$ merupakan sebuah dead state. Sekali mesin tersebut masuk ke dalam state $q_3$, maka apapun masukan selanjutnya akan tetap membuat mesin berada pada $q_3$. Penggunaan dead state penting untuk menjamin bahwa fungsi transisi $\delta$ selalu terdefinisi untuk setiap kombinasi state dan simbol masukan, sesuai dengan definisi formal DFA.
 
+
 Proses penerimaan string dapat diikuti langkah demi langkah. Sebagai contoh, Untuk string masukan ``\texttt{0110}'': dimulai dari $q_0$, karakter `0' membawa ke $q_1$; karakter `1' membawa ke $q_2$ (state penerima); karakter `1' tetap di $q_2$; karakter `0' tetap di $q_2$. Pada akhir string, mesin berada di state penerima $q_2$, sehingga ``\texttt{0110}'' diterima.
 
 Contoh yang lain, Untuk string ``\texttt{10}'' yang dimulai dengan `1', mesin membaca `1' dari $q_0$ dan berpindah ke dead state $q_3$; kemudian membaca `0' dari $q_3$ dan tetap di $q_3$. Pada akhir string, mesin berada di dead state $q_3$, sehingga string ditolak.
-\subsection{Token}
+\section{Token}
+
+\subsection{Definisi dan Struktur Token}
 
 Token adalah unit terkecil dari source code yang bermakna dan dapat dikenali oleh lexer. Dalam konteks analisis leksikal, \textit{token} berfungsi sebagai jembatan antara rangkaian karakter mentah (source code) dan struktur sintaksis yang akan diproses oleh parser pada tahap berikutnya. Setiap token terdiri dari dua komponen utama: tipe token (\textit{token type}) dan nilai token (\textit{token value}). Tipe token mengidentifikasi kategori semantik dari token tersebut—misalnya apakah token itu keyword, identifier, operator, atau literal konstanta. Nilai token merupakan string spesifik yang dikembalikan dari source code, digunakan khususnya untuk token yang memerlukan informasi detail seperti identifier berupa ``x'' atau konstanta berupa ``42''.
 
 Contoh sederhana dari rangkaian token adalah sebagai berikut. Jika source code berisi pernyataan ``\texttt{x := 10}'', lexer akan menghasilkan tiga token: (1) token dengan tipe IDENT dan nilai `` x'', (2) token dengan tipe BECOMES dan tanpa nilai khusus, dan (3) token dengan tipe INTCON dan nilai ``10''. Setiap token menyimpan informasi tambahan seperti nomor baris dan kolom tempat token ditemukan, membantu dalam pelaporan error yang akurat jika diperlukan pada tahap parsing atau analisis semantik.
 
+\subsection{Kategori Token}
+
 Klasifikasi token dalam bahasa pemrograman umumnya mencakup beberapa kategori besar. Kategori pertama adalah \textit{keyword} atau kata kunci, yang merupakan simbol-simbol tereservasi dengan makna khusus dalam bahasa, seperti ``\texttt{if}'', ``\texttt{while}'', atau ``\texttt{function}''. Kategori kedua adalah \textit{identifier}, yang merupakan nama-nama yang didefinisikan oleh programmer untuk variabel, fungsi, atau tipe data, dan umumnya bersifat case-insensitive di bahasa tertentu. Kategori ketiga adalah \textit{konstanta atau literal}, yang merepresentasikan nilai tetap seperti bilangan integer (``\texttt{42}''), bilangan riil (``\texttt{3.14}''), karakter (``\texttt{'a'}''), atau string (``\texttt{'hello world'}''). Kategori keempat adalah \textit{operator}, yang merupakan simbol untuk operasi aritmatika (``\texttt{+}'', ``\texttt{-}''), logika (``\texttt{and}'', ``\texttt{or}''), atau perbandingan (``\texttt{==}'', ``\texttt{<}''). Kategori kelima adalah \textit{delimiter atau punctuation}, yaitu simbol-simbol struktural seperti tanda kurung, koma, titik koma, dan titik. Terakhir, kategori keenam mencakup \textit{komentar}, yang merupakan teks yang tidak mempengaruhi semantik program dan umumnya dibuang atau disimpan terpisah oleh lexer.
+
+\subsection{Peran Token pada Proses Kompilasi}
 
 Peran token sangat penting dalam pipeline kompilasi modern. Dengan mengubah rangkaian karakter menjadi token, lexer menyederhanakan tugas parser: daripada parser harus menangani jutaan karakter individual, parser bekerja dengan puluhan atau ratusan token yang sudah terklasifikasi. Hal ini meningkatkan efisiensi dan kejelasan dari analisis sintaksis. Lebih lanjut, dengan mendeteksi error leksikal—seperti simbol yang tidak dikenal—pada tahap lexical analysis, proses kompilasi secara keseluruhan menjadi lebih robust dan memudahkan programmer untuk mengidentifikasi dan memperbaiki kesalahan \cite{aho2007compilers,hopcroft2006automata}.
 
-\subsection{Lexical Analysis}
+\section{Lexical Analysis}
+
+\subsection{Definisi dan Tujuan}
 
 Analisis leksikal (\textit{lexical analysis}) adalah tahap pertama dalam proses kompilasi atau interpretasi suatu bahasa pemrograman. Pada tahap ini, compiler membaca kode sumber yang pada awalnya hanya berupa rangkaian karakter mentah dan mengubahnya menjadi rangkaian token bermakna. Proses ini sangat krusial karena menjadi pondasi bagi semua tahap analisis berikutnya. Tanpa hasil tokenisasi yang akurat, tahap parsing (syntax analysis) pada langkah berikutnya tidak dapat berjalan dengan baik. Lexical analysis memisahkan tugas pengenalan pola leksikal dasar (karakter demi karakter) dari tugas analisis struktur gramatikal yang lebih kompleks, sehingga meningkatkan modularitas dan maintainability dari compiler secara keseluruhan.
 
+\subsection{Peran Lexer/Scanner}
+
 Komponen utama yang bertanggung jawab atas lexical analysis disebut \textit{lexer} atau \textit{scanner}. Lexer adalah program atau modul yang membaca input source code secara sekuensial dari kiri ke kanan, karakter per karakter, dan mengidentifikasi pola-pola yang sesuai dengan definisi token bahasa yang ditargetkan. Implementasi lexer modern umumnya berbasis DFA atau NFA (Nondeterministic Finite Automata), yang memungkinkan pengenalan pola dengan efisiensi tinggi. Pada setiap tahap pembacaan, lexer menentukan apakah karakter yang sedang dibaca merupakan lanjutan dari token sebelumnya ataukah awal dari token baru. Ketika lexer menemukan bahwa pola karakter telah lengkap dan sesuai dengan definisi token, lexer akan memancarkan (emit) token tersebut ke dalam output token stream.
+
+\subsection{Alur Kerja Lexical Analysis}
 
 Proses lexical analysis secara umum mengikuti alur berikut: pertama, lexer membaca karakter masukan satu per satu menggunakan buffer atau pointer masukan. Kedua, berdasarkan karakter yang dibaca dan state DFA saat ini, lexer melakukan transisi ke state berikutnya atau menyelesaikan pembacaan satu token. Ketiga, ketika lexer mendeteksi batas token (misalnya ketika karakter berikutnya bukan bagian dari token saat ini), lexer melakukan klasifikasi terhadap lexeme yang terkumpul dan memancarkan token yang sesuai. Keempat, lexer kembali ke state awal dan siap membaca lexeme berikutnya. Selama proses ini, lexer juga menangani karakter-karakter non-esensial seperti whitespace (spasi, tab, newline), komentar, dan simbol-simbol lain yang tidak berkontribusi pada semantik program.
 
+\subsection{Penanganan Simbol Non-Esensial}
+
 Pembuangan whitespace dan komentar selama lexical analysis memiliki tujuan penting. Whitespace seperti spasi dan indentasi membantu programmer membaca kode dengan lebih mudah, tetapi tidak mempengaruhi semantik program (kecuali pada bahasa tertentu seperti Python). Komentar adalah teks yang disisipkan programmer untuk dokumentasi dan juga tidak mempengaruhi eksekusi program. Dengan membuang elemen-elemen ini di tahap lexical analysis, lexer mengurangi beban kerja parser dan meningkatkan efisiensi keseluruhan. Namun, informasi baris dan kolom tempat setiap token ditemukan tetap disimpan dalam representasi token, sehingga jika terjadi error di tahap berikutnya, compiler dapat melaporkan lokasi error dengan akurat kepada programmer.
+
+\subsection{Keluaran Token Stream}
 
 Output dari lexical analysis adalah token stream, yaitu urutan token-token yang telah terklasifikasi dan siap untuk diproses oleh parser. Token stream ini biasanya disimpan dalam struktur data seperti array atau linked list, atau dalam beberapa implementasi, di-stream secara on-demand ke parser. Setiap token dalam stream menyimpan informasi lengkap: tipe token, nilai token (jika ada), dan metadata lokasi (baris dan kolom). Format output yang terstandarisasi dan terstruktur ini memastikan bahwa parser dapat fokus pada analisis struktur gramatikal tanpa perlu terganggu oleh detail-detail karakter level yang kompleks \cite{aho2007compilers,grune2012modern}.
