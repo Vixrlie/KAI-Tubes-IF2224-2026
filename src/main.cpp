@@ -17,7 +17,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include "lexer.h"
+#include "lexer/lexer.h"
 
 /**
  * Menghitung baris akhir token.
