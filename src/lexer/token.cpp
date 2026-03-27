@@ -1,6 +1,4 @@
 /**
- * token.cpp
- *
  * Implementasi fungsi utilitas untuk Token.
  * Menyediakan konversi tipe token ke string dan formatting output.
  */
