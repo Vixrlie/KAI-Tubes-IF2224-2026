@@ -1,5 +1,4 @@
 /**
- * lexer.cpp
  *
  * Implementasi Lexer berbasis Deterministic Finite Automata (DFA)
  * untuk bahasa pemrograman Arion.
@@ -69,8 +68,7 @@ bool Lexer::isAtEnd() const {
 }
 
 /**
- * Mengkonsumsi karakter saat ini dan memperbarui posisi baris/kolom.
- * Newline memajukan baris dan mereset kolom ke 1.
+ * Ambil karakter saat ini, dan maju ke karakter selanjutnya
  */
 void Lexer::advance() {
     if (!isAtEnd()) {
@@ -86,8 +84,6 @@ void Lexer::advance() {
 
 /**
  * Menambahkan token ke daftar hasil.
- * Posisi token menggunakan tokenStartLine/tokenStartCol yang
- * di-set di awal pembacaan setiap token.
  */
 void Lexer::emitToken(TokenType type, const std::string& value) {
     Token token;
@@ -99,9 +95,7 @@ void Lexer::emitToken(TokenType type, const std::string& value) {
 }
 
 /**
- * Melaporkan error leksikal.
- * Pesan error dicetak ke stderr dan token ERROR ditambahkan ke daftar.
- * Program tetap melanjutkan proses tokenisasi setelah error.
+ * Print error (ke token)
  */
 void Lexer::emitError(const std::string& message) {
     errorFlag = true;
@@ -116,9 +110,7 @@ void Lexer::emitError(const std::string& message) {
 }
 
 /**
- * Mencari keyword berdasarkan identifier.
- * Perbandingan bersifat case-insensitive: identifier diubah ke lowercase
- * sebelum dicocokkan dengan tabel keyword.
+ * Mencari keyword yang sesuai
  * @return Tipe keyword jika cocok, IDENT jika bukan keyword
  */
 TokenType Lexer::lookupKeyword(const std::string& identifier) const {
@@ -138,9 +130,7 @@ bool Lexer::hasErrors() const {
 /* ========== Fungsi Utama Tokenisasi ========== */
 
 /**
- * Menjalankan DFA untuk menghasilkan seluruh token dari source code.
- * Loop utama membaca karakter satu per satu dan memanggil handler
- * sesuai dengan state DFA saat ini.
+ * Cek state, lalu melanjutkan ke state DFA yang bersangkutan
  */
 std::vector<Token> Lexer::tokenize() {
     while (!isAtEnd()) {
@@ -153,14 +143,15 @@ std::vector<Token> Lexer::tokenize() {
             case State::IN_STRING:           handleInString(); break;
             case State::SAW_COLON:           handleSawColon(); break;
             case State::SAW_LESS:            handleSawLess(); break;
-            case State::SAW_GREATER:         handleSawGreater(); break;
-            case State::SAW_EQUAL:           handleSawEqual(); break;
-            case State::IN_COMMENT:          handleInComment(); break;
-            case State::SAW_LPAREN:          handleSawLparen(); break;
-            case State::SAW_STAR_IN_COMMENT: handleSawStarInComment(); break;
+            case State::SAW_GREATER:               handleSawGreater(); break;
+            case State::SAW_EQUAL:                 handleSawEqual(); break;
+            case State::IN_CURLY_COMMENT:          handleInCurlyComment(); break;
+            case State::SAW_LPAREN:                handleSawLparen(); break;
+            case State::IN_PAREN_STAR_COMMENT:     handleInParenStarComment(); break;
+            case State::SAW_STAR_IN_PAREN_COMMENT: handleSawStarInParenComment(); break;
         }
     }
-    // Tangani token yang belum selesai di akhir file
+    
     handleEof();
     return tokens;
 }
@@ -169,9 +160,9 @@ std::vector<Token> Lexer::tokenize() {
 
 /**
  * State START - State awal DFA.
- * Membaca karakter pertama dari setiap token baru dan menentukan
- * transisi ke state yang sesuai.
- *
+ * Membaca karakter pertama dari setiap token baru dan
+ * menentukan state selanjutnya
+ * 
  * Transisi:
  *   huruf       -> IN_IDENT
  *   digit       -> IN_NUMBER
@@ -189,28 +180,24 @@ std::vector<Token> Lexer::tokenize() {
 void Lexer::handleStart() {
     char c = current();
 
-    // Abaikan whitespace
+    // ignore whitespace
     if (std::isspace(c)) {
         advance();
         return;
     }
 
-    // Simpan posisi awal token
     tokenStartLine = line;
     tokenStartCol = col;
 
-    if (std::isalpha(c)) {
-        // Huruf: mulai identifier atau keyword
+    if (std::isalpha(c)) { // huruf
         buffer = c;
         state = State::IN_IDENT;
         advance();
-    } else if (std::isdigit(c)) {
-        // Digit: mulai bilangan integer
+    } else if (std::isdigit(c)) { // integer
         buffer = c;
         state = State::IN_NUMBER;
         advance();
-    } else if (c == '\'') {
-        // Tanda kutip tunggal: mulai string/charcon
+    } else if (c == '\'') { // petik = string
         buffer = "";
         state = State::IN_STRING;
         advance();
@@ -226,13 +213,11 @@ void Lexer::handleStart() {
     } else if (c == '=') {
         state = State::SAW_EQUAL;
         advance();
-    } else if (c == '{') {
-        // Awal komentar dengan kurung kurawal
+    } else if (c == '{') { // comment curly
         buffer = "{";
-        state = State::IN_COMMENT;
+        state = State::IN_CURLY_COMMENT;
         advance();
-    } else if (c == '(') {
-        // Bisa lparent atau awal komentar (*
+    } else if (c == '(') { // comment star
         state = State::SAW_LPAREN;
         advance();
     } else if (c == '+') {
@@ -265,8 +250,7 @@ void Lexer::handleStart() {
     } else if (c == '.') {
         emitToken(TokenType::PERIOD);
         advance();
-    } else {
-        // Karakter tidak dikenali
+    } else { // unknown
         emitError("Unexpected character '" + std::string(1, c) + "'");
         advance();
     }
@@ -277,27 +261,23 @@ void Lexer::handleStart() {
  * Identifier dimulai dengan huruf dan diikuti oleh huruf atau digit.
  *
  * Transisi:
- *   huruf/digit -> tetap di IN_IDENT (akumulasi ke buffer)
+ *   huruf/digit -> tetap di IN_IDENT
  *   lainnya     -> emit token (keyword atau ident), kembali ke START
- *                  (karakter saat ini di-reprocess)
  */
 void Lexer::handleInIdent() {
     char c = current();
 
-    if (std::isalnum(c)) {
+    if (std::isalnum(c)) { // lanjut baca ampe gadapet
         buffer += c;
         advance();
-    } else {
-        // Identifier selesai, cek apakah keyword
+    } else { // cek keyword exist?
         TokenType type = lookupKeyword(buffer);
         if (type == TokenType::IDENT) {
             emitToken(TokenType::IDENT, buffer);
         } else {
-            // Keyword tidak menyimpan value
             emitToken(type);
         }
         state = State::START;
-        // Tidak advance: karakter saat ini di-reprocess di START
     }
 }
 
@@ -312,17 +292,15 @@ void Lexer::handleInIdent() {
 void Lexer::handleInNumber() {
     char c = current();
 
-    if (std::isdigit(c)) {
+    if (std::isdigit(c)) { // lanjut
         buffer += c;
         advance();
-    } else if (c == '.') {
-        // Simpan posisi titik untuk kemungkinan emit PERIOD
+    } else if (c == '.') { // bs jadi float ato titik biasa
         dotLine = line;
         dotCol = col;
         state = State::DOT_AFTER_NUM;
         advance();
     } else {
-        // Integer selesai
         emitToken(TokenType::INTCON, buffer);
         state = State::START;
     }
@@ -339,17 +317,14 @@ void Lexer::handleInNumber() {
 void Lexer::handleDotAfterNum() {
     char c = current();
 
-    if (std::isdigit(c)) {
-        // Titik adalah pemisah desimal, lanjut ke bilangan riil
+    if (std::isdigit(c)) { // float
         buffer += '.';
         buffer += c;
         state = State::IN_REAL;
         advance();
     } else {
-        // Titik bukan bagian bilangan, emit integer lalu period
         emitToken(TokenType::INTCON, buffer);
 
-        // Emit period dengan posisi titik yang benar
         int savedLine = tokenStartLine;
         int savedCol = tokenStartCol;
         tokenStartLine = dotLine;
@@ -359,7 +334,6 @@ void Lexer::handleDotAfterNum() {
         tokenStartCol = savedCol;
 
         state = State::START;
-        // Tidak advance: karakter saat ini di-reprocess
     }
 }
 
@@ -385,21 +359,20 @@ void Lexer::handleInReal() {
 
 /**
  * State IN_STRING - Membaca karakter di antara tanda kutip tunggal.
- * Mengakumulasi karakter ke buffer sampai menemukan kutip penutup.
+ * Membaca karakter ke buffer sampai menemukan kutip penutup.
  * Setelah selesai, token diklasifikasikan:
  *   - 1 karakter  -> CHARCON
- *   - selainnya   -> STRING
+ *   - sisanya     -> STRING
  *
  * Transisi:
  *   '       -> emit charcon/string, kembali ke START
- *   newline -> error (string tidak boleh lintas baris)
- *   lain    -> tetap di IN_STRING (akumulasi)
+ *   newline -> error
+ *   lain    -> tetap di IN_STRING
  */
 void Lexer::handleInString() {
     char c = current();
 
-    if (c == '\'') {
-        // Kutip penutup ditemukan
+    if (c == '\'') { // kutip tutup
         std::string value = "'" + buffer + "'";
         if (buffer.length() == 1) {
             emitToken(TokenType::CHARCON, value);
@@ -408,11 +381,9 @@ void Lexer::handleInString() {
         }
         state = State::START;
         advance();
-    } else if (c == '\n') {
-        // String tidak boleh mengandung newline
+    } else if (c == '\n') { // error
         emitError("Unterminated string literal");
         state = State::START;
-        // Tidak advance: newline di-reprocess di START
     } else {
         buffer += c;
         advance();
@@ -430,7 +401,7 @@ void Lexer::handleInString() {
 void Lexer::handleSawColon() {
     char c = current();
 
-    if (c == '=') {
+    if (c == '=') { // operator
         emitToken(TokenType::BECOMES);
         state = State::START;
         advance();
@@ -445,9 +416,9 @@ void Lexer::handleSawColon() {
  * Menentukan token: <, <=, atau <>.
  *
  * Transisi:
- *   > -> emit NEQ (<>), kembali ke START
- *   = -> emit LEQ (<=), kembali ke START
- *   l -> emit LSS (<), kembali ke START (reprocess)
+ *   > -> emit NEQ, kembali ke START
+ *   = -> emit LEQ, kembali ke START
+ *   l -> emit LSS, kembali ke START (reprocess)
  */
 void Lexer::handleSawLess() {
     char c = current();
@@ -471,8 +442,8 @@ void Lexer::handleSawLess() {
  * Menentukan token: > atau >=.
  *
  * Transisi:
- *   = -> emit GEQ (>=), kembali ke START
- *   l -> emit GTR (>), kembali ke START (reprocess)
+ *   = -> emit GEQ, kembali ke START
+ *   l -> emit GTR, kembali ke START (reprocess)
  */
 void Lexer::handleSawGreater() {
     char c = current();
@@ -506,33 +477,23 @@ void Lexer::handleSawEqual() {
     } else {
         emitError("Unexpected '=' (expected '==')");
         state = State::START;
-        // Tidak advance: karakter saat ini di-reprocess
     }
 }
 
 /**
- * State IN_COMMENT - Di dalam komentar.
- * Komentar bisa dimulai dengan '{' atau '(*' dan diakhiri dengan '}' atau '*)'.
- * Komentar boleh lintas baris (multiline).
+ * State IN_CURLY_COMMENT - Di dalam komentar curly braces {...}.
  *
  * Transisi:
  *   } -> emit COMMENT, kembali ke START
- *   * -> SAW_STAR_IN_COMMENT (mungkin akhir komentar *)
- *   l -> tetap di IN_COMMENT (akumulasi)
+ *   l -> tetap di IN_CURLY_COMMENT (akumulasi)
  */
-void Lexer::handleInComment() {
+void Lexer::handleInCurlyComment() {
     char c = current();
 
-    if (c == '}') {
-        // Komentar berakhir dengan '}'
+    if (c == '}') { // tutup
         buffer += '}';
         emitToken(TokenType::COMMENT, buffer);
         state = State::START;
-        advance();
-    } else if (c == '*') {
-        // Mungkin awal dari penutup '*)'
-        buffer += '*';
-        state = State::SAW_STAR_IN_COMMENT;
         advance();
     } else {
         buffer += c;
@@ -545,57 +506,65 @@ void Lexer::handleInComment() {
  * Menentukan apakah ini left parenthesis atau awal komentar '(*'.
  *
  * Transisi:
- *   * -> IN_COMMENT (awal komentar)
+ *   * -> IN_PAREN_STAR_COMMENT (awal komentar)
  *   l -> emit LPARENT, kembali ke START (reprocess)
  */
 void Lexer::handleSawLparen() {
     char c = current();
 
-    if (c == '*') {
-        // Awal komentar (*
+    if (c == '*') { // awal star comment
         buffer = "(*";
-        state = State::IN_COMMENT;
+        state = State::IN_PAREN_STAR_COMMENT;
         advance();
     } else {
         emitToken(TokenType::LPARENT);
         state = State::START;
-        // Tidak advance: karakter saat ini di-reprocess
     }
 }
 
 /**
- * State SAW_STAR_IN_COMMENT - Di dalam komentar, melihat '*'.
+ * State IN_PAREN_STAR_COMMENT - Di dalam komentar (*...*).
+ *
+ * Transisi:
+ *   * -> SAW_STAR_IN_PAREN_COMMENT (mungkin akhir komentar *)
+ *   l -> tetap di IN_PAREN_STAR_COMMENT (akumulasi)
+ */
+void Lexer::handleInParenStarComment() {
+    char c = current();
+
+    if (c == '*') { // * penutup?
+        buffer += '*';
+        state = State::SAW_STAR_IN_PAREN_COMMENT;
+        advance();
+    } else {
+        buffer += c;
+        advance();
+    }
+}
+
+/**
+ * State SAW_STAR_IN_PAREN_COMMENT - Di dalam komentar (*, melihat '*'.
  * Menentukan apakah '*' diikuti ')' (akhir komentar) atau bukan.
  *
  * Transisi:
  *   ) -> emit COMMENT (*), kembali ke START
- *   } -> emit COMMENT (komentar juga bisa diakhiri '}')
- *   * -> tetap di SAW_STAR_IN_COMMENT (akumulasi '*')
- *   l -> IN_COMMENT (bukan akhir komentar)
+ *   * -> tetap di SAW_STAR_IN_PAREN_COMMENT (akumulasi '*')
+ *   l -> IN_PAREN_STAR_COMMENT (bukan akhir komentar)
  */
-void Lexer::handleSawStarInComment() {
+void Lexer::handleSawStarInParenComment() {
     char c = current();
 
-    if (c == ')') {
-        // Komentar berakhir dengan '*)'
+    if (c == ')') { // penutup
         buffer += ')';
         emitToken(TokenType::COMMENT, buffer);
         state = State::START;
         advance();
-    } else if (c == '}') {
-        // Komentar juga bisa berakhir dengan '}'
-        buffer += '}';
-        emitToken(TokenType::COMMENT, buffer);
-        state = State::START;
-        advance();
-    } else if (c == '*') {
-        // '*' berturut, tetap menunggu ')'
+    } else if (c == '*') { // ngulang terus ampe ')'
         buffer += '*';
         advance();
-    } else {
-        // Bukan akhir komentar, kembali ke IN_COMMENT
+    } else { // balik ke comment state
         buffer += c;
-        state = State::IN_COMMENT;
+        state = State::IN_PAREN_STAR_COMMENT;
         advance();
     }
 }
@@ -608,11 +577,9 @@ void Lexer::handleSawStarInComment() {
 void Lexer::handleEof() {
     switch (state) {
         case State::START:
-            // Tidak ada yang perlu dilakukan
             break;
 
-        case State::IN_IDENT: {
-            // Identifier/keyword terakhir
+        case State::IN_IDENT: { // print ident terakhir
             TokenType type = lookupKeyword(buffer);
             if (type == TokenType::IDENT) {
                 emitToken(TokenType::IDENT, buffer);
@@ -622,57 +589,49 @@ void Lexer::handleEof() {
             break;
         }
 
-        case State::IN_NUMBER:
-            // Integer terakhir
+        case State::IN_NUMBER: // print int terakhir
             emitToken(TokenType::INTCON, buffer);
             break;
 
         case State::DOT_AFTER_NUM:
-            // Integer diikuti titik di akhir file
             emitToken(TokenType::INTCON, buffer);
             tokenStartLine = dotLine;
             tokenStartCol = dotCol;
             emitToken(TokenType::PERIOD);
             break;
 
-        case State::IN_REAL:
+        case State::IN_REAL: // print float terakhir
             // Bilangan riil terakhir
             emitToken(TokenType::REALCON, buffer);
             break;
 
-        case State::IN_STRING:
-            // String tidak ditutup
+        case State::IN_STRING: // string ga ketutup
             emitError("Unterminated string literal at end of file");
             break;
 
         case State::SAW_COLON:
-            // ':' di akhir file adalah colon
             emitToken(TokenType::COLON);
             break;
 
         case State::SAW_LESS:
-            // '<' di akhir file
             emitToken(TokenType::LSS);
             break;
 
         case State::SAW_GREATER:
-            // '>' di akhir file
             emitToken(TokenType::GTR);
             break;
 
         case State::SAW_EQUAL:
-            // '=' tunggal di akhir file
             emitError("Unexpected '=' at end of file (expected '==')");
             break;
 
-        case State::IN_COMMENT:
-        case State::SAW_STAR_IN_COMMENT:
-            // Komentar tidak ditutup
+        case State::IN_CURLY_COMMENT:
+        case State::IN_PAREN_STAR_COMMENT:
+        case State::SAW_STAR_IN_PAREN_COMMENT: // comment kebuka
             emitError("Unterminated comment at end of file");
             break;
 
         case State::SAW_LPAREN:
-            // '(' di akhir file
             emitToken(TokenType::LPARENT);
             break;
     }
