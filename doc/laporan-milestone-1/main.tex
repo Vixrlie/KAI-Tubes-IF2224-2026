@@ -13,7 +13,7 @@
 \usepackage{subcaption}
 \usepackage{float}
 \usepackage{tikz}
-\usetikzlibrary{automata,positioning,arrows}
+\usetikzlibrary{automata,positioning,arrows,shapes.geometric}
 \bibliographystyle{IEEEtran}
 % ---------- Paket lain ----------
 \usepackage[most]{tcolorbox}
@@ -29,15 +29,35 @@
 \usepackage{booktabs} % gaya tabel lebih elegan
 \usepackage[table]{xcolor}
 \usepackage{tabularx}
-\newcolumntype{Y}{>{\centering\arraybackslash}X}
+\usepackage{algorithm}
+\usepackage{algpseudocode}\usepackage{listings}
+
+% Konfigurasi styling untuk code listings
+\lstset{
+    language=C++,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color[rgb]{0.13, 0.29, 0.53}\bfseries,
+    commentstyle=\color[rgb]{0.1, 0.5, 0.1},
+    stringstyle=\color[rgb]{0.627, 0.126, 0.941},
+    numberstyle=\tiny\color[rgb]{0.5, 0.5, 0.5},
+    breaklines=false,
+    showstringspaces=false,
+    upquote=true,
+    tabsize=4,
+    captionpos=b,
+    frame=single,
+    framesep=5pt,
+    rulecolor=\color[rgb]{0.7, 0.7, 0.7},
+    backgroundcolor=\color[rgb]{0.96, 0.96, 0.98}
+}\newcolumntype{Y}{>{\centering\arraybackslash}X}
 \newcolumntype{L}{>{\raggedright\arraybackslash}X}
 \newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
 
 
 
 % Tambah jarak aman dari header dan footer:	
-\setlength{\headheight}{10pt}   % wajib cukup besar untuk fancyhdr
-\setlength{\headsep}{55pt}      % jarak header ke teks
+\setlength{\headheight}{72pt}   % area header dibuat lebih tinggi agar tidak terpotong
+\setlength{\headsep}{20pt}      % jarak header ke teks dibuat lebih proporsional
 \setlength{\footskip}{28pt}     % jarak teks ke footer
 \usepackage[a4paper,top=3cm,bottom=3cm,left=3cm,right=3cm]{geometry}
 
@@ -52,14 +72,15 @@
 \fancypagestyle{plain}{%
 	\fancyhf{}%
 	\fancyhead[L]{%
-		\includegraphics[height=1.1cm]{logo-itb}\hspace{0.3cm}%
-		\includegraphics[height=1.1cm]{logo-stei}\hspace{0.3cm}%
+        \includegraphics[height=1.0cm]{logo-itb}\hspace{0.3cm}%
+        \includegraphics[height=1.0cm]{logo-stei}\hspace{0.3cm}%
 	}%
 	\fancyhead[R]{%
-		\begin{minipage}{9cm}
-			\raggedleft\bfseries IF2224 Teori Bahasa Formal dan Otomata \\
-			\normalsize Laporan Akhir Tugas Besar\\
-			Semester II 2025/2026
+        \begin{minipage}[b]{8.3cm}
+            \raggedleft\small
+            \textbf{IF2224 Teori Bahasa Formal dan Otomata} \\
+            \textbf{Laporan Akhir Tugas Besar}\\
+            \textit{Semester II 2025/2026}
 		\end{minipage}
 	}%
 	\renewcommand{\headrulewidth}{0.4pt}%
@@ -71,15 +92,16 @@
 
 
 \fancyhead[L]{%
-	\includegraphics[height=1.5cm]{logo-itb}\hspace{0.3cm}%
-	\includegraphics[height=1.5cm]{logo-stei}\hspace{0.3cm}%
+    \includegraphics[height=1.0cm]{logo-itb}\hspace{0.3cm}%
+    \includegraphics[height=1.0cm]{logo-stei}\hspace{0.3cm}%
 }
 
 \fancyhead[R]{%
-	\begin{minipage}{9cm}
-		\raggedleft\bfseries IF2224 Teori Bahasa Formal dan Otomata\\
-		\normalsize Laporan Akhir Tugas Besar\\
-		\itshape Semester II 2025/2026
+    \begin{minipage}[b]{8.3cm}
+        \raggedleft\small
+        \textbf{IF2224 Teori Bahasa Formal dan Otomata}\\
+        \textbf{Laporan Akhir Tugas Besar}\\
+        \textit{Semester II 2025/2026}
 	\end{minipage}
 }
 
@@ -93,43 +115,43 @@
 \begin{document}
 
 \begin{titlepage}
-	\thispagestyle{empty}
-	\centering
+    \thispagestyle{empty}
+    \centering
 
-	% ---------- Judul utama ----------
-	{\LARGE \textbf{Tugas Besar}\par}
-	\vspace{0.2cm}
-	{\LARGE \textbf{Milestone 1}\par}
-	\vspace{0.8cm}
-	{\large IF2224 Teori Bahasa Formal dan Otomata\par}
-	\vspace{0.2cm}
-	{\large Lexical Analysis\par}
-	\vspace{0.2cm}
-	{\large Semester 2 Tahun 2025/2026\par}
+    % ---------- Judul utama ----------
+    {\LARGE \textbf{Tugas Besar}\par}
+    \vspace{0.2cm}
+    {\LARGE \textbf{Milestone 1}\par}
+    \vspace{0.8cm}
+    {\large IF2224 Teori Bahasa Formal dan Otomata\par}
+    \vspace{0.2cm}
+    {\large Lexical Analysis\par}
+    \vspace{0.2cm}
+    {\large Semester 2 Tahun 2025/2026\par}
 
-	% ---------- Gambar tengah ----------
-	\vspace{1.8cm}
-	\includegraphics[width=0.9\textwidth]{foto-kelompok}\par
+    % ---------- Gambar tengah ----------
+    \vspace{1.8cm}
+    \includegraphics[width=0.9\textwidth]{foto-kelompok}\par
 
-	% ---------- Disusun oleh ----------
-	\vspace{0.8cm}
-	{\bfseries Disusun oleh:\par}
-	\vspace{0.2cm}
-	\textbf{Kai}
-	\vspace{0.5cm} \\
-	\begin{tabular}{l l}
-		Jonathan Kris Wicaksono     & (13524023) \\
-		Vincent Rionarlie           & (13524031) \\
-		Muhammad Aufar Rizqi Kusuam & (13524061) \\
-		Bryan Pratama Putra Hendra  & (13524067)
-	\end{tabular}
+    % ---------- Disusun oleh ----------
+    \vspace{0.8cm}
+    {\bfseries Disusun oleh:\par}
+    \vspace{0.2cm}
+    \textbf{Kai}
+    \vspace{0.5cm} \\
+    \begin{tabular}{l l}
+        Jonathan Kris Wicaksono     & (13524023) \\
+        Vincent Rionarlie           & (13524031) \\
+        Muhammad Aufar Rizqi Kusuam & (13524061) \\
+        Bryan Pratama Putra Hendra  & (13524067)
+    \end{tabular}
 
-	% ---------- Institusi ----------
-	\vspace{2.0cm}
-	Laboratorium Ilmu dan Rekayasa Komputasi\par
-	Program Studi Teknik Informatika\par
-	Sekolah Teknik Elektro dan Informatika\par
-	Institut Teknologi Bandung\par
+    % ---------- Institusi ----------
+    \vspace{2.0cm}
+    Laboratorium Ilmu dan Rekayasa Komputasi\par
+    Program Studi Teknik Informatika\par
+    Sekolah Teknik Elektro dan Informatika\par
+    Institut Teknologi Bandung\par
 
 \end{titlepage}
 
