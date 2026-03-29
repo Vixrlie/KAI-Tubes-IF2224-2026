@@ -20,20 +20,27 @@ Proyek ini adalah implementasi **Lexical Analyzer (Lexer)** untuk bahasa pemrogr
 ## How To Run Program
 ### 1. Build
 ```bash
-g++ -std=c++17 -Wall -Wextra -Isrc/lexer src/main.cpp src/lexer/lexer.cpp src/lexer/token.cpp -o lexer
+make
 ```
 
 ### 2. Run (output ke terminal)
 ```bash
-./lexer test/milestone-1/input-1.txt
+make run INPUT=test/milestone-1/input-1.txt
 ```
 
 ### 3. Run (output ke file)
 ```bash
-./lexer test/milestone-1/input-1.txt test/milestone-1/output-1.txt
+make run-output INPUT=test/milestone-1/input-1.txt OUTPUT=test/milestone-1/output-1.txt
 ```
 
-Pada Windows PowerShell, gunakan `./lexer.exe` jika executable bernama `lexer.exe`.
+### 4. Clean hasil build
+```bash
+make clean
+```
+
+Catatan:
+- Makefile sudah mendukung Windows dan Unix-like shell.
+- Jika `make` belum tersedia di Windows, jalankan dari MSYS2/MinGW/Git Bash, atau gunakan `mingw32-make` sesuai environment.
 
 ## Format Input File `.txt`
 Input berupa source code Arion biasa. Contoh:
@@ -93,6 +100,14 @@ Tim **Kai**:
 - Vincent Rionarlie (13524031)
 - Muhammad Aufar Rizqi Kusuam (13524061)
 - Bryan Pratama Putra Hendra (13524067)
+
+## Tabel Kontribusi
+| No | Nama Lengkap | NIM | Deskripsi Pekerjaan | Persentase Kontribusi (%) |
+|---|---|---|---|---:|
+| 1 | Jonathan Kris Wicaksono | 13524023 | Membuat konsep algoritma program, menyusun `lexer.h` serta `lexer.cpp` | 25 |
+| 2 | Vincent Rionarlie | 13524031 | Melakukan pembagian tugas, mendesain diagram transisi DFA | 25 |
+| 3 | Muhammad Aufar Rizqi Kusuam | 13524061 | Menyusun laporan akhir | 25 |
+| 4 | Bryan Pratama Putra Hendra | 13524067 | Mengkodekan `token.h` dan `token.cpp` | 25 |
 
 ## MIT License
 Proyek ini menggunakan lisensi **MIT**.
