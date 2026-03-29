@@ -1,0 +1,10 @@
+programsy
+ident (LeadingZero)
+semicolon
+beginsy
+ident (x)
+becomes
+intcon (0123)
+semicolon
+endsy
+period

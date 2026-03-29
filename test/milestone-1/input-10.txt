@@ -1,0 +1,6 @@
+program Quotes;
+begin
+  writeln('');
+  writeln('Baca buku ''KBBI''');
+  c := '''';
+end.

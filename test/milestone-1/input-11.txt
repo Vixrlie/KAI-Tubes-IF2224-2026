@@ -1,0 +1,4 @@
+program BadString;
+begin
+  writeln('hello);
+end.

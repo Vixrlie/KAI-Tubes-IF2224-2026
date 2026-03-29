@@ -1,0 +1,23 @@
+programsy
+ident (SpaceNewline)
+semicolon
+varsy
+ident (a)
+colon
+ident (integer)
+semicolon
+beginsy
+ident (a)
+becomes
+intcon (5)
+semicolon
+ident (a)
+becomes
+intcon (5)
+semicolon
+ident (a)
+becomes
+intcon (5)
+semicolon
+endsy
+period
