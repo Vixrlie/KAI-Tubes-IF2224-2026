@@ -6,6 +6,28 @@
 \end{figure}
 \section{Gambaran Umum Program}
 
+Program lexer untuk bahasa pemrograman Arion didesain sebagai aplikasi berbasis command-line yang menerima masukan berupa file source code dan menghasilkan daftar token sebagai keluaran. Alur umum eksekusi program adalah sebagai berikut.
+
+\begin{enumerate}
+    \item \textbf{Validasi Argumen}. Program menerima dua argumen dari command-line: nama file input (wajib) dan nama file output (opsional). Jika argument tidak sesuai, program akan menampilkan pesan error dan keluar dengan exit code 1.
+
+    \item \textbf{Pembacaan File Input}. Program membuka file input dengan mode baca. Jika file tidak dapat dibuka, program menampilkan error message dan keluar. Seluruh isi file dibaca ke dalam buffer string di memori.
+
+    \item \textbf{Inisialisasi Lexer}. Objek atau struktur Lexer diinisialisasi dengan string source code yang sudah dibaca. State awal DFA disetel ke \texttt{START}, posisi pembacaan diatur ke 0, dan daftar token diinisialisasi kosong.
+
+    \item \textbf{Tokenisasi}. Lexer menjalankan mesin DFA dengan membaca karakter demi karakter dari source code. Untuk setiap karakter, berdasarkan state DFA saat ini, lexer menentukan transisi ke state berikutnya atau menyelesaikan pembacaan satu token dan memancarkannya.
+
+    \item \textbf{Deteksi Error}. Jika lexer menemukan simbol atau urutan karakter yang tidak valid, lexer memancarkan token ERROR dengan pesan diagnostik, namun tetap melanjutkan proses tokenisasi (error recovery).
+
+    \item \textbf{Format Output}. Token-token yang telah dikumpulkan diformat menjadi string output sesuai dengan spesifikasi format lexer. Jika terdapat gap baris pada source code, baris kosong disisipkan pada output untuk mempertahankan struktur visual.
+
+    \item \textbf{Penulisan Output}. Output dicetak ke terminal (standard output). Jika nama file output diberikan sebagai argumen, output juga ditulis ke file tersebut.
+
+    \item \textbf{Kode Keluar}. Program keluar dengan exit code 0 jika tidak ada error leksikal atau exit code 1 jika terdapat error.
+\end{enumerate}
+
+Secara arsitektur, program dibagi menjadi beberapa modul yang terpisah untuk meningkatkan modularitas dan maintainability. Modul \texttt{token} mendefinisikan enum TokenType yang berisi 52 jenis token plus ERROR, struktur Token untuk menyimpan informasi token (tipe, nilai, baris, kolom), dan fungsi-fungsi utilitas untuk konversi tipe ke string dan pemformatan output. Modul \texttt{lexer} mengimplementasikan class atau struktur Lexer yang mengenkapsulasi state DFA, buffer pembacaan, dan logika transisi. Modul \texttt{main} bertugas menangani argument parsing, file I/O, dan orchestration keseluruhan proses dari pembacaan input sampai penulisan output.
+
 \section{Algoritma Lexer}
 
 \section{Struktur Direktori Program}
