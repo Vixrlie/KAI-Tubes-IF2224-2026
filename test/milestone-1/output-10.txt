@@ -1,0 +1,23 @@
+programsy
+ident (Quotes)
+semicolon
+beginsy
+ident (writeln)
+lparent
+string ('')
+rparent
+semicolon
+ident (writeln)
+lparent
+string ('Baca buku ')
+string ('KBBI')
+string ('')
+rparent
+semicolon
+ident (c)
+becomes
+string ('')
+string ('')
+semicolon
+endsy
+period

@@ -1,0 +1,23 @@
+programsy
+ident (MixedComment)
+semicolon
+beginsy
+comment ((* komentar dengan pola *...*..*))
+ident (writeln)
+lparent
+string ('ok')
+rparent
+semicolon
+
+comment ({ komentar multiline
+    baris kedua
+  })
+
+comment ((* komentar dibuka pakai (* tapi ditutup pakai })
+ident (writeln)
+lparent
+string ('after mixed close')
+rparent
+semicolon
+endsy
+period
