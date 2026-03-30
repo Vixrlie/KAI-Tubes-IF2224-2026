@@ -1,0 +1,9 @@
+programsy
+ident (BadString)
+semicolon
+beginsy
+ident (writeln)
+lparent
+error (Unterminated string literal)
+endsy
+period

@@ -1,0 +1,7 @@
+program DotAndPlus;
+begin
+  x := .18;
+  y := 0.18;
+  z := +67;
+  w := 123.;
+end.

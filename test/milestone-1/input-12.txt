@@ -1,0 +1,5 @@
+program BadComment;
+begin
+  x := 1;
+  { comment belum ditutup
+end.

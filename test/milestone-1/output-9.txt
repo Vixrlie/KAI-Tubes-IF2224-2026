@@ -1,0 +1,25 @@
+programsy
+ident (DotAndPlus)
+semicolon
+beginsy
+ident (x)
+becomes
+period
+intcon (18)
+semicolon
+ident (y)
+becomes
+realcon (0.18)
+semicolon
+ident (z)
+becomes
+plus
+intcon (67)
+semicolon
+ident (w)
+becomes
+intcon (123)
+period
+semicolon
+endsy
+period

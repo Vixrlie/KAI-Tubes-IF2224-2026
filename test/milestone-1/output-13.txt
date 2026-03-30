@@ -1,0 +1,34 @@
+programsy
+ident (WeirdTokens)
+semicolon
+beginsy
+ident (a)
+error (Unexpected character '_')
+ident (b)
+becomes
+intcon (1)
+semicolon
+ifsy
+ident (x)
+error (Unexpected '=' (expected '=='))
+intcon (1)
+thensy
+ident (writeln)
+lparent
+string ('bad equal')
+rparent
+semicolon
+ident (n)
+becomes
+realcon (1.2)
+ident (e)
+minus
+intcon (10)
+semicolon
+ident (m)
+becomes
+realcon (1.2)
+ident (e10)
+semicolon
+endsy
+period

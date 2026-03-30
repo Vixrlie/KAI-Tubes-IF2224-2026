@@ -1,0 +1,4 @@
+program LeadingZero;
+begin
+  x := 0123;
+end.

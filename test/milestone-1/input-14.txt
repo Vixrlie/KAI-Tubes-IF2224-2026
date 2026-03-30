@@ -1,0 +1,12 @@
+program MixedComment;
+begin
+  (* komentar dengan pola *...*..*)
+  writeln('ok');
+
+  { komentar multiline
+    baris kedua
+  }
+
+  (* komentar dibuka pakai (* tapi ditutup pakai } 
+  writeln('after mixed close');
+end.

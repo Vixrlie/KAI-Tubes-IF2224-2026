@@ -1,0 +1,14 @@
+program SpaceNewline;
+var
+  a
+  :
+  integer
+  ;
+begin
+  a
+  :=
+  5
+  ;
+  a:=5;
+  a := 5;
+end.
