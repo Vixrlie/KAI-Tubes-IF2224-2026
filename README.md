@@ -98,7 +98,7 @@ KAI-Tubes-IF2224-2026/
 Tim **Kai**:
 - Jonathan Kris Wicaksono (13524023)
 - Vincent Rionarlie (13524031)
-- Muhammad Aufar Rizqi Kusuam (13524061)
+- Muhammad Aufar Rizqi Kusuma (13524061)
 - Bryan Pratama Putra Hendra (13524067)
 
 ## Tabel Kontribusi
