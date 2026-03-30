@@ -1,0 +1,345 @@
+\section{Perancangan Automata (DFA)}
+
+\subsection{Definisi State DFA}
+Lexical Analyzer pada compiler Arion memanfaatkan \textit{Deterministic Finite Automata} (DFA). Proses \textit{scanning} token dan analisis karakter pada tugas ini diproses dalam 15 \textit{state}, meliputi 1 \textit{initial state} ($), \textit{accepting state} akhir pembacaan yakni \texttt{FOUND\_EOF} ({15}$), serta state lainnya.
+
+Daftar \textit{state} dan deskripsinya di dalam kode (Enumerasi \texttt{State} di \texttt{lexer.h}) adalah sebagai berikut:
+\begin{enumerate}
+    \item (\texttt{START}): \textit{State} awal, menunggu karakter baru.
+    \item (\texttt{IN\_IDENT}): Sedang membaca bagian dari \textit{identifier} atau \textit{keyword}.
+    \item (\texttt{IN\_NUMBER}): Sedang membaca digit untuk dikelompokkan sebagai \textit{integer}.
+    \item (\texttt{DOT\_AFTER\_NUM}): Membaca titik (\texttt{.}) persis setelah digit, menentukan apakah bilangan riil atau titik biasa.
+    \item (\texttt{IN\_REAL}): Sedang membaca digit desimal setelah menemukan titik. 
+    \item (\texttt{IN\_STRING}): Membaca karakter yang diapit tanda kutip (\texttt{'}).
+    \item (\texttt{SAW\_COLON}): Telah memroses titik dua (\texttt{:}), berjaga-jaga jika transisi ke \textit{assignment operator} (\texttt{:=}).
+    \item (\texttt{SAW\_LESS}): Telah membaca tanda \textless, memeriksa simbol selanjutnya, seperti \texttt{<=} atau \texttt{<>}.
+    \item (\texttt{SAW\_GREATER}): Telah membaca tanda \textgreater, memeriksa kemunculan \texttt{>=}.
+    \item (\texttt{SAW\_EQUAL}): Telah membaca tanda \texttt{=}, memeriksa kemunculan operator is equal \texttt{==}.
+    \item (\texttt{IN\_CURLY\_COMMENT}): Telah membaca penanda komentar, yaitu kurung kurawal (\texttt{\{}).
+    \item (\texttt{SAW\_LPAREN}): Telah membaca kurung buka biasa (\texttt{(}), yang juga merupakan penanda awal komentar dengan format \texttt{(*}.
+    \item (\texttt{IN\_PAREN\_STAR\_COMMENT}): Memroses isi komentar pada bagian \texttt{(* ... *)}.
+    \item (\texttt{SAW\_STAR\_IN\_PAREN\_COMMENT}): Di akhir komentar \texttt{(*}, memroses kemunculan tanda \texttt{*} sebagai penutup akhir komentar.
+    \item (\texttt{FOUND\_EOF}): Menjadi penanda selesainya pembacaan stream file \textit{source code}.
+\end{enumerate}
+
+\subsection{Tabel Transisi}
+DFA memiliki perilaku penentuan token berdasarkan fungsi deterministik $\delta : Q \times \Sigma \rightarrow Q$. Perumpamaan ini ditunjukkan pada Tabel \ref{tab:dfa-transition}.
+Setiap titik tabel merupakan transisi perpindahan state untuk setiap simbol. State bisa berubah bentuk, atau kembali menjadi state awal itu sendiri. Pada tabel berikut, nomor state bersesuaian dengan daftar state yang telah didefinisikan sebelumnya.
+
+\begin{table}[H]
+    \centering
+    \resizebox{\textwidth}{!}{
+    \begin{tabular}{|c*{15}{|c}|}
+        \hline
+        \textbf{State} & \textbf{Alphabets} & \textbf{Digits} & \textbf{Space Char} & \textbf{.} & \textbf{:} & \textbf{\textless} & \textbf{\textgreater} & \textbf{=} & \textbf{\{} & \textbf{\}} & \textbf{(} & \textbf{*} & \textbf{)} & \textbf{'} & \textbf{EOF} \\ \hline
+        q1  & q2  & q3  & q1  & q1  & q7  & q8  & q9  & q10 & q11 & q1  & q12 & q1  & q1  & q6  & q15 \\ \hline
+        q2  & q2  & q2  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q15 \\ \hline
+        q3  & q1  & q3  & q1  & q4  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q15 \\ \hline
+        q4  & q1  & q5  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q15 \\ \hline
+        q5  & q1  & q5  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q15 \\ \hline
+        q6  & q6  & q6  & q6  & q6  & q6  & q6  & q6  & q6  & q6  & q6  & q6  & q6  & q6  & q1  & q15 \\ \hline
+        q7  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q15 \\ \hline
+        q8  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q15 \\ \hline
+        q9  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q15 \\ \hline
+        q10 & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q15 \\ \hline
+        q11 & q11 & q11 & q11 & q11 & q11 & q11 & q11 & q11 & q11 & q1  & q11 & q11 & q11 & q11 & q15 \\ \hline
+        q12 & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q13 & q1  & q1  & q15 \\ \hline
+        q13 & q13 & q13 & q13 & q13 & q13 & q13 & q13 & q13 & q13 & q13 & q13 & q14 & q13 & q13 & q15 \\ \hline
+        q14 & q13 & q13 & q13 & q13 & q13 & q13 & q13 & q13 & q13 & q13 & q13 & q14 & q1  & q13 & q15 \\ \hline
+        q15 & q15 & q15 & q15 & q15 & q15 & q15 & q15 & q15 & q15 & q15 & q15 & q15 & q15 & q15 & q15 \\ \hline
+    \end{tabular}
+    }
+    \caption{Tabel Transisi DFA Penuh (dari q1 hingga final marker q15)}
+    \label{tab:dfa-transition}
+\end{table}
+
+\subsection{Visualisasi Diagram}
+Penekanan wujud nyata dari tabel relasional tertampakkan pula pada bagan node graf terurut dalam Gambar \ref{fig:dfa-diagram}. Mengingat kembalinya alur sirkulasi menuju (\textit{emit start state}) \$ sedemikian intens, maka beberapa simpul direduksi kepadatannya demi menjaga estetika pembacaan yang presisi.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{lexerDFAfinal.drawio.png}
+    \caption{Visualisasi Diagram State DFA. \href{https://drive.google.com/file/d/1aSSj8bhTI08BDqSrc8pjaBD1EtSzj6KU/view?usp=sharing}{(Link State Diagram)}}
+\end{figure}
+
+\section{Implementasi Program}
+
+\subsection{Arsitektur Kelas Lexer}
+Arsitektur kelas Lexer terdapat pada file header \texttt{lexer.h}. Penulis mendeklarasikan enumerasi \texttt{State} untuk menentukan transisi himpunan state pada DFA. Kelas ini memiliki beberapa properti utama. Variabel \texttt{state} melacak posisi pergerakan DFA aktual. Variabel \texttt{pos}, \texttt{line}, dan \texttt{col} menjalankan tugas melacak koordinat pembaca file input untuk kebutuhan parsing. Program juga menyediakan variabel \texttt{buffer} bertipe string untuk mengumpulkan karakter tunggal menjadi satu unit token seperti identifier atau integer.
+
+Untuk memberikan gambaran wujud abstraksi data yang merekatkan seluruh utilitas pembacaan tanpa menyertakan deklarasi fungsi, berikut adalah struktur variabel \texttt{Lexer}:
+
+\begin{tcolorbox}[title=Struktur Variabel \texttt{class Lexer} pada \texttt{lexer.h},colback=gray!5,colframe=black!60,boxrule=0.5pt,arc=2mm,breakable]
+\begin{verbatim}
+class Lexer {
+private:
+    std::string source;         // Source code lengkap
+    int pos;                    // Posisi karakter saat ini
+    int line;                   // Baris saat ini
+    int col;                    // Kolom saat ini
+    State state;                // State DFA saat ini
+    std::string buffer;         // Buffer akumulasi karakter
+    int tokenStartLine;         // Baris awal token
+    int tokenStartCol;          // Kolom awal token
+    int dotLine;                // Baris posisi titik desimal
+    int dotCol;                 // Kolom posisi titik desimal
+    bool errorFlag;             // Flag error
+    std::vector<Token> tokens;  // Himpunan token output
+};
+\end{verbatim}
+\end{tcolorbox}
+
+\subsection{Arsitektur Kelas Token}
+ \texttt{Token} terdapat pada file \texttt{token.h}. Kelas ini terutama berisikan enumerasi \texttt{TokenType} yang mengklasifikasikan lima puluh dua jenis token dalam tata bahasa Arion, mencakup literal, operator, delimiter, hingga kata kunci deklarasi, serta \texttt{ERROR}..
+
+Setiap objek \texttt{Token} yang memiliki empat atribut. Atribut \texttt{type} merepresentasikan kategori  token. Atribut \texttt{value} berperan mengekstrak arti dari teks, seperti identifier, string, atau konstanta numerik. Atribut \texttt{line} dan \texttt{column} merupakan lokasi tempat token tersebut terbaca.
+
+\begin{tcolorbox}[title=Struktur Data \texttt{Token} dan \texttt{TokenType} pada \texttt{token.h},colback=gray!5,colframe=black!60,boxrule=0.5pt,arc=2mm,breakable]
+\begin{verbatim}
+enum class TokenType {
+    // Literal (konstanta)
+    INTCON, REALCON, CHARCON, STRING,
+    
+    // Operator logika dan aritmatika
+    NOTSY, ANDSY, ORSY, PLUS, MINUS, TIMES, IDIV, RDIV, IMOD,
+    
+    // Operator perbandingan dan delimiter
+    EQL, NEQ, GTR, GEQ, LSS, LEQ,
+    LPARENT, RPARENT, LBRACK, RBRACK, COMMA, 
+    SEMICOLON, PERIOD, COLON, BECOMES,
+    
+    // Keyword deklarasi dan alur kontrol
+    CONSTSY, TYPESY, VARSY, FUNCTIONSY, PROCEDURESY, 
+    ARRAYSY, RECORDSY, PROGRAMSY, BEGINSY, IFSY, CASESY, 
+    REPEATSY, WHILESY, FORSY, ENDSY, ELSESY, UNTILSY, 
+    OFSY, DOSY, TOSY, DOWNTOSY, THENSY,
+    
+    // Identifier, komentar, dan error
+    IDENT, COMMENT, ERROR
+};
+
+struct Token {
+    TokenType type;     // Jenis token 
+    std::string value;  // Arti token 
+    int line;           // Baris awal kemunculan token
+    int column;         // Kolom awal kemunculan token
+};
+\end{verbatim}
+\end{tcolorbox}
+
+\subsection{Loop Utama DFA}
+Program menggunakan fungsi \texttt{tokenize} untuk menjalankan loop utama yang mengembalikan vektor Token. Fungsi ini menentukan apa yang perlu dilakukan pada sebuah state DFA. Penulis memakai iterasi \textit{while} yang mengecek kondisi fungsi \texttt{isAtEnd} sebelum melompat ke pengecekan \textit{switch}. \textit{Switch state} memetakan state saat ini ke fungsi handler yang sesuai seperti \texttt{handleStart} atau \texttt{handleSawLess}. Kalau program mencapai EOF, program memanggil \texttt{handleEof} dan mengubah state menjadi \texttt{FOUND\_EOF} lalu loop \textit{while} berhenti. Semua ini memastikan pembacaan input beroperasi secara presisi mengikuti model matematika automata.
+
+\begin{tcolorbox}[title=Cuplikan \texttt{Lexer::tokenize()},colback=gray!5,colframe=black!60,boxrule=0.5pt,arc=2mm,breakable]
+\begin{verbatim}
+std::vector<Token> Lexer::tokenize() {
+    while (state != State::FOUND_EOF) {
+        if (isAtEnd()) {
+            handleEof();
+            state = State::FOUND_EOF;
+        } else {
+            switch (state) {
+                case State::START:          handleStart(); break;
+                case State::SAW_LESS:       handleSawLess(); break;
+                case State::FOUND_EOF:      break; 
+            }
+        }
+    }
+    return tokens;
+}
+\end{verbatim}
+\end{tcolorbox}
+
+\subsection{Implementasi Fungsi State}
+Setiap handler berinteraksi dengan fungsi utilitas pendukung seperti \texttt{advance} untuk memajukan kursor lintasan, serta \texttt{emitToken} untuk menerbitkan token utuh ke jaring luaran lalu mereset state ke formasi awal \texttt{START}. Berikut adalah rincian empiris untuk setiap cabang penanganan yang dieksekusi oleh mesin DFA.
+
+\subsubsection{Fase Inisialisasi dan Identifikasi}
+Fungsi \texttt{handleStart} merupakan fungsi permulaan untuk menentukan arah transisi state berdasarkan karakter yang dibaca satu per satu. Program mengabaikan karakter spasi (\textit{whitespace}). Apabila program mendeteksi huruf, state akan dipetakan ke \texttt{IN\_IDENT}. Di dalam fungsi \texttt{handleInIdent}, program mengakumulasi urutan karakter alfanumerik secara berulang. Jika karakter saat ini bukan alfanumerik, program memanggil \texttt{lookupKeyword} untuk memvalidasi apakah buffer tersebut merupakan token bawaan atau sekadar \textit{identifier} biasa.
+
+\begin{tcolorbox}[title=Cuplikan \texttt{handleStart()} dan \texttt{handleInIdent()},colback=gray!5,colframe=black!60,boxrule=0.5pt,arc=2mm,breakable]
+\begin{verbatim}
+void Lexer::handleStart() {
+    char c = current();
+
+    if (std::isspace(c)) {
+        advance();
+        return;
+    }
+
+    tokenStartLine = line;
+    tokenStartCol = col;
+
+    if (std::isalpha(c)) { 
+        buffer = c;
+        state = State::IN_IDENT;
+        advance();
+    } // Transisi ke state lainnya
+    else if (c == '+') {
+        emitToken(TokenType::PLUS);
+        advance();
+    } // Penanganan operator tunggal
+    else { 
+        emitError("Unexpected character '" + std::string(1, c) 
+        + "'");
+        advance();
+    }
+}
+
+void Lexer::handleInIdent() {
+    char c = current();
+
+    if (std::isalnum(c)) { 
+        buffer += c;
+        advance();
+    } else { 
+        TokenType type = lookupKeyword(buffer);
+        if (type == TokenType::IDENT) {
+            emitToken(TokenType::IDENT, buffer);
+        } else {
+            emitToken(type);
+        }
+        state = State::START;
+    }
+}
+\end{verbatim}
+\end{tcolorbox}
+
+\subsubsection{Transisi Numerikal dan Pecahan Desimal}
+Untuk pembacaan angka, program mengevaluasi karakter melalui \texttt{handleInNumber}. Jika program mendeteksi digit, program menambahkan karakter ke buffer dan memajukan kursor. Jika program membaca karakter titik, program mencatat posisinya pada variabel \texttt{dotLine} dan \texttt{dotCol}, lalu mengubah state menjadi \texttt{DOT\_AFTER\_NUM}. 
+
+Di dalam \texttt{handleDotAfterNum}, program melakukan inspeksi lanjutan: apabila karakter selanjutnya adalah digit, ini menandakan formasi bilangan riil, sehingga state diubah ke \texttt{IN\_REAL}. Jika bukan digit, program mempublikasikan temuan utuh sebelumnya sebagai \texttt{INTCON}, disusul dengan penerbitan token \texttt{PERIOD} secara terpisah, lalu mengembalikan state ke formasi awal. Fungsi \texttt{handleInReal} akan terus menyerap digit desimal hingga tuntas sebelum menerbitkan \texttt{REALCON}.
+
+\begin{tcolorbox}[title=Cuplikan Transisi Numerikal,colback=gray!5,colframe=black!60,boxrule=0.5pt,arc=2mm,breakable]
+\begin{verbatim}
+void Lexer::handleInNumber() {
+    char c = current();
+    if (std::isdigit(c)) {
+        buffer += c; advance();
+    } else if (c == '.') {
+        dotLine = line; dotCol = col;
+        state = State::DOT_AFTER_NUM; advance();
+    } else {
+        emitToken(TokenType::INTCON, buffer);
+        state = State::START;
+    }
+}
+
+void Lexer::handleDotAfterNum() {
+    char c = current();
+    if (std::isdigit(c)) {
+        buffer += '.'; buffer += c;
+        state = State::IN_REAL; advance();
+    } else {
+        emitToken(TokenType::INTCON, buffer);
+        int savedLine = tokenStartLine; int savedCol = tokenStartCol;
+        tokenStartLine = dotLine; tokenStartCol = dotCol;
+        emitToken(TokenType::PERIOD);
+        tokenStartLine = savedLine; tokenStartCol = savedCol;
+        state = State::START;
+    }
+}
+
+void Lexer::handleInReal() {
+    char c = current();
+    if (std::isdigit(c)) {
+        buffer += c; advance();
+    } else {
+        emitToken(TokenType::REALCON, buffer);
+        state = State::START;
+    }
+}
+\end{verbatim}
+\end{tcolorbox}
+
+\subsubsection{Evaluasi String dan Operator Relasional}
+Pada fungsi \texttt{handleInString}, program membaca urutan karakter diapit tanda kutip. Saat menemui kutip penutup, panjang buffer dievaluasi untuk membedakan antara \texttt{CHARCON} (satu karakter) atau \texttt{STRING}. Jika menjumpai baris baru (\textit{newline}) sebelum kutip ditutup, eror dicetak.
+
+Pada \texttt{handleSawColon}, program mengevaluasi karakter \texttt{=} untuk membuat \texttt{BECOMES} (\texttt{:=}), atau \texttt{COLON} (\texttt{:}) saja. Logika tersebut juga ada pada \texttt{handleSawLess} dan \texttt{handleSawGreater} untuk memeriksa \texttt{<=}, \texttt{<>}, dan \texttt{>=}. \texttt{handleSawEqual} menunggu karakter \texttt{=} ganda untuk sama dengan (\texttt{==}).
+
+\begin{tcolorbox}[title=Cuplikan String dan Operator Relasional,colback=gray!5,colframe=black!60,boxrule=0.5pt,arc=2mm,breakable]
+\begin{verbatim}
+void Lexer::handleInString() {
+    char c = current();
+    if (c == '\'') { 
+        std::string value = "'" + buffer + "'";
+        if (buffer.length() == 1) emitToken(TokenType::CHARCON, value);
+        else emitToken(TokenType::STRING, value);
+        state = State::START; advance();
+    } else if (c == '\n') {
+        emitError("Unterminated string literal");
+        state = State::START;
+    } else {
+        buffer += c; advance();
+    }
+}
+
+void Lexer::handleSawLess() {
+    char c = current();
+    if (c == '>') { emitToken(TokenType::NEQ); state = State::START; advance(); }
+    else if (c == '=') { emitToken(TokenType::LEQ); state = State::START; advance(); }
+    else { emitToken(TokenType::LSS); state = State::START; }
+}
+
+void Lexer::handleSawEqual() {
+    char c = current();
+    if (c == '=') { emitToken(TokenType::EQL); state = State::START; advance(); }
+    else { emitError("Unexpected '=' (expected '==')"); state = State::START; }
+}
+\end{verbatim}
+\end{tcolorbox}
+
+\subsubsection{Isolasi Blok Komentar dan Akhir File}
+Untuk melakukan komentar, terdapat dua opsi format, yaitu format dengan kurung kurawal \texttt{\{\}} dan tanda kurung bintang \texttt{(**)}. Pada \texttt{handleInCurlyComment}, kursor terus dimajukan hingga menyentuh kurung kurawal tutup (\texttt{\}}). 
+
+Tingkat kerumitan pada format komentar \texttt{(* ... *)} lebih tinggi, di mana \texttt{handleSawLparen} merupakan penentu awal transisi. Jika terbaca kurung buka, loop akan saling mengunci antara \texttt{IN\_PAREN\_STAR\_COMMENT} dan \texttt{SAW\_STAR\_IN\_PAREN\_COMMENT} hingga program menemukan konfigurasi penutup \texttt{*)}.
+
+Terakhir, fungsi \texttt{handleEof} merupakan handler jika program sudah mencapai EOF. Prosedur ini membersihkan sisa buffer yang belum diproses, mencetak \textit{integer} atau \textit{identifier} terakhir, serta mencetak eror jika komentar atau \textit{string} belum ditutup dengan valid.
+
+\begin{tcolorbox}[title=Cuplikan Komentar dan EOF,colback=gray!5,colframe=black!60,boxrule=0.5pt,arc=2mm,breakable]
+\begin{verbatim}
+void Lexer::handleSawLparen() {
+    char c = current();
+    if (c == '*') { 
+        buffer = "(*"; state = State::IN_PAREN_STAR_COMMENT; advance();
+    } else {
+        emitToken(TokenType::LPARENT); state = State::START;
+    }
+}
+
+void Lexer::handleSawStarInParenComment() {
+    char c = current();
+    if (c == ')') {
+        buffer += ')'; emitToken(TokenType::COMMENT, buffer);
+        state = State::START; advance();
+    } else if (c == '*') {
+        buffer += '*'; advance();
+    } else { 
+        buffer += c; state = State::IN_PAREN_STAR_COMMENT; advance();
+    }
+}
+
+void Lexer::handleEof() {
+    switch (state) {
+        case State::IN_IDENT: {
+            TokenType type = lookupKeyword(buffer);
+            if (type == TokenType::IDENT) emitToken(TokenType::IDENT, buffer);
+            else emitToken(type);
+            break;
+        }
+        case State::IN_NUMBER: 
+        case State::IN_REAL:
+            emitToken(TokenType::INTCON, buffer); break; // Atau REALCON sesuai state
+        case State::IN_STRING:
+            emitError("Unterminated string literal at end of file"); break;
+        case State::IN_CURLY_COMMENT:
+        case State::IN_PAREN_STAR_COMMENT:
+        case State::SAW_STAR_IN_PAREN_COMMENT:
+            emitError("Unterminated comment at end of file"); break;
+        // ... penanganan state residu lainnya ...
+    }
+}
+\end{verbatim}
+\end{tcolorbox}
+
+\subsection{Klasifikasi Pembacaan Error}
+Program memvalidasi keyword menggunakan struktur data map bertipe string dan \texttt{TokenType} dari standar C++. Fungsi \texttt{lookupKeyword} membandingkan string secara case-insensitive. Kalau program tidak menemukan kecocokan, sistem mengmbalikan token \texttt{IDENT}. Sistem juga memiliki fungsi \texttt{emitError} untuk menangani karakter ilegal. Fungsi ini membiarkan program tetap mencetak \texttt{ERROR} tanpa menghentikan loop utama sampai program menemukan EOF.

@@ -1,3 +1,9 @@
 \section{Kesimpulan}
+Program lexer untuk bahasa Arion sudah berhasil dibuat dan berjalan sesuai dengan rancangan diagram DFA. Kelas Lexer dan Token yang diimplementasikan mampu membaca karakter demi karakter dari kode sumber dan mengubahnya menjadi susunan token yang terstruktur. Mesin pembaca ini terbukti bisa mengenali kelima puluh dua jenis token yang diminta pada spesifikasi tugas. Program juga sudah bisa mengabaikan spasi dan blok komentar dengan baik, serta mampu membedakan operator yang karakternya beririsan seperti pembacaan bilangan riil dan penentuan operator relasional. 
+
+Selain itu program sudah memiliki penanganan error dasar yang cukup aman. Kalau program menemukan karakter asing atau ada komentar yang tidak ditutup sampai akhir file, program tidak akan langsung berhenti secara paksa. Kesalahan tersebut akan dicatat posisi baris dan kolomnya lalu dibungkus menjadi token error. Pendekatan ini memastikan proses tokenisasi tetap berjalan sampai selesai sehingga lapisan parser nantinya tetap mendapat laporan error yang lengkap.
 
 \section{Saran}
+Meskipun lexer ini sudah berjalan sesuai spesifikasi, masih ada beberapa bagian yang bisa dikembangkan lagi kedepannya. Hal pertama yang bisa diperbaiki adalah cara program menumpuk karakter ke dalam buffer. Saat ini program masih banyak melakukan operasi penyalinan string standar yang mungkin kurang efisien jika kode sumbernya sangat panjang. Penggunaan referensi memori seperti string view bisa dipertimbangkan untuk mengurangi beban komputasi. 
+
+Terakhir fitur pelaporan error bisa dibuat lebih informatif bagi pengguna. Pesan error akan lebih membantu proses debugging kalau program bisa mencetak ulang baris kode yang salah di terminal, lengkap dengan tanda penunjuk tepat di bawah karakter yang menyebabkan kegagalan pembacaan tersebut.
