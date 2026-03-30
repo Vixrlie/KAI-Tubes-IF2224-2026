@@ -1,6 +1,4 @@
 /**
- * lexer.h
- *
  * Deklarasi kelas Lexer untuk bahasa pemrograman Arion.
  * Lexer menggunakan Deterministic Finite Automata (DFA) untuk
  * membaca source code karakter demi karakter dan menghasilkan token.
@@ -17,19 +15,20 @@
  * Enum State - State DFA untuk lexical analyzer.
  *
  * DFA terdiri dari 13 state yang merepresentasikan kondisi pembacaan:
- *   START                  : State awal, menunggu karakter baru
- *   IN_IDENT               : Sedang membaca identifier/keyword
- *   IN_NUMBER              : Sedang membaca digit integer
- *   DOT_AFTER_NUM          : Melihat '.' setelah digit (bisa real atau period)
- *   IN_REAL                : Sedang membaca bagian desimal bilangan riil
- *   IN_STRING              : Sedang membaca karakter di dalam tanda kutip
- *   SAW_COLON              : Melihat ':' (bisa colon atau becomes)
- *   SAW_LESS               : Melihat '<' (bisa lss, leq, atau neq)
- *   SAW_GREATER            : Melihat '>' (bisa gtr atau geq)
- *   SAW_EQUAL              : Melihat '=' pertama (mengharapkan '=' kedua)
- *   IN_COMMENT             : Di dalam komentar
- *   SAW_LPAREN             : Melihat '(' (bisa lparent atau awal komentar)
- *   SAW_STAR_IN_COMMENT    : Di dalam komentar, melihat '*' (bisa akhir komentar)
+ *   START                        : State awal, menunggu karakter baru
+ *   IN_IDENT                     : Sedang membaca identifier/keyword
+ *   IN_NUMBER                    : Sedang membaca digit integer
+ *   DOT_AFTER_NUM                : Melihat '.' setelah digit (bisa real atau period)
+ *   IN_REAL                      : Sedang membaca bagian desimal bilangan riil
+ *   IN_STRING                    : Sedang membaca karakter di dalam tanda kutip
+ *   SAW_COLON                    : Melihat ':' (bisa colon atau becomes)
+ *   SAW_LESS                     : Melihat '<' (bisa lss, leq, atau neq)
+ *   SAW_GREATER                  : Melihat '>' (bisa gtr atau geq)
+ *   SAW_EQUAL                    : Melihat '=' pertama (mengharapkan '=' kedua)
+ *   IN_CURLY_COMMENT             : Di dalam komentar curly
+ *   SAW_LPAREN                   : Melihat '(' (bisa lparent atau awal komentar)
+ *   IN_PAREN_STAR_COMMENT        : Di dalam komentar star
+ *   SAW_STAR_IN_PAREN_COMMENT    : Di dalam komentar star, melihat '*' (bisa akhir komentar)
  */
 enum class State {
     START,
@@ -42,9 +41,11 @@ enum class State {
     SAW_LESS,
     SAW_GREATER,
     SAW_EQUAL,
-    IN_COMMENT,
+    IN_CURLY_COMMENT,
     SAW_LPAREN,
-    SAW_STAR_IN_COMMENT
+    IN_PAREN_STAR_COMMENT,
+    SAW_STAR_IN_PAREN_COMMENT,
+    FOUND_EOF
 };
 
 /**
@@ -116,9 +117,10 @@ private:
     void handleSawLess();
     void handleSawGreater();
     void handleSawEqual();
-    void handleInComment();
+    void handleInCurlyComment();
     void handleSawLparen();
-    void handleSawStarInComment();
+    void handleInParenStarComment();
+    void handleSawStarInParenComment();
 
     /* Menangani akhir file untuk token yang belum selesai */
     void handleEof();
