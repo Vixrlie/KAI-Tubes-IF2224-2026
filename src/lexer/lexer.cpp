@@ -133,26 +133,31 @@ bool Lexer::hasErrors() const {
  * Cek state, lalu melanjutkan ke state DFA yang bersangkutan
  */
 std::vector<Token> Lexer::tokenize() {
-    while (!isAtEnd()) {
-        switch (state) {
-            case State::START:               handleStart(); break;
-            case State::IN_IDENT:            handleInIdent(); break;
-            case State::IN_NUMBER:           handleInNumber(); break;
-            case State::DOT_AFTER_NUM:       handleDotAfterNum(); break;
-            case State::IN_REAL:             handleInReal(); break;
-            case State::IN_STRING:           handleInString(); break;
-            case State::SAW_COLON:           handleSawColon(); break;
-            case State::SAW_LESS:            handleSawLess(); break;
-            case State::SAW_GREATER:               handleSawGreater(); break;
-            case State::SAW_EQUAL:                 handleSawEqual(); break;
-            case State::IN_CURLY_COMMENT:          handleInCurlyComment(); break;
-            case State::SAW_LPAREN:                handleSawLparen(); break;
-            case State::IN_PAREN_STAR_COMMENT:     handleInParenStarComment(); break;
-            case State::SAW_STAR_IN_PAREN_COMMENT: handleSawStarInParenComment(); break;
+    while (state != State::FOUND_EOF) {
+        if (isAtEnd()) {
+            handleEof();
+            state = State::FOUND_EOF;
+        } else {
+            switch (state) {
+                case State::START:               handleStart(); break;
+                case State::IN_IDENT:            handleInIdent(); break;
+                case State::IN_NUMBER:           handleInNumber(); break;
+                case State::DOT_AFTER_NUM:       handleDotAfterNum(); break;
+                case State::IN_REAL:             handleInReal(); break;
+                case State::IN_STRING:           handleInString(); break;
+                case State::SAW_COLON:           handleSawColon(); break;
+                case State::SAW_LESS:            handleSawLess(); break;
+                case State::SAW_GREATER:         handleSawGreater(); break;
+                case State::SAW_EQUAL:           handleSawEqual(); break;
+                case State::IN_CURLY_COMMENT:    handleInCurlyComment(); break;
+                case State::SAW_LPAREN:          handleSawLparen(); break;
+                case State::IN_PAREN_STAR_COMMENT: handleInParenStarComment(); break;
+                case State::SAW_STAR_IN_PAREN_COMMENT: handleSawStarInParenComment(); break;
+                case State::FOUND_EOF:           break;
+            }
         }
     }
     
-    handleEof();
     return tokens;
 }
 
@@ -633,6 +638,9 @@ void Lexer::handleEof() {
 
         case State::SAW_LPAREN:
             emitToken(TokenType::LPARENT);
+            break;
+        
+        case State::FOUND_EOF:
             break;
     }
 }
