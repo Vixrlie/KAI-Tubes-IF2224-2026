@@ -172,37 +172,33 @@ Ketika loop selesai, \texttt{handleEof()} dipanggil untuk menyelesaikan state te
 \section{Implementasi DFA}
 \subsection{Penentuan State}
 
-Lexer ini memiliki 15 state dasar, dimulai dari state awal yaitu START, dan state akhir yaitu FOUND_EOF. State-state lainnya merupakan state penengah yang digunakan untuk menandai identifier yang telah ditemukan.
+Lexer ini memiliki 13 state utama sesuai implementasi pada \texttt{lexer.h}. State awal adalah \texttt{START}, sedangkan akhir pembacaan ditangani melalui fungsi \texttt{handleEof()} (bukan state terpisah). Daftar state yang digunakan adalah sebagai berikut.
 \begin{enumerate}
     \item \texttt{START}. State awal, menunggu karakter baru untuk menentukan jenis token berikutnya.
 
-    \item \texttt{IN\_IDENT}. Sedang membaca sebuah identifier atau keyword (karakter alfanumerik dan underscore).
+    \item \texttt{IN\_IDENT}. Sedang membaca identifier atau keyword.
 
-    \item \texttt{IN\_NUMBER}. Sedang membaca digit-digit untuk konstanta integer.
+    \item \texttt{IN\_NUMBER}. Sedang membaca digit-digit konstanta integer.
 
-    \item \texttt{DOT\_AFTER\_NUM}. Baru saja membaca '.', yang bisa merupakan period (delimiter) atau bagian dari bilangan riil.
+    \item \texttt{DOT\_AFTER\_NUM}. Baru saja membaca titik setelah angka untuk membedakan \texttt{period} dan bilangan riil.
 
-    \item \texttt{IN\_REAL}. Sedang membaca bagian desimal dari bilangan riil.
+    \item \texttt{IN\_REAL}. Sedang membaca bagian desimal bilangan riil.
 
-    \item \texttt{IN\_STRING}. Sedang membaca karakter di dalam tanda kutip untuk string literal.
+    \item \texttt{IN\_STRING}. Sedang membaca karakter di dalam tanda kutip.
 
-    \item \texttt{SAW\_COLON}. State yang melihat operator \texttt{:} yang mungkin dilanjutkan dengan karakter \texttt{=} untuk membentuk operator definisi \texttt{:=}.
-    
-    \item \texttt{SAW\_LESS}. State yang melihat operator \texttt{<} yang mungkin dilanjutkan dengan karakter \texttt{>} atau \texttt{=} untuk membentuk operator tidak sama dengan seperti \texttt{<>} atau operator lebih kecil dari atau sama dengan \texttt{<=}.
-    
-    \item \texttt{SAW\_GREATER}. State yang melihat operator \texttt{>} yang mungkin dilanjutkan dengan karakter \texttt{=} untuk membentuk operator lebih besar dari atau sama dengan \texttt{>=}.
-    
-    \item \texttt{SAW\_EQUAL}. State yang melihat operator \texttt{=} yang mungkin dilanjutkan dengan karakter \texttt{=} untuk membentuk operator multi-karakter \texttt{==}. Jika tidak dilanjutkan, maka akan di-EMIT eror.
+    \item \texttt{SAW\_COLON}. Melihat operator \texttt{:} yang mungkin dilanjutkan menjadi \texttt{:=}.
 
-    \item \texttt{IN\_CURLY\_COMMENT}. Sedang membaca karakter di dalam komentar kurawal.
+    \item \texttt{SAW\_LESS}. Melihat operator \texttt{<} yang mungkin dilanjutkan menjadi \texttt{<>} atau \texttt{<=}.
 
-    \item (\texttt{SAW\_LPAREN}): Telah membaca kurung buka biasa (\texttt{(}), yang juga merupakan penanda awal komentar dengan format \texttt{(*}.
+    \item \texttt{SAW\_GREATER}. Melihat operator \texttt{>} yang mungkin dilanjutkan menjadi \texttt{>=}.
 
-    \item (\texttt{IN\_PAREN\_STAR\_COMMENT}): Memroses isi komentar pada bagian \texttt{(* ... *)}.
+    \item \texttt{SAW\_EQUAL}. Melihat operator \texttt{=} yang valid hanya jika dilanjutkan menjadi \texttt{==}.
 
-    \item (\texttt{SAW\_STAR\_IN\_PAREN\_COMMENT}): Di akhir komentar \texttt{(*}, memroses kemunculan tanda \texttt{*} sebagai penutup akhir komentar.
+    \item \texttt{IN\_COMMENT}. Sedang membaca isi komentar.
 
-    \item (\texttt{FOUND\_EOF}): Menjadi penanda selesainya pembacaan stream file \textit{source code}.
+    \item \texttt{SAW\_LPAREN}. Telah membaca karakter \texttt{(} untuk membedakan token \texttt{lparent} dan awal komentar \texttt{(*}.
+
+    \item \texttt{SAW\_STAR\_IN\_COMMENT}. Sedang memproses kemunculan \texttt{*} di dalam komentar untuk mendeteksi penutup \texttt{*)}.
 \end{enumerate}
 
 \subsection{Tabel Transisi}
