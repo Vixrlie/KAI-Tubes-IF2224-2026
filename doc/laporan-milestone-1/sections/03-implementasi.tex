@@ -172,7 +172,7 @@ Ketika loop selesai, \texttt{handleEof()} dipanggil untuk menyelesaikan state te
 \section{Implementasi DFA}
 \subsection{Penentuan State}
 
-\textbf{Enum State}. Enum ini mendefinisikan semua state yang ada dalam DFA sebagai berikut.
+Lexer ini memiliki 15 state dasar, dimulai dari state awal yaitu START, dan state akhir yaitu FOUND_EOF. State-state lainnya merupakan state penengah yang digunakan untuk menandai identifier yang telah ditemukan.
 \begin{enumerate}
     \item \texttt{START}. State awal, menunggu karakter baru untuk menentukan jenis token berikutnya.
 
@@ -186,7 +186,13 @@ Ketika loop selesai, \texttt{handleEof()} dipanggil untuk menyelesaikan state te
 
     \item \texttt{IN\_STRING}. Sedang membaca karakter di dalam tanda kutip untuk string literal.
 
-    \item \texttt{SAW\_COLON}, \texttt{SAW\_LESS}, \texttt{SAW\_GREATER}, \texttt{SAW\_EQUAL}. State yang melihat operator karakter tunggal yang mungkin dilanjutkan dengan karakter lain (untuk membentuk operator multi-karakter seperti \texttt{:=}, \texttt{<>}, \texttt{>=}, \texttt{==}).
+    \item \texttt{SAW\_COLON}. State yang melihat operator \texttt{:} yang mungkin dilanjutkan dengan karakter \texttt{=} untuk membentuk operator definisi \texttt{:=}.
+    
+    \item \texttt{SAW\_LESS}. State yang melihat operator \texttt{<} yang mungkin dilanjutkan dengan karakter \texttt{>} atau \texttt{=} untuk membentuk operator tidak sama dengan seperti \texttt{<>} atau operator lebih kecil dari atau sama dengan \texttt{<=}.
+    
+    \item \texttt{SAW\_GREATER}. State yang melihat operator \texttt{>} yang mungkin dilanjutkan dengan karakter \texttt{=} untuk membentuk operator lebih besar dari atau sama dengan \texttt{>=}.
+    
+    \item \texttt{SAW\_EQUAL}. State yang melihat operator \texttt{=} yang mungkin dilanjutkan dengan karakter \texttt{=} untuk membentuk operator multi-karakter \texttt{==}. Jika tidak dilanjutkan, maka akan di-EMIT eror.
 
     \item \texttt{IN\_CURLY\_COMMENT}. Sedang membaca karakter di dalam komentar kurawal.
 
@@ -321,10 +327,10 @@ File \texttt{lexer.h} mendeklarasikan enum \texttt{State} yang merepresentasikan
 \begin{lstlisting}[language=C++, numbers=left, numberstyle=\tiny, caption={Snippet enum State dari lexer.h}, label={lst:state-enum}]
 enum class State {
     START,                   // Menunggu karakter baru
-    IN_IDENT,                // Sedang membaca identifier/keyword
+    IN_IDENT,                // Sedang membaca identifier
     IN_NUMBER,               // Sedang membaca digit integer
     DOT_AFTER_NUM,           // Melihat '.' setelah digit
-    IN_REAL,                 // Sedang membaca desimal bilangan riil
+    IN_REAL,                 // Sedang membaca desimal float
     IN_STRING,               // Sedang membaca string literal
     SAW_COLON,               // Melihat ':'
     SAW_LESS,                // Melihat '<'
@@ -332,7 +338,7 @@ enum class State {
     SAW_EQUAL,               // Melihat '='
     IN_CURLY_COMMENT,        // Di dalam komentar kurawal
     SAW_LPAREN,              // Melihat '('
-    IN_PAREN_STAR_COMMENT,   // Di dalam komentar kurung asterisk
+    IN_PAREN_STAR_COMMENT,   // Di dalam komentar '(*'
     SAW_STAR_IN_PAREN_COMMENT, // Melihat '*' di dalam komentar
     FOUND_EOF                // Penanda akhir file (EOF)
 };

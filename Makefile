@@ -6,11 +6,7 @@ SRC_DIR   = src
 BUILD_DIR = build
 
 SRCS      = $(SRC_DIR)/main.cpp $(SRC_DIR)/lexer/lexer.cpp $(SRC_DIR)/lexer/token.cpp
-<<<<<<< HEAD
-OBJS      = $(patsubst $(SRC_DIR)/lexer/%.cpp,$(BUILD_DIR)/%.o,$(SRCS))
-=======
-OBJS      = $(patsubst $(SRC_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(SRCS))
->>>>>>> f17d396c912c0557d77b0a91e693e3869e5603bf
+OBJS      = $(patsubst %.cpp,$(BUILD_DIR)/%.o,$(notdir $(SRCS)))
 TARGET    = lexer
 
 ifeq ($(OS),Windows_NT)
@@ -37,17 +33,15 @@ all: $(TARGET)
 $(TARGET): $(OBJS)
 	$(CXX) $(CXXFLAGS) -o $(TARGET_BIN) $^
 
-<<<<<<< HEAD
-$(BUILD_DIR)/%.o: $(SRC_DIR)/lexer/%.cpp | $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
+# Rule untuk file di dalam folder src/lexer/
+$(BUILD_DIR)/%.o: $(SRC_DIR)/lexer/%.cpp
+	$(call MKDIR_P,$(dir $@))
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
 
-$(BUILD_DIR):
-	mkdir -p $(BUILD_DIR)
-=======
+# Rule untuk file di folder root src/ (seperti main.cpp)
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 	$(call MKDIR_P,$(dir $@))
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
->>>>>>> f17d396c912c0557d77b0a91e693e3869e5603bf
 
 # Membersihkan file hasil kompilasi
 clean:
