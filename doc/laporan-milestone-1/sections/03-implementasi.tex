@@ -140,7 +140,7 @@ Ketika loop selesai, \texttt{handleEof()} dipanggil untuk menyelesaikan state te
 \section{Struktur Direktori Program}
 
 \begin{itemize}
-        \item \textbf{\texttt{src/}}. Direktori utama yang berisi semua source code program dalam bahasa C++. Direktori ini dibagi menjadi dua modul.
+    \item \textbf{\texttt{src/}}. Direktori utama yang berisi semua source code program dalam bahasa C++. Direktori ini dibagi menjadi dua modul.
           \begin{itemize}
               \item \texttt{main.cpp}. File entry point program. Bertanggung jawab untuk parse argumen command-line, membuka dan membaca file input, menginisialisasi lexer, memanggil fungsi \texttt{tokenize()}, memformat output, dan menulis hasil ke terminal serta file output (jika ada). File ini juga menangani error handling untuk file I/O dan menentukan exit code berdasarkan ada tidaknya lexical error.
 
@@ -172,7 +172,7 @@ Ketika loop selesai, \texttt{handleEof()} dipanggil untuk menyelesaikan state te
 \section{Implementasi DFA}
 \subsection{Penentuan State}
 
-Lexer ini memiliki 15 state dasar, dimulai dari state awal yaitu START, dan state akhir yaitu FOUND_EOF. State-state lainnya merupakan state penengah yang digunakan untuk menandai identifier yang telah ditemukan.
+Lexer ini memiliki 15 state dasar, dimulai dari state awal yaitu \texttt{START}, dan state akhir yaitu \texttt{FOUND\_EOF}. State-state lainnya merupakan state penengah yang digunakan untuk menandai identifier yang telah ditemukan.
 \begin{enumerate}
     \item \texttt{START}. State awal, menunggu karakter baru untuk menentukan jenis token berikutnya.
 
@@ -187,22 +187,22 @@ Lexer ini memiliki 15 state dasar, dimulai dari state awal yaitu START, dan stat
     \item \texttt{IN\_STRING}. Sedang membaca karakter di dalam tanda kutip.
 
     \item \texttt{SAW\_COLON}. Melihat operator \texttt{:} yang mungkin dilanjutkan menjadi \texttt{:=}.
-    
-    \item \texttt{SAW\_LESS}. Melihat operator \texttt{<} yang mungkin dilanjutkan menjadi \texttt{<>} atau \texttt{<=}.
-    
-    \item \texttt{SAW\_GREATER}. Melihat operator \texttt{>} yang mungkin dilanjutkan menjadi \texttt{>=}.
-    
+
+    \item \texttt{SAW\_LESS}. Melihat operator \texttt{\textless} yang mungkin dilanjutkan menjadi \texttt{\textless\textgreater} atau \texttt{\textless=}.
+
+    \item \texttt{SAW\_GREATER}. Melihat operator \texttt{\textgreater} yang mungkin dilanjutkan menjadi \texttt{\textgreater=}.
+
     \item \texttt{SAW\_EQUAL}. Melihat operator \texttt{=} yang valid hanya jika dilanjutkan menjadi \texttt{==}.
 
     \item \texttt{IN\_CURLY\_COMMENT}. Sedang membaca karakter di dalam komentar kurawal.
 
-    \item (\texttt{SAW\_LPAREN}): Telah membaca kurung buka biasa (\texttt{(}), yang juga merupakan penanda awal komentar dengan format \texttt{(*}.
+    \item \texttt{SAW\_LPAREN}. Telah membaca kurung buka biasa \texttt{(}, yang juga merupakan penanda awal komentar dengan format \texttt{(*}.
 
-    \item (\texttt{IN\_PAREN\_STAR\_COMMENT}): Memroses isi komentar pada bagian \texttt{(* ... *)}.
+    \item \texttt{IN\_PAREN\_STAR\_COMMENT}. Memroses isi komentar pada bagian \texttt{(* ... *)}.
 
-    \item (\texttt{SAW\_STAR\_IN\_PAREN\_COMMENT}): Di akhir komentar \texttt{(*}, memroses kemunculan tanda \texttt{*} sebagai penutup akhir komentar.
+    \item \texttt{SAW\_STAR\_IN\_PAREN\_COMMENT}. Di akhir komentar \texttt{(*}, memroses kemunculan tanda \texttt{*} sebagai penutup akhir komentar.
 
-    \item (\texttt{FOUND\_EOF}): Menjadi penanda selesainya pembacaan stream file \textit{source code}.
+    \item \texttt{FOUND\_EOF}. Menjadi penanda selesainya pembacaan stream file \textit{source code}.
 \end{enumerate}
 
 \subsection{Tabel Transisi}
