@@ -26,7 +26,7 @@ Program Lexer harus berfungsi selayaknya suatu DFA. Program Lexer \textbf{HANYA 
     \item Otomata : Deterministic Finite Automata
 \end{enumerate}
 
-\textbf{Catatan}: Untuk mempermudah pengerjaan pada milestone-milestone selanjutnya, khususnya pada milestone 4 (pembuatan interpreter), SANGAT DISARANKAN agar program dikembangkan secara modular (terpisah antara komponen Lexer, Semantic, Syntax, dan Intermediate Code Generation). Hal ini supaya komponen dapat dimodifikasi sesuai keperluan tanpa mempengaruhi komponen lainnya, serta dapat dengan mudah dijalankan dalam satu pipeline: lexer - syntax - semantic - intermediate code generation.
+\textbf{Catatan}, untuk mempermudah pengerjaan pada milestone-milestone selanjutnya, khususnya pada milestone 4 (pembuatan interpreter), SANGAT DISARANKAN agar program dikembangkan secara modular (terpisah antara komponen Lexer, Semantic, Syntax, dan Intermediate Code Generation). Hal ini supaya komponen dapat dimodifikasi sesuai keperluan tanpa mempengaruhi komponen lainnya, serta dapat dengan mudah dijalankan dalam satu pipeline, yaitu lexer - syntax - semantic - intermediate code generation.
 
 \subsection{Daftar Token Bahasa Pemrograman Arion}
 Lexer bertujuan untuk mengubah source code dari kumpulan karakter mentah menjadi unit-unit bermakna yang disebut token. Setiap token memiliki jenis (type) dan nilai (value) yang akan digunakan untuk tahap selanjutnya dalam proses kompilasi. Lexer diharapkan dapat menerima source code dan mengeluarkan daftar token yang dihasilkan. Berikut merupakan daftar token yang harus dapat dibaca oleh lexical analyzer.
@@ -60,7 +60,7 @@ Lexer bertujuan untuk mengubah source code dari kumpulan karakter mentah menjadi
         11 & imod        & Operator aritmatika modulo                                                                                                  & \texttt{MOD}                   \\
         12 & andsy       & Operator logika AND                                                                                                         & \texttt{AND}                   \\
         13 & orsy        & Operator logika OR                                                                                                          & \texttt{OR}                    \\
-        14 & eql         & equal                                                                                                                       & \texttt{==}                    \\
+        14 & eql         & Equal                                                                                                                       & \texttt{==}                    \\
         15 & neq         & Not equal                                                                                                                   & \texttt{<>}                    \\
         16 & gtr         & Greater than                                                                                                                & \texttt{>}                     \\
         17 & geq         & Greater than or equal                                                                                                       & \texttt{>=}                    \\
