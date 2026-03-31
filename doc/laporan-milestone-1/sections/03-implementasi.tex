@@ -1,9 +1,3 @@
-\section{Diagram Transisi DFA Program}
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.9\linewidth]{03-implementasi/diagram-transisi.png}
-    \caption{Diagram Transisi Program (Sumber: \href{https://drive.google.com/file/d/1aSSj8bhTI08BDqSrc8pjaBD1EtSzj6KU/view?usp=sharing}{(Link State Diagram)})}
-\end{figure}
 \section{Gambaran Umum Program}
 
 Program lexer untuk bahasa pemrograman Arion didesain sebagai aplikasi berbasis command-line yang menerima masukan berupa file source code dan menghasilkan daftar token sebagai keluaran. Alur umum eksekusi program adalah sebagai berikut.
@@ -175,6 +169,78 @@ Ketika loop selesai, \texttt{handleEof()} dipanggil untuk menyelesaikan state te
     \item \textbf{\texttt{README.md}}. File dokumentasi yang berisi deskripsi singkat program, fitur-fitur, requirement sistem, instruksi build dan run, contoh input/output, struktur direktori, informasi penulis, dan lisensi MIT.
 \end{itemize}
 
+\section{Implementasi DFA}
+\subsection{Penentuan State}
+
+\textbf{Enum State}. Enum ini mendefinisikan semua state yang ada dalam DFA sebagai berikut.
+\begin{enumerate}
+    \item \texttt{START}. State awal, menunggu karakter baru untuk menentukan jenis token berikutnya.
+
+    \item \texttt{IN\_IDENT}. Sedang membaca sebuah identifier atau keyword (karakter alfanumerik dan underscore).
+
+    \item \texttt{IN\_NUMBER}. Sedang membaca digit-digit untuk konstanta integer.
+
+    \item \texttt{DOT\_AFTER\_NUM}. Baru saja membaca '.', yang bisa merupakan period (delimiter) atau bagian dari bilangan riil.
+
+    \item \texttt{IN\_REAL}. Sedang membaca bagian desimal dari bilangan riil.
+
+    \item \texttt{IN\_STRING}. Sedang membaca karakter di dalam tanda kutip untuk string literal.
+
+    \item \texttt{SAW\_COLON}, \texttt{SAW\_LESS}, \texttt{SAW\_GREATER}, \texttt{SAW\_EQUAL}. State yang melihat operator karakter tunggal yang mungkin dilanjutkan dengan karakter lain (untuk membentuk operator multi-karakter seperti \texttt{:=}, \texttt{<>}, \texttt{>=}, \texttt{==}).
+
+    \item \texttt{IN\_CURLY\_COMMENT}. Sedang membaca karakter di dalam komentar kurawal.
+
+    \item (\texttt{SAW\_LPAREN}): Telah membaca kurung buka biasa (\texttt{(}), yang juga merupakan penanda awal komentar dengan format \texttt{(*}.
+
+    \item (\texttt{IN\_PAREN\_STAR\_COMMENT}): Memroses isi komentar pada bagian \texttt{(* ... *)}.
+
+    \item (\texttt{SAW\_STAR\_IN\_PAREN\_COMMENT}): Di akhir komentar \texttt{(*}, memroses kemunculan tanda \texttt{*} sebagai penutup akhir komentar.
+
+    \item (\texttt{FOUND\_EOF}): Menjadi penanda selesainya pembacaan stream file \textit{source code}.
+\end{enumerate}
+
+\subsection{Tabel Transisi}
+State-state tersebut kami susun menjadi sebuah diagram transisi DFA. Sebelum membentuk diagram tersebut, kami menyusun tabel yang menentukan transisi dari satu state ke state yang lain berdasarkan karakter yang dibaca. Angka pada state disusun berurutan dengan state yang telah disusun pada subsection diatas.
+
+\begin{table}[H]
+    \centering
+    \resizebox{\textwidth}{!}{
+        \begin{tabular}{|c*{15}{|c}|}
+            \hline
+            \textbf{State} & \textbf{Alphabets} & \textbf{Digits} & \textbf{Space Char} & \textbf{.} & \textbf{:} & \textbf{\textless} & \textbf{\textgreater} & \textbf{=} & \textbf{\{} & \textbf{\}} & \textbf{(} & \textbf{*} & \textbf{)} & \textbf{'} & \textbf{EOF} \\ \hline
+            -> q1          & q2                 & q3              & q1                  & q1         & q7         & q8                 & q9                    & q10        & q11         & q1          & q12        & q1         & q1         & q6         & q15          \\ \hline
+            q2             & q2                 & q2              & q1                  & q1         & q1         & q1                 & q1                    & q1         & q1          & q1          & q1         & q1         & q1         & q1         & q15          \\ \hline
+            q3             & q1                 & q3              & q1                  & q4         & q1         & q1                 & q1                    & q1         & q1          & q1          & q1         & q1         & q1         & q1         & q15          \\ \hline
+            q4             & q1                 & q5              & q1                  & q1         & q1         & q1                 & q1                    & q1         & q1          & q1          & q1         & q1         & q1         & q1         & q15          \\ \hline
+            q5             & q1                 & q5              & q1                  & q1         & q1         & q1                 & q1                    & q1         & q1          & q1          & q1         & q1         & q1         & q1         & q15          \\ \hline
+            q6             & q6                 & q6              & q6                  & q6         & q6         & q6                 & q6                    & q6         & q6          & q6          & q6         & q6         & q6         & q1         & q15          \\ \hline
+            q7             & q1                 & q1              & q1                  & q1         & q1         & q1                 & q1                    & q1         & q1          & q1          & q1         & q1         & q1         & q1         & q15          \\ \hline
+            q8             & q1                 & q1              & q1                  & q1         & q1         & q1                 & q1                    & q1         & q1          & q1          & q1         & q1         & q1         & q1         & q15          \\ \hline
+            q9             & q1                 & q1              & q1                  & q1         & q1         & q1                 & q1                    & q1         & q1          & q1          & q1         & q1         & q1         & q1         & q15          \\ \hline
+            q10            & q1                 & q1              & q1                  & q1         & q1         & q1                 & q1                    & q1         & q1          & q1          & q1         & q1         & q1         & q1         & q15          \\ \hline
+            q11            & q11                & q11             & q11                 & q11        & q11        & q11                & q11                   & q11        & q11         & q1          & q11        & q11        & q11        & q11        & q15          \\ \hline
+            q12            & q1                 & q1              & q1                  & q1         & q1         & q1                 & q1                    & q1         & q1          & q1          & q1         & q13        & q1         & q1         & q15          \\ \hline
+            q13            & q13                & q13             & q13                 & q13        & q13        & q13                & q13                   & q13        & q13         & q13         & q13        & q14        & q13        & q13        & q15          \\ \hline
+            q14            & q13                & q13             & q13                 & q13        & q13        & q13                & q13                   & q13        & q13         & q13         & q13        & q14        & q1         & q13        & q15          \\ \hline
+            * q15          & q15                & q15             & q15                 & q15        & q15        & q15                & q15                   & q15        & q15         & q15         & q15        & q15        & q15        & q15        & q15          \\ \hline
+        \end{tabular}
+    }
+    \caption{Tabel Transisi DFA Penuh (dari q1 hingga final marker q15)}
+    \label{tab:dfa-transition}
+\end{table}
+
+\subsection{Diagram Transisi DFA}
+Setelah merumuskan tabel transisi state, dibentuk diagram state DFA yang meliputi:
+\begin{itemize}
+    \item \textbf{Initial State}: q1 (\texttt{START})
+    \item \textbf{Final State}: q15 (\texttt{FOUND\_EOF})
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{03-implementasi/diagram-transisi.png}
+    \caption{Diagram Transisi Program (Sumber: \href{https://drive.google.com/file/d/1aSSj8bhTI08BDqSrc8pjaBD1EtSzj6KU/view?usp=sharing}{(Link State Diagram)})}
+\end{figure}
 
 \section{Implementasi Kode}
 \subsection{\texttt{token.h}}
@@ -251,31 +317,26 @@ std::string formatToken(const Token& token) {
 File \texttt{lexer.h} mendeklarasikan enum \texttt{State} yang merepresentasikan 13 state dalam DFA lexer, serta kelas \texttt{Lexer} yang mengimplementasikan mesin DFA.
 
 \textbf{Enum State}. Enum ini mendefinisikan semua state yang ada dalam DFA sebagai berikut.
-\begin{enumerate}
-    \item \texttt{START}. State awal, menunggu karakter baru untuk menentukan jenis token berikutnya.
 
-    \item \texttt{IN\_IDENT}. Sedang membaca sebuah identifier atau keyword (karakter alfanumerik dan underscore).
-
-    \item \texttt{IN\_NUMBER}. Sedang membaca digit-digit untuk konstanta integer.
-
-    \item \texttt{DOT\_AFTER\_NUM}. Baru saja membaca '.', yang bisa merupakan period (delimiter) atau bagian dari bilangan riil.
-
-    \item \texttt{IN\_REAL}. Sedang membaca bagian desimal dari bilangan riil.
-
-    \item \texttt{IN\_STRING}. Sedang membaca karakter di dalam tanda kutip untuk string literal.
-
-    \item \texttt{SAW\_COLON}, \texttt{SAW\_LESS}, \texttt{SAW\_GREATER}, \texttt{SAW\_EQUAL}. State yang melihat operator karakter tunggal yang mungkin dilanjutkan dengan karakter lain (untuk membentuk operator multi-karakter seperti \texttt{:=}, \texttt{<>}, \texttt{>=}, \texttt{==}).
-
-    \item \texttt{IN\_CURLY\_COMMENT}. Sedang membaca karakter di dalam komentar kurawal.
-
-    \item (\texttt{SAW\_LPAREN}): Telah membaca kurung buka biasa (\texttt{(}), yang juga merupakan penanda awal komentar dengan format \texttt{(*}.
-    
-    \item (\texttt{IN\_PAREN\_STAR\_COMMENT}): Memroses isi komentar pada bagian \texttt{(* ... *)}.
-    
-    \item (\texttt{SAW\_STAR\_IN\_PAREN\_COMMENT}): Di akhir komentar \texttt{(*}, memroses kemunculan tanda \texttt{*} sebagai penutup akhir komentar.
-    
-    \item (\texttt{FOUND\_EOF}): Menjadi penanda selesainya pembacaan stream file \textit{source code}.
-\end{enumerate}
+\begin{lstlisting}[language=C++, numbers=left, numberstyle=\tiny, caption={Snippet enum State dari lexer.h}, label={lst:state-enum}]
+enum class State {
+    START,                   // Menunggu karakter baru
+    IN_IDENT,                // Sedang membaca identifier/keyword
+    IN_NUMBER,               // Sedang membaca digit integer
+    DOT_AFTER_NUM,           // Melihat '.' setelah digit
+    IN_REAL,                 // Sedang membaca desimal bilangan riil
+    IN_STRING,               // Sedang membaca string literal
+    SAW_COLON,               // Melihat ':'
+    SAW_LESS,                // Melihat '<'
+    SAW_GREATER,             // Melihat '>'
+    SAW_EQUAL,               // Melihat '='
+    IN_CURLY_COMMENT,        // Di dalam komentar kurawal
+    SAW_LPAREN,              // Melihat '('
+    IN_PAREN_STAR_COMMENT,   // Di dalam komentar kurung asterisk
+    SAW_STAR_IN_PAREN_COMMENT, // Melihat '*' di dalam komentar
+    FOUND_EOF                // Penanda akhir file (EOF)
+};
+\end{lstlisting}
 
 \textbf{Kelas Lexer}. Kelas ini mengenkapsulasi semua data dan logika untuk melakukan tokenisasi. Data member privat meliputi data sebagai berikut.
 \begin{itemize}
@@ -378,33 +439,3 @@ void Lexer::handleStart() {
 \end{lstlisting}
 
 Dengan struktur \textit{state machine} ini, lexer dapat mengenali semua pola token dalam bahasa Arion dengan cara yang terstruktur dan mudah dipahami. Setiap transisi state mewakili suatu tahap dalam proses pengenalan token, dan handler memastikan akumulasi buffer serta penentuan token type yang tepat sesuai pola yang ditemukan.
-
-\subsection{\texttt{Tabel Transisi}}
-Handler state diatas merupakan hasil perumusan dari state diagram yang dapat dirumuskan ke dalam tabel berikut.
-
-\begin{table}[H]
-    \centering
-    \resizebox{\textwidth}{!}{
-    \begin{tabular}{|c*{15}{|c}|}
-        \hline
-        \textbf{State} & \textbf{Alphabets} & \textbf{Digits} & \textbf{Space Char} & \textbf{.} & \textbf{:} & \textbf{\textless} & \textbf{\textgreater} & \textbf{=} & \textbf{\{} & \textbf{\}} & \textbf{(} & \textbf{*} & \textbf{)} & \textbf{'} & \textbf{EOF} \\ \hline
-        q1  & q2  & q3  & q1  & q1  & q7  & q8  & q9  & q10 & q11 & q1  & q12 & q1  & q1  & q6  & q15 \\ \hline
-        q2  & q2  & q2  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q15 \\ \hline
-        q3  & q1  & q3  & q1  & q4  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q15 \\ \hline
-        q4  & q1  & q5  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q15 \\ \hline
-        q5  & q1  & q5  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q15 \\ \hline
-        q6  & q6  & q6  & q6  & q6  & q6  & q6  & q6  & q6  & q6  & q6  & q6  & q6  & q6  & q1  & q15 \\ \hline
-        q7  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q15 \\ \hline
-        q8  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q15 \\ \hline
-        q9  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q15 \\ \hline
-        q10 & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q15 \\ \hline
-        q11 & q11 & q11 & q11 & q11 & q11 & q11 & q11 & q11 & q11 & q1  & q11 & q11 & q11 & q11 & q15 \\ \hline
-        q12 & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q1  & q13 & q1  & q1  & q15 \\ \hline
-        q13 & q13 & q13 & q13 & q13 & q13 & q13 & q13 & q13 & q13 & q13 & q13 & q14 & q13 & q13 & q15 \\ \hline
-        q14 & q13 & q13 & q13 & q13 & q13 & q13 & q13 & q13 & q13 & q13 & q13 & q14 & q1  & q13 & q15 \\ \hline
-        q15 & q15 & q15 & q15 & q15 & q15 & q15 & q15 & q15 & q15 & q15 & q15 & q15 & q15 & q15 & q15 \\ \hline
-    \end{tabular}
-    }
-    \caption{Tabel Transisi DFA Penuh (dari q1 hingga final marker q15)}
-    \label{tab:dfa-transition}
-\end{table}
