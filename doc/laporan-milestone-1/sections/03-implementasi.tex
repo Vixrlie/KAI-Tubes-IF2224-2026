@@ -3,7 +3,7 @@
 Program lexer untuk bahasa pemrograman Arion didesain sebagai aplikasi berbasis command-line yang menerima masukan berupa file source code dan menghasilkan daftar token sebagai keluaran. Alur umum eksekusi program adalah sebagai berikut.
 
 \begin{enumerate}
-    \item \textbf{Validasi Argumen}. Program menerima dua argumen dari command-line: nama file input (wajib) dan nama file output (opsional). Jika argument tidak sesuai, program akan menampilkan pesan error dan keluar dengan exit code 1.
+    \item \textbf{Validasi Argumen}. Program menerima dua argumen dari command-line, yaitu nama file input (wajib) dan nama file output (opsional). Jika argument tidak sesuai, program akan menampilkan pesan error dan keluar dengan exit code 1.
 
     \item \textbf{Pembacaan File Input}. Program membuka file input dengan mode baca. Jika file tidak dapat dibuka, program menampilkan error message dan keluar. Seluruh isi file dibaca ke dalam buffer string di memori.
 
@@ -26,7 +26,7 @@ Secara arsitektur, program dibagi menjadi beberapa modul yang terpisah untuk men
 
 Algoritma lexer pada program ini menggunakan pendekatan \textit{single pass scanning}, yaitu membaca source code sekali dari kiri ke kanan secara karakter demi karakter. Selama proses pembacaan, lexer menyimpan \textit{state} aktif DFA, posisi karakter saat ini, serta buffer lexeme yang sedang dibangun. Setiap karakter yang dibaca akan memicu transisi ke state berikutnya, atau menandakan bahwa sebuah token telah lengkap dan siap dikeluarkan. Dengan pendekatan ini, kompleksitas waktu tokenisasi tetap linear terhadap panjang input, yakni $O(n)$, karena setiap karakter diproses dengan jumlah operasi konstan.
 
-Secara lebih rinci, alur algoritma dimulai dari tahap validasi argumen masukan, kemudian pembacaan file \texttt{input.txt} ke dalam string \texttt{source}. Setelah itu, objek lexer diinisialisasi pada state awal \texttt{START} dengan posisi awal karakter di indeks pertama. Fungsi \texttt{tokenize()} lalu dijalankan dalam loop utama hingga akhir input. Pada setiap iterasi, handler state yang sesuai akan dieksekusi, misalnya handler untuk identifier, angka, string, operator, delimiter, atau komentar. Jika lexeme valid selesai dibaca, lexer memanggil \texttt{emitToken(...)}; jika ditemukan pola tidak valid, lexer memanggil \texttt{emitError(...)} namun tetap melanjutkan pemrosesan untuk mendukung \textit{error recovery}.
+Secara lebih rinci, alur algoritma dimulai dari tahap validasi argumen masukan, kemudian pembacaan file \texttt{input.txt} ke dalam string \texttt{source}. Setelah itu, objek lexer diinisialisasi pada state awal \texttt{START} dengan posisi awal karakter di indeks pertama. Fungsi \texttt{tokenize()} lalu dijalankan dalam loop utama hingga akhir input. Pada setiap iterasi, handler state yang sesuai akan dieksekusi, misalnya handler untuk identifier, angka, string, operator, delimiter, atau komentar. Jika lexeme valid selesai dibaca, lexer memanggil \texttt{emitToken(...)}. Jika ditemukan pola tidak valid, lexer memanggil \texttt{emitError(...)} namun tetap melanjutkan pemrosesan untuk mendukung \textit{error recovery}.
 
 Setelah seluruh input dipindai, program menjalankan \texttt{handleEof()} untuk menangani kasus token yang belum tertutup di akhir file (contohnya komentar atau string yang tidak ditutup). Daftar token yang dihasilkan kemudian diformat menjadi teks keluaran menggunakan fungsi \texttt{formatOutput(...)}. Hasil ini selalu ditulis ke terminal, dan jika argumen file output tersedia, hasil yang sama disimpan ke \texttt{output.txt}. Program mengembalikan exit code 0 jika tidak ada error leksikal, atau 1 jika ditemukan sedikitnya satu token error.
 
@@ -140,7 +140,7 @@ Ketika loop selesai, \texttt{handleEof()} dipanggil untuk menyelesaikan state te
 \section{Struktur Direktori Program}
 
 \begin{itemize}
-    \item \textbf{\texttt{src/}}. Direktori utama yang berisi semua source code program dalam bahasa C++. Direktori ini dibagi menjadi dua modul:
+        \item \textbf{\texttt{src/}}. Direktori utama yang berisi semua source code program dalam bahasa C++. Direktori ini dibagi menjadi dua modul.
           \begin{itemize}
               \item \texttt{main.cpp}. File entry point program. Bertanggung jawab untuk parse argumen command-line, membuka dan membaca file input, menginisialisasi lexer, memanggil fungsi \texttt{tokenize()}, memformat output, dan menulis hasil ke terminal serta file output (jika ada). File ini juga menangani error handling untuk file I/O dan menentukan exit code berdasarkan ada tidaknya lexical error.
 
@@ -176,23 +176,23 @@ Lexer ini memiliki 15 state dasar, dimulai dari state awal yaitu START, dan stat
 \begin{enumerate}
     \item \texttt{START}. State awal, menunggu karakter baru untuk menentukan jenis token berikutnya.
 
-    \item \texttt{IN\_IDENT}. Sedang membaca sebuah identifier atau keyword (karakter alfanumerik dan underscore).
+    \item \texttt{IN\_IDENT}. Sedang membaca identifier atau keyword.
 
-    \item \texttt{IN\_NUMBER}. Sedang membaca digit-digit untuk konstanta integer.
+    \item \texttt{IN\_NUMBER}. Sedang membaca digit-digit konstanta integer.
 
-    \item \texttt{DOT\_AFTER\_NUM}. Baru saja membaca '.', yang bisa merupakan period (delimiter) atau bagian dari bilangan riil.
+    \item \texttt{DOT\_AFTER\_NUM}. Baru saja membaca titik setelah angka untuk membedakan \texttt{period} dan bilangan riil.
 
-    \item \texttt{IN\_REAL}. Sedang membaca bagian desimal dari bilangan riil.
+    \item \texttt{IN\_REAL}. Sedang membaca bagian desimal bilangan riil.
 
-    \item \texttt{IN\_STRING}. Sedang membaca karakter di dalam tanda kutip untuk string literal.
+    \item \texttt{IN\_STRING}. Sedang membaca karakter di dalam tanda kutip.
 
-    \item \texttt{SAW\_COLON}. State yang melihat operator \texttt{:} yang mungkin dilanjutkan dengan karakter \texttt{=} untuk membentuk operator definisi \texttt{:=}.
+    \item \texttt{SAW\_COLON}. Melihat operator \texttt{:} yang mungkin dilanjutkan menjadi \texttt{:=}.
     
-    \item \texttt{SAW\_LESS}. State yang melihat operator \texttt{<} yang mungkin dilanjutkan dengan karakter \texttt{>} atau \texttt{=} untuk membentuk operator tidak sama dengan seperti \texttt{<>} atau operator lebih kecil dari atau sama dengan \texttt{<=}.
+    \item \texttt{SAW\_LESS}. Melihat operator \texttt{<} yang mungkin dilanjutkan menjadi \texttt{<>} atau \texttt{<=}.
     
-    \item \texttt{SAW\_GREATER}. State yang melihat operator \texttt{>} yang mungkin dilanjutkan dengan karakter \texttt{=} untuk membentuk operator lebih besar dari atau sama dengan \texttt{>=}.
+    \item \texttt{SAW\_GREATER}. Melihat operator \texttt{>} yang mungkin dilanjutkan menjadi \texttt{>=}.
     
-    \item \texttt{SAW\_EQUAL}. State yang melihat operator \texttt{=} yang mungkin dilanjutkan dengan karakter \texttt{=} untuk membentuk operator multi-karakter \texttt{==}. Jika tidak dilanjutkan, maka akan di-EMIT eror.
+    \item \texttt{SAW\_EQUAL}. Melihat operator \texttt{=} yang valid hanya jika dilanjutkan menjadi \texttt{==}.
 
     \item \texttt{IN\_CURLY\_COMMENT}. Sedang membaca karakter di dalam komentar kurawal.
 
@@ -236,15 +236,15 @@ State-state tersebut kami susun menjadi sebuah diagram transisi DFA. Sebelum mem
 \end{table}
 
 \subsection{Diagram Transisi DFA}
-Setelah merumuskan tabel transisi state, dibentuk diagram state DFA yang meliputi:
+Setelah merumuskan tabel transisi state, dibentuk diagram state DFA yang meliputi
 \begin{itemize}
     \item \textbf{Initial State}: q1 (\texttt{START})
-    \item \textbf{Final State}: q15 (\texttt{FOUND\_EOF})
+    \item \textbf{Final State}: q15 (\texttt{FOUND\_EOF}).
 \end{itemize}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.9\linewidth]{03-implementasi/diagram-transisi.png}
+    \includegraphics[width=\linewidth]{03-implementasi/diagram-transisi.png}
     \caption{Diagram Transisi Program (Sumber: \href{https://drive.google.com/file/d/1aSSj8bhTI08BDqSrc8pjaBD1EtSzj6KU/view?usp=sharing}{(Link State Diagram)})}
 \end{figure}
 
@@ -276,7 +276,7 @@ enum class TokenType {
 };
 \end{lstlisting}
 
-\textbf{Struktur Token}. Struct \texttt{Token} adalah tipe data yang menyimpan informasi lengkap tentang token yang dihasilkan lexer:
+\textbf{Struktur Token}. Struct \texttt{Token} adalah tipe data yang menyimpan informasi lengkap tentang token yang dihasilkan lexer.
 
 \begin{lstlisting}[language=C++, numbers=left, numberstyle=\tiny, caption={Struktur Token dari token.h}, label={lst:token-struct}]
 struct Token {
@@ -288,18 +288,18 @@ struct Token {
 };
 \end{lstlisting}
 
-\textbf{Fungsi Utilitas}. File ini juga mendeklarasikan tiga fungsi utilitas penting:
+\textbf{Fungsi Utilitas}. File ini juga mendeklarasikan tiga fungsi utilitas penting sebagai berikut.
 \begin{itemize}
     \item \texttt{std::string tokenTypeToString(TokenType type)} . Fungsi ini digunkan untuk mengonversi enum TokenType menjadi string untuk ditampilkan pada output. Contohnya, \texttt{INTCON} dikonversi menjadi \texttt{"intcon"}.
 
     \item \texttt{bool tokenHasValue(TokenType type)}. Fungsi ini digunakan untuk mengecek apakah token memiliki nilai yang perlu ditampilkan. Contohnya adalah IDENT, INTCON, REALCON, CHARCON, STRING memiliki nilai, sedangkan PLUS, SEMICOLON tidak.
 
-    \item \texttt{std::string formatToken(const Token\& token)}. Fungsi ini digunakan untuk Memformat token untuk output sesuai spesifikasi format lexer. Jika token memiliki nilai, format output adalah \texttt{<tipe-token>(<nilai>)}, misalnya \texttt{ident(x)}; jika tidak ada nilai, hanya \texttt{<tipe-token>}, misalnya \texttt{plus}.
+    \item \texttt{std::string formatToken(const Token\& token)}. Fungsi ini digunakan untuk Memformat token untuk output sesuai spesifikasi format lexer. Jika token memiliki nilai, format output adalah \texttt{<tipe-token>(<nilai>)}, misalnya \texttt{ident(x)}. Jika tidak ada nilai, hanya \texttt{<tipe-token>}, misalnya \texttt{plus}.
 \end{itemize}
 
 \subsection{\texttt{token.cpp}}
 
-File \texttt{token.cpp} mengimplementasikan tiga fungsi utilitas yang dideklarasikan di \texttt{token.h}.
+File \texttt{token.cpp} mengimplementasikan tiga fungsi pembantu yang dideklarasikan di \texttt{token.h}.
 
 \begin{enumerate}
     \item \textbf{tokenTypeToString()}. Fungsi ini mengkonversi nilai enum \texttt{TokenType} menjadi representasi string. Implementasinya menggunakan \texttt{switch-case} untuk memetakan setiap token type ke string yang sesuai, semua dalam huruf kecil sesuai format output yang ditentukan. Contohnya, \texttt{TokenType::INTCON} dikonversi menjadi \texttt{"intcon"}, \texttt{TokenType::PROGRAMSY} menjadi \texttt{"programsy"}, dan seterusnya.
