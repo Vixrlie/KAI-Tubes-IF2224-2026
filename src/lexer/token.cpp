@@ -1,14 +1,5 @@
-/**
- * Implementasi fungsi utilitas untuk Token.
- * Menyediakan konversi tipe token ke string dan formatting output.
- */
-
 #include "token.h"
 
-/**
- * Mengubah TokenType menjadi representasi string sesuai spesifikasi.
- * Nama token menggunakan huruf kecil sesuai format output yang ditentukan.
- */
 std::string tokenTypeToString(TokenType type) {
     switch (type) {
         case TokenType::INTCON:       return "intcon";
@@ -63,16 +54,12 @@ std::string tokenTypeToString(TokenType type) {
         case TokenType::DOWNTOSY:     return "downtosy";
         case TokenType::THENSY:       return "thensy";
         case TokenType::COMMENT:      return "comment";
+        case TokenType::UNKNOWN:      return "unknown";
         case TokenType::ERROR:        return "error";
     }
     return "unknown";
 }
 
-/**
- * Mengecek apakah suatu tipe token memiliki nilai yang perlu ditampilkan.
- * Token seperti ident, intcon, realcon, charcon, string, dan comment
- * memiliki nilai yang ditampilkan dalam tanda kurung.
- */
 bool tokenHasValue(TokenType type) {
     return type == TokenType::IDENT   ||
            type == TokenType::INTCON  ||
@@ -80,15 +67,10 @@ bool tokenHasValue(TokenType type) {
            type == TokenType::CHARCON ||
            type == TokenType::STRING  ||
            type == TokenType::COMMENT ||
+           type == TokenType::UNKNOWN ||
            type == TokenType::ERROR;
 }
 
-/**
- * Memformat token untuk output.
- * Token tanpa nilai: "tokentype"
- * Token dengan nilai: "tokentype (value)"
- * Contoh: "programsy", "ident (Hello)", "intcon (5)"
- */
 std::string formatToken(const Token& token) {
     if (tokenHasValue(token.type)) {
         return tokenTypeToString(token.type) + " (" + token.value + ")";
