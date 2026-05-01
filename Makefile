@@ -1,12 +1,14 @@
 CXX       = g++
 CXXFLAGS  = -std=c++17 -Wall -Wextra
-INCLUDES  = -I$(SRC_DIR)/lexer
+INCLUDES  = -I$(SRC_DIR)/lexer -I$(SRC_DIR)/parser
 
 SRC_DIR   = src
 BUILD_DIR = build
 
-SRCS      = $(SRC_DIR)/main.cpp $(SRC_DIR)/lexer/lexer.cpp $(SRC_DIR)/lexer/token.cpp
-OBJS      = $(patsubst %.cpp,$(BUILD_DIR)/%.o,$(notdir $(SRCS)))
+# Automatically collect all .cpp files from src and subdirectories
+SRCS      = $(wildcard $(SRC_DIR)/*.cpp $(SRC_DIR)/*/*.cpp $(SRC_DIR)/*/*/*.cpp)
+# Preserve directory structure in build directory
+OBJS      = $(patsubst $(SRC_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(SRCS))
 TARGET    = lexer
 
 ifeq ($(OS),Windows_NT)
@@ -33,12 +35,7 @@ all: $(TARGET)
 $(TARGET): $(OBJS)
 	$(CXX) $(CXXFLAGS) -o $(TARGET_BIN) $^
 
-# Rule untuk file di dalam folder src/lexer/
-$(BUILD_DIR)/%.o: $(SRC_DIR)/lexer/%.cpp
-	$(call MKDIR_P,$(dir $@))
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
-
-# Rule untuk file di folder root src/ (seperti main.cpp)
+# Rule untuk compile semua .cpp files, preserving directory structure
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 	$(call MKDIR_P,$(dir $@))
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
