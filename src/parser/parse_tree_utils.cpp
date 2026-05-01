@@ -235,7 +235,7 @@ namespace ParseTreeUtils
 
     int countNodesByName(const ParseTreeNode *node, const std::string &name)
     {
-        auto matches = collectNodesByName(const_cast<ParseTreeNode *>(node), name);
+        auto matches = collectNodesByName(node, name);
         return static_cast<int>(matches.size());
     }
 
