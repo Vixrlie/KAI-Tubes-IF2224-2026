@@ -1,0 +1,10 @@
+intcon (1)
+period
+intcon (1)
+period
+period
+intcon (1)
+period
+period
+intcon (10)
+unknown (.23.e-+/1.e-+/1)

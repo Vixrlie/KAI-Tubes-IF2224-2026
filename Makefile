@@ -1,13 +1,17 @@
 CXX       = g++
 CXXFLAGS  = -std=c++17 -Wall -Wextra
-INCLUDES  = -I$(SRC_DIR)/lexer
 
 SRC_DIR   = src
 BUILD_DIR = build
 
-SRCS      = $(SRC_DIR)/main.cpp $(SRC_DIR)/lexer/lexer.cpp $(SRC_DIR)/lexer/token.cpp
-OBJS      = $(patsubst %.cpp,$(BUILD_DIR)/%.o,$(notdir $(SRCS)))
 TARGET    = lexer
+
+# Cari semua file .cpp secara rekursif di dalam src/
+rwildcard = $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
+
+SRCS      = $(call rwildcard,$(SRC_DIR)/,*.cpp)
+OBJS      = $(patsubst $(SRC_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(SRCS))
+INCLUDES  = $(addprefix -I,$(sort $(dir $(SRCS))))
 
 ifeq ($(OS),Windows_NT)
 TARGET_BIN = $(TARGET).exe
@@ -33,12 +37,7 @@ all: $(TARGET)
 $(TARGET): $(OBJS)
 	$(CXX) $(CXXFLAGS) -o $(TARGET_BIN) $^
 
-# Rule untuk file di dalam folder src/lexer/
-$(BUILD_DIR)/%.o: $(SRC_DIR)/lexer/%.cpp
-	$(call MKDIR_P,$(dir $@))
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
-
-# Rule untuk file di folder root src/ (seperti main.cpp)
+# Rule umum untuk semua file .cpp di dalam src/
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 	$(call MKDIR_P,$(dir $@))
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
