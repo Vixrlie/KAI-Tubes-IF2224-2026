@@ -1,0 +1,13 @@
+ident (kata)
+ident (pisah)
+becomes
+ident (kata)
+realcon (1.23)
+intcon (1)
+period
+period
+intcon (10)
+unknown (.23.e-+/1.e-+/1)
+ident (ident)
+becomes
+intcon (1)
