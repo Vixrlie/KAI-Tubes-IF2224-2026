@@ -161,6 +161,38 @@ bool Parser::isRangeStart() const
            check(TokenType::PERIOD, 2);
 }
 
+bool Parser::isStatementFollow() const
+{
+    return check(TokenType::SEMICOLON) ||
+           check(TokenType::ENDSY) ||
+           check(TokenType::ELSESY) ||
+           check(TokenType::UNTILSY);
+}
+
+bool Parser::isVariableSuffixStart() const
+{
+    return check(TokenType::LBRACK) || check(TokenType::PERIOD);
+}
+
+bool Parser::isIndexToken() const
+{
+    return check(TokenType::INTCON) ||
+           check(TokenType::CHARCON) ||
+           check(TokenType::IDENT);
+}
+
+std::unique_ptr<VariableNode> Parser::parseVariableWithBase(std::unique_ptr<VariableNode> baseVariable)
+{
+    if (!isVariableSuffixStart())
+    {
+        return baseVariable;
+    }
+
+    auto wrappedVariableNode = std::make_unique<VariableNode>();
+    wrappedVariableNode->addChild(parseComponentVariable(std::move(baseVariable)));
+    return parseVariableWithBase(std::move(wrappedVariableNode));
+}
+
 std::unique_ptr<DeclarationPartNode> Parser::parseDeclarationPart()
 {
     auto declarationPartNode = std::make_unique<DeclarationPartNode>();
@@ -501,11 +533,401 @@ std::unique_ptr<CompoundStatementNode> Parser::parseCompoundStatement()
 std::unique_ptr<StatementListNode> Parser::parseStatementList()
 {
     auto statementListNode = std::make_unique<StatementListNode>();
-    if (check(TokenType::ENDSY))
+    statementListNode->addChild(parseStatement());
+
+    while (check(TokenType::SEMICOLON))
     {
-        statementListNode->addChild(std::make_unique<EmptyStatementNode>());
-        return statementListNode;
+        statementListNode->addChild(makeTerminalNode(advance()));
+        statementListNode->addChild(parseStatement());
     }
 
-    throwSyntaxError("endsy");
+    return statementListNode;
+}
+
+std::unique_ptr<StatementNode> Parser::parseStatement()
+{
+    auto statementNode = std::make_unique<StatementNode>();
+
+    if (check(TokenType::IDENT))
+    {
+        if (check(TokenType::BECOMES, 1) || check(TokenType::LBRACK, 1) || check(TokenType::PERIOD, 1))
+        {
+            statementNode->addChild(parseAssignmentStatement());
+        }
+        else
+        {
+            statementNode->addChild(parseProcedureFunctionCall());
+        }
+        return statementNode;
+    }
+
+    if (check(TokenType::BEGINSY))
+    {
+        statementNode->addChild(parseCompoundStatement());
+        return statementNode;
+    }
+
+    if (check(TokenType::IFSY))
+    {
+        statementNode->addChild(parseIfStatement());
+        return statementNode;
+    }
+
+    if (check(TokenType::CASESY))
+    {
+        statementNode->addChild(parseCaseStatement());
+        return statementNode;
+    }
+
+    if (check(TokenType::WHILESY))
+    {
+        statementNode->addChild(parseWhileStatement());
+        return statementNode;
+    }
+
+    if (check(TokenType::REPEATSY))
+    {
+        statementNode->addChild(parseRepeatStatement());
+        return statementNode;
+    }
+
+    if (check(TokenType::FORSY))
+    {
+        statementNode->addChild(parseForStatement());
+        return statementNode;
+    }
+
+    if (isStatementFollow())
+    {
+        statementNode->addChild(std::make_unique<EmptyStatementNode>());
+        return statementNode;
+    }
+
+    throwSyntaxError("statement");
+}
+
+std::unique_ptr<VariableNode> Parser::parseVariable()
+{
+    auto variableNode = std::make_unique<VariableNode>();
+    variableNode->addChild(makeTerminalNode(consume(TokenType::IDENT, "ident")));
+    return parseVariableWithBase(std::move(variableNode));
+}
+
+std::unique_ptr<ComponentVariableNode> Parser::parseComponentVariable(std::unique_ptr<VariableNode> baseVariable)
+{
+    auto componentVariableNode = std::make_unique<ComponentVariableNode>();
+    componentVariableNode->addChild(std::move(baseVariable));
+
+    if (check(TokenType::LBRACK))
+    {
+        componentVariableNode->addChild(makeTerminalNode(advance()));
+        componentVariableNode->addChild(parseIndexList());
+        componentVariableNode->addChild(makeTerminalNode(consume(TokenType::RBRACK, "rbrack")));
+        return componentVariableNode;
+    }
+
+    componentVariableNode->addChild(makeTerminalNode(consume(TokenType::PERIOD, "period")));
+    componentVariableNode->addChild(makeTerminalNode(consume(TokenType::IDENT, "ident")));
+    return componentVariableNode;
+}
+
+std::unique_ptr<IndexListNode> Parser::parseIndexList()
+{
+    auto indexListNode = std::make_unique<IndexListNode>();
+
+    if (!isIndexToken())
+    {
+        throwSyntaxError("intcon, charcon, or ident");
+    }
+
+    indexListNode->addChild(makeTerminalNode(advance()));
+    while (check(TokenType::COMMA))
+    {
+        indexListNode->addChild(makeTerminalNode(advance()));
+        if (!isIndexToken())
+        {
+            throwSyntaxError("intcon, charcon, or ident");
+        }
+        indexListNode->addChild(makeTerminalNode(advance()));
+    }
+
+    return indexListNode;
+}
+
+std::unique_ptr<AssignmentStatementNode> Parser::parseAssignmentStatement()
+{
+    auto assignmentStatementNode = std::make_unique<AssignmentStatementNode>();
+    assignmentStatementNode->addChild(parseVariable());
+    assignmentStatementNode->addChild(makeTerminalNode(consume(TokenType::BECOMES, "becomes")));
+    assignmentStatementNode->addChild(parseExpression());
+    return assignmentStatementNode;
+}
+
+std::unique_ptr<IfStatementNode> Parser::parseIfStatement()
+{
+    auto ifStatementNode = std::make_unique<IfStatementNode>();
+    ifStatementNode->addChild(makeTerminalNode(consume(TokenType::IFSY, "ifsy")));
+    ifStatementNode->addChild(parseExpression());
+    ifStatementNode->addChild(makeTerminalNode(consume(TokenType::THENSY, "thensy")));
+    ifStatementNode->addChild(parseStatement());
+
+    if (check(TokenType::ELSESY))
+    {
+        ifStatementNode->addChild(makeTerminalNode(advance()));
+        ifStatementNode->addChild(parseStatement());
+    }
+
+    return ifStatementNode;
+}
+
+std::unique_ptr<CaseStatementNode> Parser::parseCaseStatement()
+{
+    auto caseStatementNode = std::make_unique<CaseStatementNode>();
+    caseStatementNode->addChild(makeTerminalNode(consume(TokenType::CASESY, "casesy")));
+    caseStatementNode->addChild(parseExpression());
+    caseStatementNode->addChild(makeTerminalNode(consume(TokenType::OFSY, "ofsy")));
+    caseStatementNode->addChild(parseCaseBlock());
+    caseStatementNode->addChild(makeTerminalNode(consume(TokenType::ENDSY, "endsy")));
+    return caseStatementNode;
+}
+
+std::unique_ptr<CaseBlockNode> Parser::parseCaseBlock()
+{
+    auto caseBlockNode = std::make_unique<CaseBlockNode>();
+    caseBlockNode->addChild(parseConstant());
+
+    while (check(TokenType::COMMA))
+    {
+        caseBlockNode->addChild(makeTerminalNode(advance()));
+        caseBlockNode->addChild(parseConstant());
+    }
+
+    caseBlockNode->addChild(makeTerminalNode(consume(TokenType::COLON, "colon")));
+    caseBlockNode->addChild(parseStatement());
+
+    if (check(TokenType::SEMICOLON))
+    {
+        caseBlockNode->addChild(makeTerminalNode(advance()));
+        if (!check(TokenType::ENDSY))
+        {
+            caseBlockNode->addChild(parseCaseBlock());
+        }
+    }
+
+    return caseBlockNode;
+}
+
+std::unique_ptr<WhileStatementNode> Parser::parseWhileStatement()
+{
+    auto whileStatementNode = std::make_unique<WhileStatementNode>();
+    whileStatementNode->addChild(makeTerminalNode(consume(TokenType::WHILESY, "whilesy")));
+    whileStatementNode->addChild(parseExpression());
+    whileStatementNode->addChild(makeTerminalNode(consume(TokenType::DOSY, "dosy")));
+    whileStatementNode->addChild(parseStatement());
+    return whileStatementNode;
+}
+
+std::unique_ptr<RepeatStatementNode> Parser::parseRepeatStatement()
+{
+    auto repeatStatementNode = std::make_unique<RepeatStatementNode>();
+    repeatStatementNode->addChild(makeTerminalNode(consume(TokenType::REPEATSY, "repeatsy")));
+    repeatStatementNode->addChild(parseStatementList());
+    repeatStatementNode->addChild(makeTerminalNode(consume(TokenType::UNTILSY, "untilsy")));
+    repeatStatementNode->addChild(parseExpression());
+    return repeatStatementNode;
+}
+
+std::unique_ptr<ForStatementNode> Parser::parseForStatement()
+{
+    auto forStatementNode = std::make_unique<ForStatementNode>();
+    forStatementNode->addChild(makeTerminalNode(consume(TokenType::FORSY, "forsy")));
+    forStatementNode->addChild(makeTerminalNode(consume(TokenType::IDENT, "ident")));
+    forStatementNode->addChild(makeTerminalNode(consume(TokenType::BECOMES, "becomes")));
+    forStatementNode->addChild(parseExpression());
+
+    if (check(TokenType::TOSY) || check(TokenType::DOWNTOSY))
+    {
+        forStatementNode->addChild(makeTerminalNode(advance()));
+    }
+    else
+    {
+        throwSyntaxError("tosy or downtosy");
+    }
+
+    forStatementNode->addChild(parseExpression());
+    forStatementNode->addChild(makeTerminalNode(consume(TokenType::DOSY, "dosy")));
+    forStatementNode->addChild(parseStatement());
+    return forStatementNode;
+}
+
+std::unique_ptr<ProcedureFunctionCallNode> Parser::parseProcedureFunctionCall()
+{
+    auto procedureFunctionCallNode = std::make_unique<ProcedureFunctionCallNode>();
+    procedureFunctionCallNode->addChild(makeTerminalNode(consume(TokenType::IDENT, "ident")));
+
+    if (check(TokenType::LPARENT))
+    {
+        procedureFunctionCallNode->addChild(makeTerminalNode(advance()));
+        if (!check(TokenType::RPARENT))
+        {
+            procedureFunctionCallNode->addChild(parseParameterList());
+        }
+        procedureFunctionCallNode->addChild(makeTerminalNode(consume(TokenType::RPARENT, "rparent")));
+    }
+
+    return procedureFunctionCallNode;
+}
+
+std::unique_ptr<ParameterListNode> Parser::parseParameterList()
+{
+    auto parameterListNode = std::make_unique<ParameterListNode>();
+    parameterListNode->addChild(parseExpression());
+
+    while (check(TokenType::COMMA))
+    {
+        parameterListNode->addChild(makeTerminalNode(advance()));
+        parameterListNode->addChild(parseExpression());
+    }
+
+    return parameterListNode;
+}
+
+std::unique_ptr<ExpressionNode> Parser::parseExpression()
+{
+    auto expressionNode = std::make_unique<ExpressionNode>();
+    expressionNode->addChild(parseSimpleExpression());
+
+    if (check(TokenType::EQL) || check(TokenType::NEQ) ||
+        check(TokenType::GTR) || check(TokenType::GEQ) ||
+        check(TokenType::LSS) || check(TokenType::LEQ))
+    {
+        expressionNode->addChild(parseRelationalOperator());
+        expressionNode->addChild(parseSimpleExpression());
+    }
+
+    return expressionNode;
+}
+
+std::unique_ptr<SimpleExpressionNode> Parser::parseSimpleExpression()
+{
+    auto simpleExpressionNode = std::make_unique<SimpleExpressionNode>();
+
+    if (check(TokenType::PLUS) || check(TokenType::MINUS))
+    {
+        simpleExpressionNode->addChild(makeTerminalNode(advance()));
+    }
+
+    simpleExpressionNode->addChild(parseTerm());
+    while (check(TokenType::PLUS) || check(TokenType::MINUS) || check(TokenType::ORSY))
+    {
+        simpleExpressionNode->addChild(parseAdditiveOperator());
+        simpleExpressionNode->addChild(parseTerm());
+    }
+
+    return simpleExpressionNode;
+}
+
+std::unique_ptr<TermNode> Parser::parseTerm()
+{
+    auto termNode = std::make_unique<TermNode>();
+    termNode->addChild(parseFactor());
+
+    while (check(TokenType::TIMES) || check(TokenType::RDIV) ||
+           check(TokenType::IDIV) || check(TokenType::IMOD) ||
+           check(TokenType::ANDSY))
+    {
+        termNode->addChild(parseMultiplicativeOperator());
+        termNode->addChild(parseFactor());
+    }
+
+    return termNode;
+}
+
+std::unique_ptr<FactorNode> Parser::parseFactor()
+{
+    auto factorNode = std::make_unique<FactorNode>();
+
+    if (check(TokenType::IDENT))
+    {
+        if (check(TokenType::LPARENT, 1))
+        {
+            factorNode->addChild(parseProcedureFunctionCall());
+        }
+        else if (check(TokenType::LBRACK, 1) || check(TokenType::PERIOD, 1))
+        {
+            factorNode->addChild(parseVariable());
+        }
+        else
+        {
+            factorNode->addChild(makeTerminalNode(advance()));
+        }
+        return factorNode;
+    }
+
+    if (check(TokenType::INTCON) || check(TokenType::REALCON) ||
+        check(TokenType::CHARCON) || check(TokenType::STRING))
+    {
+        factorNode->addChild(makeTerminalNode(advance()));
+        return factorNode;
+    }
+
+    if (check(TokenType::LPARENT))
+    {
+        factorNode->addChild(makeTerminalNode(advance()));
+        factorNode->addChild(parseExpression());
+        factorNode->addChild(makeTerminalNode(consume(TokenType::RPARENT, "rparent")));
+        return factorNode;
+    }
+
+    if (check(TokenType::NOTSY))
+    {
+        factorNode->addChild(makeTerminalNode(advance()));
+        factorNode->addChild(parseFactor());
+        return factorNode;
+    }
+
+    throwSyntaxError("factor");
+}
+
+std::unique_ptr<RelationalOperatorNode> Parser::parseRelationalOperator()
+{
+    auto relationalOperatorNode = std::make_unique<RelationalOperatorNode>();
+
+    if (check(TokenType::EQL) || check(TokenType::NEQ) ||
+        check(TokenType::GTR) || check(TokenType::GEQ) ||
+        check(TokenType::LSS) || check(TokenType::LEQ))
+    {
+        relationalOperatorNode->addChild(makeTerminalNode(advance()));
+        return relationalOperatorNode;
+    }
+
+    throwSyntaxError("relational operator");
+}
+
+std::unique_ptr<AdditiveOperatorNode> Parser::parseAdditiveOperator()
+{
+    auto additiveOperatorNode = std::make_unique<AdditiveOperatorNode>();
+
+    if (check(TokenType::PLUS) || check(TokenType::MINUS) || check(TokenType::ORSY))
+    {
+        additiveOperatorNode->addChild(makeTerminalNode(advance()));
+        return additiveOperatorNode;
+    }
+
+    throwSyntaxError("additive operator");
+}
+
+std::unique_ptr<MultiplicativeOperatorNode> Parser::parseMultiplicativeOperator()
+{
+    auto multiplicativeOperatorNode = std::make_unique<MultiplicativeOperatorNode>();
+
+    if (check(TokenType::TIMES) || check(TokenType::RDIV) ||
+        check(TokenType::IDIV) || check(TokenType::IMOD) ||
+        check(TokenType::ANDSY))
+    {
+        multiplicativeOperatorNode->addChild(makeTerminalNode(advance()));
+        return multiplicativeOperatorNode;
+    }
+
+    throwSyntaxError("multiplicative operator");
 }
