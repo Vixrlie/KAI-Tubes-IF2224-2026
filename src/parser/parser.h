@@ -44,6 +44,10 @@ private:
     std::unique_ptr<ParseTreeTerminalNode> makeTerminalNode(const Token &token) const;
     [[noreturn]] void throwSyntaxError(const std::string &expectedName) const;
     bool isRangeStart() const;
+    bool isStatementFollow() const;
+    bool isVariableSuffixStart() const;
+    bool isIndexToken() const;
+    std::unique_ptr<VariableNode> parseVariableWithBase(std::unique_ptr<VariableNode> baseVariable);
 
     std::unique_ptr<DeclarationPartNode> parseDeclarationPart();
     std::unique_ptr<ConstDeclarationNode> parseConstDeclaration();
@@ -66,6 +70,26 @@ private:
     std::unique_ptr<ParameterGroupNode> parseParameterGroup();
     std::unique_ptr<CompoundStatementNode> parseCompoundStatement();
     std::unique_ptr<StatementListNode> parseStatementList();
+    std::unique_ptr<StatementNode> parseStatement();
+    std::unique_ptr<VariableNode> parseVariable();
+    std::unique_ptr<ComponentVariableNode> parseComponentVariable(std::unique_ptr<VariableNode> baseVariable);
+    std::unique_ptr<IndexListNode> parseIndexList();
+    std::unique_ptr<AssignmentStatementNode> parseAssignmentStatement();
+    std::unique_ptr<IfStatementNode> parseIfStatement();
+    std::unique_ptr<CaseStatementNode> parseCaseStatement();
+    std::unique_ptr<CaseBlockNode> parseCaseBlock();
+    std::unique_ptr<WhileStatementNode> parseWhileStatement();
+    std::unique_ptr<RepeatStatementNode> parseRepeatStatement();
+    std::unique_ptr<ForStatementNode> parseForStatement();
+    std::unique_ptr<ProcedureFunctionCallNode> parseProcedureFunctionCall();
+    std::unique_ptr<ParameterListNode> parseParameterList();
+    std::unique_ptr<ExpressionNode> parseExpression();
+    std::unique_ptr<SimpleExpressionNode> parseSimpleExpression();
+    std::unique_ptr<TermNode> parseTerm();
+    std::unique_ptr<FactorNode> parseFactor();
+    std::unique_ptr<RelationalOperatorNode> parseRelationalOperator();
+    std::unique_ptr<AdditiveOperatorNode> parseAdditiveOperator();
+    std::unique_ptr<MultiplicativeOperatorNode> parseMultiplicativeOperator();
 };
 
 #endif
