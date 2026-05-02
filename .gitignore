@@ -106,3 +106,5 @@ doc/laporan-milestone-2/spesifikasi/*.md
 
 # Ignore generated PDFs? Uncomment if you want to ignore them
 # *.pdf
+
+.swift*
