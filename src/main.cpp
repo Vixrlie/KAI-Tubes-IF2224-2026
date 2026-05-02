@@ -1,40 +1,9 @@
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <sstream>
+
 #include "lexer/lexer.h"
-
-int getEndLine(const Token &token)
-{
-    if (token.type == TokenType::COMMENT)
-    {
-        int newlines = 0;
-        for (char c : token.value)
-        {
-            if (c == '\n')
-                newlines++;
-        }
-        return token.line + newlines;
-    }
-    return token.line;
-}
-
-std::string formatOutput(const std::vector<Token> &tokens)
-{
-    std::string output;
-    int prevEndLine = 0;
-
-    for (const auto &token : tokens)
-    {
-        if (prevEndLine > 0 && token.line - prevEndLine > 1)
-        {
-            output += "\n";
-        }
-        output += formatToken(token) + "\n";
-        prevEndLine = getEndLine(token);
-    }
-
-    return output;
-}
+#include "parser/parser.h"
 
 int main(int argc, char *argv[])
 {
@@ -57,23 +26,44 @@ int main(int argc, char *argv[])
     inputFile.close();
 
     Lexer lexer(source);
-    std::vector<Token> tokens = lexer.tokenize();
-
-    std::string output = formatOutput(tokens);
-
-    std::cout << output;
-
-    if (argc >= 3)
+    try
     {
-        std::ofstream outputFile(argv[2]);
-        if (!outputFile.is_open())
+        std::vector<Token> tokens = lexer.tokenize();
+        if (lexer.hasErrors())
         {
-            std::cerr << "Error: Cannot open output file '" << argv[2] << "'" << std::endl;
             return 1;
         }
-        outputFile << output;
-        outputFile.close();
-    }
 
-    return lexer.hasErrors() ? 1 : 0;
+        Parser parser(tokens);
+        std::unique_ptr<ProgramNode> parseTree = parser.parseProgram();
+
+        std::ostringstream outputBuffer;
+        parseTree->print(outputBuffer);
+        const std::string output = outputBuffer.str();
+
+        std::cout << output;
+
+        if (argc >= 3)
+        {
+            std::ofstream outputFile(argv[2]);
+            if (!outputFile.is_open())
+            {
+                std::cerr << "Error: Cannot open output file '" << argv[2] << "'" << std::endl;
+                return 1;
+            }
+            outputFile << output;
+        }
+
+        return 0;
+    }
+    catch (const ParserError &error)
+    {
+        std::cerr << error.what() << std::endl;
+        return 1;
+    }
+    catch (const std::exception &error)
+    {
+        std::cerr << "Error: " << error.what() << std::endl;
+        return 1;
+    }
 }
