@@ -16,7 +16,7 @@ namespace
 }
 
 ParseTreeNode::ParseTreeNode(std::string name)
-    : nodeName(std::move(name)) {}
+    : nodeName(std::move(name)), parentNode(nullptr) {}
 
 const std::string &ParseTreeNode::name() const
 {
@@ -28,8 +28,24 @@ const std::vector<std::unique_ptr<ParseTreeNode>> &ParseTreeNode::children() con
     return childNodes;
 }
 
+ParseTreeNode *ParseTreeNode::parent()
+{
+    return parentNode;
+}
+
+const ParseTreeNode *ParseTreeNode::parent() const
+{
+    return parentNode;
+}
+
 void ParseTreeNode::addChild(std::unique_ptr<ParseTreeNode> child)
 {
+    if (!child)
+    {
+        return;
+    }
+
+    child->parentNode = this;
     childNodes.push_back(std::move(child));
 }
 
@@ -92,6 +108,9 @@ ParameterGroupNode::ParameterGroupNode() : ParseTreeNode("<parameter-group>") {}
 CompoundStatementNode::CompoundStatementNode() : ParseTreeNode("<compound-statement>") {}
 StatementListNode::StatementListNode() : ParseTreeNode("<statement-list>") {}
 StatementNode::StatementNode() : ParseTreeNode("<statement>") {}
+VariableNode::VariableNode() : ParseTreeNode("<variable>") {}
+ComponentVariableNode::ComponentVariableNode() : ParseTreeNode("<component-variable>") {}
+IndexListNode::IndexListNode() : ParseTreeNode("<index-list>") {}
 AssignmentStatementNode::AssignmentStatementNode() : ParseTreeNode("<assignment-statement>") {}
 IfStatementNode::IfStatementNode() : ParseTreeNode("<if-statement>") {}
 CaseStatementNode::CaseStatementNode() : ParseTreeNode("<case-statement>") {}
