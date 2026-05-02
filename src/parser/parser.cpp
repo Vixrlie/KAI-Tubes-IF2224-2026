@@ -538,6 +538,10 @@ std::unique_ptr<StatementListNode> Parser::parseStatementList()
     while (check(TokenType::SEMICOLON))
     {
         statementListNode->addChild(makeTerminalNode(advance()));
+        if (check(TokenType::ENDSY) || check(TokenType::UNTILSY))
+        {
+            break;
+        }
         statementListNode->addChild(parseStatement());
     }
 
@@ -768,10 +772,11 @@ std::unique_ptr<ProcedureFunctionCallNode> Parser::parseProcedureFunctionCall()
     if (check(TokenType::LPARENT))
     {
         procedureFunctionCallNode->addChild(makeTerminalNode(advance()));
-        if (!check(TokenType::RPARENT))
+        if (check(TokenType::RPARENT))
         {
-            procedureFunctionCallNode->addChild(parseParameterList());
+            throwSyntaxError("parameter-list");
         }
+        procedureFunctionCallNode->addChild(parseParameterList());
         procedureFunctionCallNode->addChild(makeTerminalNode(consume(TokenType::RPARENT, "rparent")));
     }
 
