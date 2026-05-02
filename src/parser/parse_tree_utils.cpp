@@ -5,11 +5,34 @@
 namespace ParseTreeUtils
 {
 
+    bool isRoot(const ParseTreeNode *node)
+    {
+        return node != nullptr && node->parent() == nullptr;
+    }
+
     bool isLeaf(const ParseTreeNode *node)
     {
         if (!node)
             return false;
         return node->children().empty();
+    }
+
+    bool isLeft(const ParseTreeNode *node)
+    {
+        if (!node || !node->parent())
+            return false;
+
+        const auto &siblings = node->parent()->children();
+        return !siblings.empty() && siblings.front().get() == node;
+    }
+
+    bool isRight(const ParseTreeNode *node)
+    {
+        if (!node || !node->parent())
+            return false;
+
+        const auto &siblings = node->parent()->children();
+        return !siblings.empty() && siblings.back().get() == node;
     }
 
     bool isTerminal(const ParseTreeNode *node)
@@ -24,6 +47,20 @@ namespace ParseTreeUtils
         if (!node)
             return 0;
         return node->children().size();
+    }
+
+    ParseTreeNode *getParent(ParseTreeNode *node)
+    {
+        if (!node)
+            return nullptr;
+        return node->parent();
+    }
+
+    const ParseTreeNode *getParent(const ParseTreeNode *node)
+    {
+        if (!node)
+            return nullptr;
+        return node->parent();
     }
 
     ParseTreeNode *getChildAt(ParseTreeNode *node, std::size_t index)
@@ -235,7 +272,7 @@ namespace ParseTreeUtils
 
     int countNodesByName(const ParseTreeNode *node, const std::string &name)
     {
-        auto matches = collectNodesByName(const_cast<ParseTreeNode *>(node), name);
+        auto matches = collectNodesByName(node, name);
         return static_cast<int>(matches.size());
     }
 

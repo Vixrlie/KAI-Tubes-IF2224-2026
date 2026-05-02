@@ -9,11 +9,21 @@
 namespace ParseTreeUtils
 {
 
+    bool isRoot(const ParseTreeNode *node);
+
     bool isLeaf(const ParseTreeNode *node);
+
+    bool isLeft(const ParseTreeNode *node);
+
+    bool isRight(const ParseTreeNode *node);
 
     bool isTerminal(const ParseTreeNode *node);
 
     std::size_t countChildren(const ParseTreeNode *node);
+
+    ParseTreeNode *getParent(ParseTreeNode *node);
+
+    const ParseTreeNode *getParent(const ParseTreeNode *node);
 
     ParseTreeNode *getChildAt(ParseTreeNode *node, std::size_t index);
 

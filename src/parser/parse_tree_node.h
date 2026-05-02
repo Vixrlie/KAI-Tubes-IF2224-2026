@@ -17,6 +17,8 @@ public:
 
     const std::string &name() const;
     const std::vector<std::unique_ptr<ParseTreeNode>> &children() const;
+    ParseTreeNode *parent();
+    const ParseTreeNode *parent() const;
 
     void addChild(std::unique_ptr<ParseTreeNode> child);
     template <typename NodeType, typename... Args>
@@ -35,6 +37,7 @@ protected:
 
 private:
     std::string nodeName;
+    ParseTreeNode *parentNode;
     std::vector<std::unique_ptr<ParseTreeNode>> childNodes;
 };
 
@@ -194,6 +197,24 @@ class StatementNode : public ParseTreeNode
 {
 public:
     StatementNode();
+};
+
+class VariableNode : public ParseTreeNode
+{
+public:
+    VariableNode();
+};
+
+class ComponentVariableNode : public ParseTreeNode
+{
+public:
+    ComponentVariableNode();
+};
+
+class IndexListNode : public ParseTreeNode
+{
+public:
+    IndexListNode();
 };
 
 class AssignmentStatementNode : public ParseTreeNode

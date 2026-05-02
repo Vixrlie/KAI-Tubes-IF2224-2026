@@ -6,17 +6,16 @@ namespace
 {
     std::string terminalLabel(const Token &token)
     {
-        std::string text = formatToken(token);
-        if (token.type == TokenType::COMMENT || token.type == TokenType::UNKNOWN || token.type == TokenType::ERROR)
+        if (tokenHasValue(token.type))
         {
-            return text;
+            return tokenTypeToString(token.type) + "(" + token.value + ")";
         }
-        return text;
+        return tokenTypeToString(token.type);
     }
 }
 
 ParseTreeNode::ParseTreeNode(std::string name)
-    : nodeName(std::move(name)) {}
+    : nodeName(std::move(name)), parentNode(nullptr) {}
 
 const std::string &ParseTreeNode::name() const
 {
@@ -28,8 +27,24 @@ const std::vector<std::unique_ptr<ParseTreeNode>> &ParseTreeNode::children() con
     return childNodes;
 }
 
+ParseTreeNode *ParseTreeNode::parent()
+{
+    return parentNode;
+}
+
+const ParseTreeNode *ParseTreeNode::parent() const
+{
+    return parentNode;
+}
+
 void ParseTreeNode::addChild(std::unique_ptr<ParseTreeNode> child)
 {
+    if (!child)
+    {
+        return;
+    }
+
+    child->parentNode = this;
     childNodes.push_back(std::move(child));
 }
 
@@ -41,13 +56,13 @@ std::string ParseTreeNode::renderLabel() const
 void ParseTreeNode::print(std::ostream &out, const std::string &prefix, bool isLast) const
 {
     out << prefix;
-    if (!prefix.empty())
+    if (parentNode != nullptr)
     {
         out << (isLast ? "└── " : "├── ");
     }
     out << renderLabel() << '\n';
 
-    const std::string childPrefix = prefix + (prefix.empty() ? "" : (isLast ? "    " : "│   "));
+    const std::string childPrefix = prefix + (parentNode == nullptr ? "" : (isLast ? "    " : "│   "));
     for (std::size_t index = 0; index < childNodes.size(); ++index)
     {
         const bool childIsLast = index + 1 == childNodes.size();
@@ -92,6 +107,9 @@ ParameterGroupNode::ParameterGroupNode() : ParseTreeNode("<parameter-group>") {}
 CompoundStatementNode::CompoundStatementNode() : ParseTreeNode("<compound-statement>") {}
 StatementListNode::StatementListNode() : ParseTreeNode("<statement-list>") {}
 StatementNode::StatementNode() : ParseTreeNode("<statement>") {}
+VariableNode::VariableNode() : ParseTreeNode("<variable>") {}
+ComponentVariableNode::ComponentVariableNode() : ParseTreeNode("<component-variable>") {}
+IndexListNode::IndexListNode() : ParseTreeNode("<index-list>") {}
 AssignmentStatementNode::AssignmentStatementNode() : ParseTreeNode("<assignment-statement>") {}
 IfStatementNode::IfStatementNode() : ParseTreeNode("<if-statement>") {}
 CaseStatementNode::CaseStatementNode() : ParseTreeNode("<case-statement>") {}

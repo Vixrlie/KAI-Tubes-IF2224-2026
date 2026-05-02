@@ -1,0 +1,19 @@
+program StructuredData;
+
+type
+  Student == record
+    age: integer;
+  end;
+
+var
+  data: Student;
+  arr: array[1..10] of integer;
+
+begin
+  data.age := 1;
+  arr[1] := data.age;
+  case arr[1] of
+    0: writeln('zero');
+    1, 2: writeln('small');
+  end;
+end.
