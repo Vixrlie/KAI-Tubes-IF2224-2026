@@ -180,6 +180,11 @@ std::unique_ptr<DeclarationPartNode> Parser::parseDeclarationPart()
         declarationPartNode->addChild(parseVarDeclaration());
     }
 
+    while (check(TokenType::PROCEDURESY) || check(TokenType::FUNCTIONSY))
+    {
+        declarationPartNode->addChild(parseSubprogramDeclaration());
+    }
+
     return declarationPartNode;
 }
 
@@ -387,6 +392,101 @@ std::unique_ptr<FieldPartNode> Parser::parseFieldPart()
     fieldPartNode->addChild(makeTerminalNode(consume(TokenType::COLON, "colon")));
     fieldPartNode->addChild(parseType());
     return fieldPartNode;
+}
+
+std::unique_ptr<SubprogramDeclarationNode> Parser::parseSubprogramDeclaration()
+{
+    auto subprogramDeclarationNode = std::make_unique<SubprogramDeclarationNode>();
+
+    if (check(TokenType::PROCEDURESY))
+    {
+        subprogramDeclarationNode->addChild(parseProcedureDeclaration());
+        return subprogramDeclarationNode;
+    }
+
+    if (check(TokenType::FUNCTIONSY))
+    {
+        subprogramDeclarationNode->addChild(parseFunctionDeclaration());
+        return subprogramDeclarationNode;
+    }
+
+    throwSyntaxError("proceduresy or functionsy");
+}
+
+std::unique_ptr<ProcedureDeclarationNode> Parser::parseProcedureDeclaration()
+{
+    auto procedureDeclarationNode = std::make_unique<ProcedureDeclarationNode>();
+    procedureDeclarationNode->addChild(makeTerminalNode(consume(TokenType::PROCEDURESY, "proceduresy")));
+    procedureDeclarationNode->addChild(makeTerminalNode(consume(TokenType::IDENT, "ident")));
+
+    if (check(TokenType::LPARENT))
+    {
+        procedureDeclarationNode->addChild(parseFormalParameterList());
+    }
+
+    procedureDeclarationNode->addChild(makeTerminalNode(consume(TokenType::SEMICOLON, "semicolon")));
+    procedureDeclarationNode->addChild(parseBlock());
+    procedureDeclarationNode->addChild(makeTerminalNode(consume(TokenType::SEMICOLON, "semicolon")));
+    return procedureDeclarationNode;
+}
+
+std::unique_ptr<FunctionDeclarationNode> Parser::parseFunctionDeclaration()
+{
+    auto functionDeclarationNode = std::make_unique<FunctionDeclarationNode>();
+    functionDeclarationNode->addChild(makeTerminalNode(consume(TokenType::FUNCTIONSY, "functionsy")));
+    functionDeclarationNode->addChild(makeTerminalNode(consume(TokenType::IDENT, "ident")));
+
+    if (check(TokenType::LPARENT))
+    {
+        functionDeclarationNode->addChild(parseFormalParameterList());
+    }
+
+    functionDeclarationNode->addChild(makeTerminalNode(consume(TokenType::COLON, "colon")));
+    functionDeclarationNode->addChild(makeTerminalNode(consume(TokenType::IDENT, "ident")));
+    functionDeclarationNode->addChild(makeTerminalNode(consume(TokenType::SEMICOLON, "semicolon")));
+    functionDeclarationNode->addChild(parseBlock());
+    functionDeclarationNode->addChild(makeTerminalNode(consume(TokenType::SEMICOLON, "semicolon")));
+    return functionDeclarationNode;
+}
+
+std::unique_ptr<BlockNode> Parser::parseBlock()
+{
+    auto blockNode = std::make_unique<BlockNode>();
+    blockNode->addChild(parseDeclarationPart());
+    blockNode->addChild(parseCompoundStatement());
+    return blockNode;
+}
+
+std::unique_ptr<FormalParameterListNode> Parser::parseFormalParameterList()
+{
+    auto formalParameterListNode = std::make_unique<FormalParameterListNode>();
+    formalParameterListNode->addChild(makeTerminalNode(consume(TokenType::LPARENT, "lparent")));
+    formalParameterListNode->addChild(parseParameterGroup());
+
+    while (check(TokenType::SEMICOLON))
+    {
+        formalParameterListNode->addChild(makeTerminalNode(advance()));
+        formalParameterListNode->addChild(parseParameterGroup());
+    }
+
+    formalParameterListNode->addChild(makeTerminalNode(consume(TokenType::RPARENT, "rparent")));
+    return formalParameterListNode;
+}
+
+std::unique_ptr<ParameterGroupNode> Parser::parseParameterGroup()
+{
+    auto parameterGroupNode = std::make_unique<ParameterGroupNode>();
+    parameterGroupNode->addChild(parseIdentifierList());
+    parameterGroupNode->addChild(makeTerminalNode(consume(TokenType::COLON, "colon")));
+
+    if (check(TokenType::ARRAYSY))
+    {
+        parameterGroupNode->addChild(parseArrayType());
+        return parameterGroupNode;
+    }
+
+    parameterGroupNode->addChild(makeTerminalNode(consume(TokenType::IDENT, "ident")));
+    return parameterGroupNode;
 }
 
 std::unique_ptr<CompoundStatementNode> Parser::parseCompoundStatement()
