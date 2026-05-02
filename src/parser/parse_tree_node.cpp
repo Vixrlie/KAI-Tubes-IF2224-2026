@@ -6,12 +6,11 @@ namespace
 {
     std::string terminalLabel(const Token &token)
     {
-        std::string text = formatToken(token);
-        if (token.type == TokenType::COMMENT || token.type == TokenType::UNKNOWN || token.type == TokenType::ERROR)
+        if (tokenHasValue(token.type))
         {
-            return text;
+            return tokenTypeToString(token.type) + "(" + token.value + ")";
         }
-        return text;
+        return tokenTypeToString(token.type);
     }
 }
 
