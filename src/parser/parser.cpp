@@ -104,3 +104,55 @@ Token Parser::consume(TokenType type, const std::string &expectedName)
 
     return advance();
 }
+
+std::unique_ptr<ParseTreeTerminalNode> Parser::makeTerminalNode(const Token &token) const
+{
+    return std::make_unique<ParseTreeTerminalNode>(token);
+}
+
+void Parser::throwSyntaxError(const std::string &expectedName) const
+{
+    std::ostringstream message;
+    if (isAtEnd())
+    {
+        int line = parserTokens.empty() ? 1 : parserTokens.back().line;
+        int column = parserTokens.empty() ? 1 : parserTokens.back().column;
+        message << "Syntax error at line " << line
+                << ", column " << column
+                << ": unexpected end of input, expected " << expectedName;
+        throw ParserError(message.str(), line, column);
+    }
+
+    const Token &token = peek();
+    message << "Syntax error at line " << token.line
+            << ", column " << token.column
+            << ": unexpected token " << tokenTypeToString(token.type)
+            << ", expected " << expectedName;
+    throw ParserError(message.str(), token.line, token.column);
+}
+
+std::unique_ptr<DeclarationPartNode> Parser::parseDeclarationPart()
+{
+    return std::make_unique<DeclarationPartNode>();
+}
+
+std::unique_ptr<CompoundStatementNode> Parser::parseCompoundStatement()
+{
+    auto compoundStatementNode = std::make_unique<CompoundStatementNode>();
+    compoundStatementNode->addChild(makeTerminalNode(consume(TokenType::BEGINSY, "beginsy")));
+    compoundStatementNode->addChild(parseStatementList());
+    compoundStatementNode->addChild(makeTerminalNode(consume(TokenType::ENDSY, "endsy")));
+    return compoundStatementNode;
+}
+
+std::unique_ptr<StatementListNode> Parser::parseStatementList()
+{
+    auto statementListNode = std::make_unique<StatementListNode>();
+    if (check(TokenType::ENDSY))
+    {
+        statementListNode->addChild(std::make_unique<EmptyStatementNode>());
+        return statementListNode;
+    }
+
+    throwSyntaxError("endsy");
+}
