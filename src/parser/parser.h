@@ -58,6 +58,12 @@ private:
     std::unique_ptr<RecordTypeNode> parseRecordType();
     std::unique_ptr<FieldListNode> parseFieldList();
     std::unique_ptr<FieldPartNode> parseFieldPart();
+    std::unique_ptr<SubprogramDeclarationNode> parseSubprogramDeclaration();
+    std::unique_ptr<ProcedureDeclarationNode> parseProcedureDeclaration();
+    std::unique_ptr<FunctionDeclarationNode> parseFunctionDeclaration();
+    std::unique_ptr<BlockNode> parseBlock();
+    std::unique_ptr<FormalParameterListNode> parseFormalParameterList();
+    std::unique_ptr<ParameterGroupNode> parseParameterGroup();
     std::unique_ptr<CompoundStatementNode> parseCompoundStatement();
     std::unique_ptr<StatementListNode> parseStatementList();
 };
