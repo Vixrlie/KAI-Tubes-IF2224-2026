@@ -108,3 +108,4 @@ doc/laporan-milestone-2/spesifikasi/*.md
 # *.pdf
 
 .swift*
+lexer*
