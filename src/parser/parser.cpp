@@ -147,6 +147,20 @@ void Parser::throwSyntaxError(const std::string &expectedName) const
     throw ParserError(message.str(), token.line, token.column);
 }
 
+bool Parser::isRangeStart() const
+{
+    if (check(TokenType::PLUS) || check(TokenType::MINUS) ||
+        check(TokenType::INTCON) || check(TokenType::REALCON) ||
+        check(TokenType::CHARCON) || check(TokenType::STRING))
+    {
+        return true;
+    }
+
+    return check(TokenType::IDENT) &&
+           check(TokenType::PERIOD, 1) &&
+           check(TokenType::PERIOD, 2);
+}
+
 std::unique_ptr<DeclarationPartNode> Parser::parseDeclarationPart()
 {
     auto declarationPartNode = std::make_unique<DeclarationPartNode>();
