@@ -4,7 +4,7 @@ CXXFLAGS  = -std=c++17 -Wall -Wextra
 SRC_DIR   = src
 BUILD_DIR = build
 
-TARGET    = lexer
+TARGET    = arion_parser
 
 # Cari semua file .cpp secara rekursif di dalam src/
 rwildcard = $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
@@ -31,7 +31,7 @@ RM_DIR = -rm -rf "$(BUILD_DIR)"
 RM_BIN = -rm -f "$(TARGET_BIN)" "$(TARGET)"
 endif
 
-# Target utama: kompilasi program lexer
+# Target utama: kompilasi program syntax analyzer
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
@@ -48,12 +48,12 @@ clean:
 	$(RM_BIN)
 
 # Menjalankan program dengan file input
-# Usage: make run INPUT=test/milestone-1/input-1.txt
+# Usage: make run INPUT=test/milestone-2/input-1.txt
 run: $(TARGET)
 	$(RUN_TARGET) $(INPUT)
 
 # Menjalankan program dengan output ke file
-# Usage: make run-output INPUT=test/milestone-1/input-1.txt OUTPUT=test/milestone-1/output-1.txt
+# Usage: make run-output INPUT=test/milestone-2/input-1.txt OUTPUT=test/milestone-2/output-1.txt
 run-output: $(TARGET)
 	$(RUN_TARGET) $(INPUT) $(OUTPUT)
 
