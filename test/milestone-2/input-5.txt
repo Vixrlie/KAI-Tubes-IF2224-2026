@@ -1,0 +1,17 @@
+program Subprograms;
+
+procedure PrintTwice(x: integer);
+begin
+  writeln(x);
+  writeln(x);
+end;
+
+function IncOne(x: integer): integer;
+begin
+  IncOne := x + 1;
+end;
+
+begin
+  PrintTwice(2);
+  writeln(IncOne(5));
+end.

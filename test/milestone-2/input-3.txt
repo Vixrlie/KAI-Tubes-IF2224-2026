@@ -1,0 +1,14 @@
+program ControlFlow;
+
+var
+  i, x: integer;
+
+begin
+  while x < 10 do
+    x := x + 1;
+  for i := 1 to 3 do
+    writeln(i);
+  repeat
+    x := x - 1
+  until x == 0;
+end.

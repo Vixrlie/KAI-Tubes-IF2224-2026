@@ -1,0 +1,13 @@
+program Expressions;
+
+var
+  x, y: integer;
+
+begin
+  x := (10 + 5) - 3 * 2;
+  y := x div 2;
+  if (x > 5) and (y <= 10) then
+    writeln('OK');
+  if not (x == 0) then
+    writeln('NonZero');
+end.
