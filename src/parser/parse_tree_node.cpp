@@ -57,13 +57,13 @@ std::string ParseTreeNode::renderLabel() const
 void ParseTreeNode::print(std::ostream &out, const std::string &prefix, bool isLast) const
 {
     out << prefix;
-    if (!prefix.empty())
+    if (parentNode != nullptr)
     {
         out << (isLast ? "└── " : "├── ");
     }
     out << renderLabel() << '\n';
 
-    const std::string childPrefix = prefix + (prefix.empty() ? "" : (isLast ? "    " : "│   "));
+    const std::string childPrefix = prefix + (parentNode == nullptr ? "" : (isLast ? "    " : "│   "));
     for (std::size_t index = 0; index < childNodes.size(); ++index)
     {
         const bool childIsLast = index + 1 == childNodes.size();
