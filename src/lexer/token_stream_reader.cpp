@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <utility>
 
+// This file reads milestone 1 token dumps back into Token objects for the parser.
 namespace
 {
     struct SourceLocation
@@ -12,11 +13,13 @@ namespace
         int column;
     };
 
+    // This treats both Unix and Windows line endings as token-stream separators.
     bool isLineBreak(char c)
     {
         return c == '\n' || c == '\r';
     }
 
+    // This maps milestone 1 token labels back to the internal token enum.
     const std::unordered_map<std::string, TokenType> &tokenTypeMap()
     {
         static const std::unordered_map<std::string, TokenType> mapping = {
@@ -81,6 +84,7 @@ namespace
     class TokenStreamParser
     {
     public:
+        // This constructor caches line starts so later errors can point to the right place.
         explicit TokenStreamParser(const std::string &inputText)
             : text(inputText)
         {
@@ -94,6 +98,7 @@ namespace
             }
         }
 
+        // This cheaply checks whether the input starts like a token dump instead of source code.
         bool looksLikeTokenStream() const
         {
             std::size_t position = skipSeparators(0);
@@ -116,6 +121,7 @@ namespace
             return tokenTypeMap().find(text.substr(position, end - position)) != tokenTypeMap().end();
         }
 
+        // This parses the whole token dump into Token objects or reports where it broke.
         bool parse(std::vector<Token> &tokens, std::string &error) const
         {
             tokens.clear();
@@ -135,6 +141,7 @@ namespace
         std::vector<std::size_t> lineStarts;
         mutable std::size_t failureIndex = 0;
 
+        // This skips blank separators that carry no token information.
         std::size_t skipSeparators(std::size_t position) const
         {
             while (position < text.size() && isLineBreak(text[position]))
@@ -144,6 +151,7 @@ namespace
             return position;
         }
 
+        // This translates a raw character offset back into a human-readable location.
         SourceLocation locationForIndex(std::size_t index) const
         {
             std::size_t lineIndex = 0;
@@ -158,6 +166,7 @@ namespace
             };
         }
 
+        // This parses one token plus the rest of the stream using recursive descent.
         bool parseSequence(std::size_t position, std::vector<Token> &tokens) const
         {
             position = skipSeparators(position);
@@ -265,11 +274,13 @@ namespace
     };
 }
 
+// This exposes the lightweight token-stream detection used by main.
 bool TokenStreamReader::looksLikeTokenStream(const std::string &text)
 {
     return TokenStreamParser(text).looksLikeTokenStream();
 }
 
+// This turns a milestone 1 token file into parser-ready Token objects.
 bool TokenStreamReader::tryRead(const std::string &text, std::vector<Token> &tokens, std::string &errorMessage)
 {
     return TokenStreamParser(text).parse(tokens, errorMessage);

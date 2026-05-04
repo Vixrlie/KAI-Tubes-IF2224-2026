@@ -6,6 +6,7 @@
 
 #include "token.h"
 
+// This header exposes helpers for recognizing and loading token-stream input files.
 namespace TokenStreamReader
 {
     bool looksLikeTokenStream(const std::string &text);
