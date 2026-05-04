@@ -43,7 +43,11 @@ Catatan:
 - Jika `make` belum tersedia di Windows, jalankan dari MSYS2/MinGW/Git Bash, atau gunakan `mingw32-make` sesuai environment.
 
 ## Format Input File `.txt`
-Input berupa source code Arion biasa. Contoh:
+Program menerima dua bentuk input:
+- Source code Arion biasa, sesuai alur milestone 2.
+- Daftar token hasil milestone 1 dalam format `.txt`, misalnya `test/milestone-1/output-1.txt`.
+
+Contoh source code:
 
 ```txt
 program Hello;
@@ -58,7 +62,20 @@ begin
 end.
 ```
 
-Program akan menghasilkan token per baris, misalnya `programsy`, `ident (Hello)`, `semicolon`, dan seterusnya.
+Contoh input token stream:
+
+```txt
+programsy
+ident (Hello)
+semicolon
+varsy
+ident (a)
+comma
+ident (b)
+colon
+ident (integer)
+semicolon
+```
 
 ## Struktur Direktori Program
 ```text
