@@ -3,6 +3,7 @@
 #include <sstream>
 
 #include "lexer/lexer.h"
+#include "lexer/token_stream_reader.h"
 #include "parser/parser.h"
 
 int main(int argc, char *argv[])
@@ -28,10 +29,24 @@ int main(int argc, char *argv[])
     Lexer lexer(source);
     try
     {
-        std::vector<Token> tokens = lexer.tokenize();
-        if (lexer.hasErrors())
+        std::vector<Token> tokens;
+        std::string tokenStreamError;
+
+        if (TokenStreamReader::looksLikeTokenStream(source))
         {
-            return 1;
+            if (!TokenStreamReader::tryRead(source, tokens, tokenStreamError))
+            {
+                std::cerr << "Error: " << tokenStreamError << std::endl;
+                return 1;
+            }
+        }
+        else
+        {
+            tokens = lexer.tokenize();
+            if (lexer.hasErrors())
+            {
+                return 1;
+            }
         }
 
         Parser parser(tokens);
