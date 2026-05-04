@@ -2,8 +2,10 @@
 
 #include <sstream>
 
+// This file owns how parse tree nodes store children and print themselves.
 namespace
 {
+    // This keeps terminal nodes formatted the same way the spec prints tokens.
     std::string terminalLabel(const Token &token)
     {
         if (tokenHasValue(token.type))
@@ -14,29 +16,35 @@ namespace
     }
 }
 
+// This constructor stores the printable label for one parse tree node.
 ParseTreeNode::ParseTreeNode(std::string name)
     : nodeName(std::move(name)), parentNode(nullptr) {}
 
+// This returns the node label used by helper code and searches.
 const std::string &ParseTreeNode::name() const
 {
     return nodeName;
 }
 
+// This exposes the node children without copying the tree.
 const std::vector<std::unique_ptr<ParseTreeNode>> &ParseTreeNode::children() const
 {
     return childNodes;
 }
 
+// This gives mutable access to the parent pointer when tree helpers need it.
 ParseTreeNode *ParseTreeNode::parent()
 {
     return parentNode;
 }
 
+// This gives read-only access to the parent pointer for const tree traversals.
 const ParseTreeNode *ParseTreeNode::parent() const
 {
     return parentNode;
 }
 
+// This attaches a child and wires its parent pointer in one place.
 void ParseTreeNode::addChild(std::unique_ptr<ParseTreeNode> child)
 {
     if (!child)
@@ -48,11 +56,13 @@ void ParseTreeNode::addChild(std::unique_ptr<ParseTreeNode> child)
     childNodes.push_back(std::move(child));
 }
 
+// This returns the default label unless a subclass wants a custom terminal rendering.
 std::string ParseTreeNode::renderLabel() const
 {
     return nodeName;
 }
 
+// This prints the whole subtree using box-drawing indentation.
 void ParseTreeNode::print(std::ostream &out, const std::string &prefix, bool isLast) const
 {
     out << prefix;
@@ -70,19 +80,23 @@ void ParseTreeNode::print(std::ostream &out, const std::string &prefix, bool isL
     }
 }
 
+// This constructor wraps one terminal token as a leaf parse tree node.
 ParseTreeTerminalNode::ParseTreeTerminalNode(const Token &token)
     : ParseTreeNode("<terminal>"), terminalToken(token) {}
 
+// This returns the stored terminal token for downstream inspection.
 const Token &ParseTreeTerminalNode::token() const
 {
     return terminalToken;
 }
 
+// This renders terminal leaves using token text instead of the generic node name.
 std::string ParseTreeTerminalNode::renderLabel() const
 {
     return terminalLabel(terminalToken);
 }
 
+// These constructors only bind each concrete node type to its grammar label.
 ProgramNode::ProgramNode() : ParseTreeNode("<program>") {}
 ProgramHeaderNode::ProgramHeaderNode() : ParseTreeNode("<program-header>") {}
 DeclarationPartNode::DeclarationPartNode() : ParseTreeNode("<declaration-part>") {}

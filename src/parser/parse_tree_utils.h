@@ -6,6 +6,7 @@
 #include <functional>
 #include <vector>
 
+// This header exposes convenience helpers for inspecting parse tree structure.
 namespace ParseTreeUtils
 {
 

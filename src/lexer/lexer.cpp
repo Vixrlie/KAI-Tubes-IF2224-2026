@@ -4,6 +4,7 @@
 #include <map>
 #include <iostream>
 
+// This file turns raw Arion characters into tokens one step at a time.
 static const std::map<std::string, TokenType> keywords = {
     {"program", TokenType::PROGRAMSY},
     {"const", TokenType::CONSTSY},
@@ -33,11 +34,13 @@ static const std::map<std::string, TokenType> keywords = {
     {"and", TokenType::ANDSY},
     {"or", TokenType::ORSY}};
 
+// This constructor starts the lexer in a clean state at the beginning of the source.
 Lexer::Lexer(const std::string &source)
     : source(source), pos(0), line(1), col(1),
       state(State::START), tokenStartLine(1), tokenStartCol(1),
       dotLine(0), dotCol(0), errorFlag(false) {}
 
+// This returns the current character or '\0' when the input is exhausted.
 char Lexer::current() const
 {
     if (isAtEnd())
@@ -45,16 +48,19 @@ char Lexer::current() const
     return source[pos];
 }
 
+// This checks whether every source character has already been consumed.
 bool Lexer::isAtEnd() const
 {
     return pos >= static_cast<int>(source.size());
 }
 
+// This treats spaces, tabs, and line breaks as token separators.
 bool Lexer::isSeparator(char c)
 {
     return c == ' ' || c == '\t' || c == '\n' || c == '\r';
 }
 
+// This moves the cursor forward while keeping line and column positions correct.
 void Lexer::advance()
 {
     if (!isAtEnd())
@@ -72,6 +78,7 @@ void Lexer::advance()
     }
 }
 
+// This stores one token using the position where the current lexeme started.
 void Lexer::emitToken(TokenType type, const std::string &value)
 {
     Token token;
@@ -82,6 +89,7 @@ void Lexer::emitToken(TokenType type, const std::string &value)
     tokens.push_back(token);
 }
 
+// This records a lexical error token and prints an informative message.
 void Lexer::emitError(const std::string &message)
 {
     errorFlag = true;
@@ -95,6 +103,7 @@ void Lexer::emitError(const std::string &message)
               << ", column " << tokenStartCol << ": " << message << std::endl;
 }
 
+// This turns a finished identifier into either a keyword token or a plain ident token.
 TokenType Lexer::lookupKeyword(const std::string &identifier) const
 {
     std::string lower = identifier;
@@ -107,11 +116,13 @@ TokenType Lexer::lookupKeyword(const std::string &identifier) const
     return TokenType::IDENT;
 }
 
+// This lets later stages know whether tokenization found any lexical problem.
 bool Lexer::hasErrors() const
 {
     return errorFlag;
 }
 
+// This runs the DFA until the whole input has been classified into tokens.
 std::vector<Token> Lexer::tokenize()
 {
     while (state != State::FOUND_EOF)
@@ -179,6 +190,7 @@ std::vector<Token> Lexer::tokenize()
     return tokens;
 }
 
+// This chooses the next DFA branch from the neutral start state.
 void Lexer::handleStart()
 {
     char c = current();
@@ -304,13 +316,14 @@ void Lexer::handleStart()
     }
     else
     {
-        // Per revision: collect non-separator chars into one unknown token.
+        // Collect non-separator chars into one unknown token.
         buffer = std::string(1, c);
         state = State::IN_UNKNOWN;
         advance();
     }
 }
 
+// This keeps consuming letters and digits for identifiers and keywords.
 void Lexer::handleInIdent()
 {
     char c = current();
@@ -335,6 +348,7 @@ void Lexer::handleInIdent()
     }
 }
 
+// This keeps consuming digits and defers the dot decision for numbers.
 void Lexer::handleInNumber()
 {
     char c = current();
@@ -359,6 +373,7 @@ void Lexer::handleInNumber()
     }
 }
 
+// This decides whether a digit sequence followed by '.' is an int or a real.
 void Lexer::handleDotAfterNum()
 {
     char c = current();
@@ -386,6 +401,7 @@ void Lexer::handleDotAfterNum()
     }
 }
 
+// This consumes the fractional part of a real constant.
 void Lexer::handleInReal()
 {
     char c = current();
@@ -402,6 +418,7 @@ void Lexer::handleInReal()
     }
 }
 
+// This reads a quoted literal and decides whether it is charcon or string.
 void Lexer::handleInString()
 {
     char c = current();
@@ -432,6 +449,7 @@ void Lexer::handleInString()
     }
 }
 
+// This distinguishes ':' from the assignment token ':='.
 void Lexer::handleSawColon()
 {
     char c = current();
@@ -449,6 +467,7 @@ void Lexer::handleSawColon()
     }
 }
 
+// This distinguishes '<', '<=', and '<>' after seeing a less-than sign.
 void Lexer::handleSawLess()
 {
     char c = current();
@@ -472,6 +491,7 @@ void Lexer::handleSawLess()
     }
 }
 
+// This distinguishes '>' from '>=' after seeing a greater-than sign.
 void Lexer::handleSawGreater()
 {
     char c = current();
@@ -489,6 +509,7 @@ void Lexer::handleSawGreater()
     }
 }
 
+// This enforces Arion's equality token to be written as '=='.
 void Lexer::handleSawEqual()
 {
     char c = current();
@@ -506,6 +527,7 @@ void Lexer::handleSawEqual()
     }
 }
 
+// This consumes a brace comment until its closing delimiter appears.
 void Lexer::handleInCurlyComment()
 {
     char c = current();
@@ -524,6 +546,7 @@ void Lexer::handleInCurlyComment()
     }
 }
 
+// This distinguishes a plain '(' from the '(*' comment opener.
 void Lexer::handleSawLparen()
 {
     char c = current();
@@ -541,6 +564,7 @@ void Lexer::handleSawLparen()
     }
 }
 
+// This keeps consuming characters inside a parenthesis-star comment.
 void Lexer::handleInParenStarComment()
 {
     char c = current();
@@ -558,6 +582,7 @@ void Lexer::handleInParenStarComment()
     }
 }
 
+// Decides whether a seen '*' ends the comment or stays inside it.
 void Lexer::handleSawStarInParenComment()
 {
     char c = current();
@@ -582,6 +607,7 @@ void Lexer::handleSawStarInParenComment()
     }
 }
 
+// This groups unexpected non-separator characters into one unknown token.
 void Lexer::handleInUnknown()
 {
     char c = current();
@@ -598,6 +624,7 @@ void Lexer::handleInUnknown()
     }
 }
 
+// This flushes the active DFA state when the source ends unexpectedly or cleanly.
 void Lexer::handleEof()
 {
     switch (state)

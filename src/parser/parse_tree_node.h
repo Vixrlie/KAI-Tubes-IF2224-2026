@@ -9,6 +9,7 @@
 
 #include "../lexer/token.h"
 
+// This header declares the parse tree node types used by the parser output.
 class ParseTreeNode
 {
 public:
@@ -21,6 +22,8 @@ public:
     const ParseTreeNode *parent() const;
 
     void addChild(std::unique_ptr<ParseTreeNode> child);
+
+    // This builds and attaches a child node without repeating the allocation boilerplate.
     template <typename NodeType, typename... Args>
     NodeType &emplaceChild(Args &&...args)
     {

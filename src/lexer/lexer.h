@@ -5,6 +5,7 @@
 #include <vector>
 #include "token.h"
 
+// Defines the lexer state machine and the public lexer interface.
 enum class State {
     START,
     IN_IDENT,

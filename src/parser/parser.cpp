@@ -2,8 +2,10 @@
 
 #include <sstream>
 
+// This file implements the recursive descent rules for the Arion grammar.
 namespace
 {
+    // This tells the parser to ignore comment tokens that survived the lexer stage.
     bool shouldSkipToken(const Token &token)
     {
         return token.type == TokenType::COMMENT;
@@ -15,19 +17,23 @@ namespace
     }
 }
 
+// This stores the parser failure message together with its source location.
 ParserError::ParserError(std::string message, int line, int column)
     : std::runtime_error(std::move(message)), errorLine(line), errorColumn(column) {}
 
+// This returns the source line where the parser failed.
 int ParserError::line() const
 {
     return errorLine;
 }
 
+// This returns the source column where the parser failed.
 int ParserError::column() const
 {
     return errorColumn;
 }
 
+// This constructor filters out comments and rejects lexical error tokens up front.
 Parser::Parser(const std::vector<Token> &tokens)
     : currentIndex(0)
 {
@@ -50,6 +56,7 @@ Parser::Parser(const std::vector<Token> &tokens)
     }
 }
 
+// This parses a complete Arion program from header to final period.
 std::unique_ptr<ProgramNode> Parser::parseProgram()
 {
     auto programNode = std::make_unique<ProgramNode>();
@@ -66,6 +73,7 @@ std::unique_ptr<ProgramNode> Parser::parseProgram()
     return programNode;
 }
 
+// This parses the fixed 'program ident ;' header at the start of the file.
 std::unique_ptr<ProgramHeaderNode> Parser::parseProgramHeader()
 {
     auto programHeaderNode = std::make_unique<ProgramHeaderNode>();
@@ -75,27 +83,32 @@ std::unique_ptr<ProgramHeaderNode> Parser::parseProgramHeader()
     return programHeaderNode;
 }
 
+// This checks whether the parser has already consumed every token.
 bool Parser::isAtEnd() const
 {
     return currentIndex >= parserTokens.size();
 }
 
+// This checks whether the current token matches the expected type.
 bool Parser::check(TokenType type) const
 {
     return !isAtEnd() && peek().type == type;
 }
 
+// This checks one lookahead position without advancing the parser cursor.
 bool Parser::check(TokenType type, std::size_t offset) const
 {
     const Token *token = peek(offset);
     return token != nullptr && token->type == type;
 }
 
+// This returns the current token and assumes the parser is not at the end.
 const Token &Parser::peek() const
 {
     return parserTokens[currentIndex];
 }
 
+// This returns one lookahead token when it exists or null when it does not.
 const Token *Parser::peek(std::size_t offset) const
 {
     const std::size_t targetIndex = currentIndex + offset;
@@ -106,11 +119,13 @@ const Token *Parser::peek(std::size_t offset) const
     return &parserTokens[targetIndex];
 }
 
+// This consumes the current token and moves the parser cursor forward.
 const Token &Parser::advance()
 {
     return parserTokens[currentIndex++];
 }
 
+// This consumes one expected token or throws a syntax error immediately.
 Token Parser::consume(TokenType type, const std::string &expectedName)
 {
     if (!check(type))
@@ -121,11 +136,13 @@ Token Parser::consume(TokenType type, const std::string &expectedName)
     return advance();
 }
 
+// This wraps a consumed token so it can live as a terminal parse tree node.
 std::unique_ptr<ParseTreeTerminalNode> Parser::makeTerminalNode(const Token &token) const
 {
     return std::make_unique<ParseTreeTerminalNode>(token);
 }
 
+// This centralizes parser error text so every rule reports failures consistently.
 void Parser::throwSyntaxError(const std::string &expectedName) const
 {
     std::ostringstream message;
@@ -147,6 +164,7 @@ void Parser::throwSyntaxError(const std::string &expectedName) const
     throw ParserError(message.str(), token.line, token.column);
 }
 
+// This checks whether the current token sequence can start a range production.
 bool Parser::isRangeStart() const
 {
     if (check(TokenType::PLUS) || check(TokenType::MINUS) ||
@@ -161,6 +179,7 @@ bool Parser::isRangeStart() const
            check(TokenType::PERIOD, 2);
 }
 
+// This checks whether the current token can legally end an optional statement slot.
 bool Parser::isStatementFollow() const
 {
     return check(TokenType::SEMICOLON) ||
@@ -169,11 +188,13 @@ bool Parser::isStatementFollow() const
            check(TokenType::UNTILSY);
 }
 
+// This checks whether a variable continues with indexing or field access.
 bool Parser::isVariableSuffixStart() const
 {
     return check(TokenType::LBRACK) || check(TokenType::PERIOD);
 }
 
+// This checks whether the current token is valid inside an array index list.
 bool Parser::isIndexToken() const
 {
     return check(TokenType::INTCON) ||
@@ -181,6 +202,7 @@ bool Parser::isIndexToken() const
            check(TokenType::IDENT);
 }
 
+// This keeps wrapping a base variable while more component suffixes are present.
 std::unique_ptr<VariableNode> Parser::parseVariableWithBase(std::unique_ptr<VariableNode> baseVariable)
 {
     if (!isVariableSuffixStart())
@@ -193,6 +215,7 @@ std::unique_ptr<VariableNode> Parser::parseVariableWithBase(std::unique_ptr<Vari
     return parseVariableWithBase(std::move(wrappedVariableNode));
 }
 
+// This parses the declaration section that sits between the header and executable block.
 std::unique_ptr<DeclarationPartNode> Parser::parseDeclarationPart()
 {
     auto declarationPartNode = std::make_unique<DeclarationPartNode>();
@@ -220,6 +243,7 @@ std::unique_ptr<DeclarationPartNode> Parser::parseDeclarationPart()
     return declarationPartNode;
 }
 
+// This parses one or more constant declarations after the const keyword.
 std::unique_ptr<ConstDeclarationNode> Parser::parseConstDeclaration()
 {
     auto constDeclarationNode = std::make_unique<ConstDeclarationNode>();
@@ -236,6 +260,7 @@ std::unique_ptr<ConstDeclarationNode> Parser::parseConstDeclaration()
     return constDeclarationNode;
 }
 
+// This parses a constant literal or signed identifier allowed by the grammar.
 std::unique_ptr<ConstantNode> Parser::parseConstant()
 {
     auto constantNode = std::make_unique<ConstantNode>();
@@ -260,6 +285,7 @@ std::unique_ptr<ConstantNode> Parser::parseConstant()
     throwSyntaxError("constant");
 }
 
+// This parses one or more user-defined type declarations after the type keyword.
 std::unique_ptr<TypeDeclarationNode> Parser::parseTypeDeclaration()
 {
     auto typeDeclarationNode = std::make_unique<TypeDeclarationNode>();
@@ -276,6 +302,7 @@ std::unique_ptr<TypeDeclarationNode> Parser::parseTypeDeclaration()
     return typeDeclarationNode;
 }
 
+// This parses one or more variable declarations after the var keyword.
 std::unique_ptr<VarDeclarationNode> Parser::parseVarDeclaration()
 {
     auto varDeclarationNode = std::make_unique<VarDeclarationNode>();
@@ -292,6 +319,7 @@ std::unique_ptr<VarDeclarationNode> Parser::parseVarDeclaration()
     return varDeclarationNode;
 }
 
+// This parses a comma-separated list of identifiers.
 std::unique_ptr<IdentifierListNode> Parser::parseIdentifierList()
 {
     auto identifierListNode = std::make_unique<IdentifierListNode>();
@@ -306,6 +334,7 @@ std::unique_ptr<IdentifierListNode> Parser::parseIdentifierList()
     return identifierListNode;
 }
 
+// This dispatches to the correct type production based on the current token.
 std::unique_ptr<TypeNode> Parser::parseType()
 {
     auto typeNode = std::make_unique<TypeNode>();
@@ -343,6 +372,7 @@ std::unique_ptr<TypeNode> Parser::parseType()
     throwSyntaxError("type");
 }
 
+// This parses an array type including its index domain and element type.
 std::unique_ptr<ArrayTypeNode> Parser::parseArrayType()
 {
     auto arrayTypeNode = std::make_unique<ArrayTypeNode>();
@@ -364,6 +394,7 @@ std::unique_ptr<ArrayTypeNode> Parser::parseArrayType()
     return arrayTypeNode;
 }
 
+// This parses a subrange written as two constants separated by two periods.
 std::unique_ptr<RangeNode> Parser::parseRange()
 {
     auto rangeNode = std::make_unique<RangeNode>();
@@ -374,6 +405,7 @@ std::unique_ptr<RangeNode> Parser::parseRange()
     return rangeNode;
 }
 
+// This parses an enumerated type written inside parentheses.
 std::unique_ptr<EnumeratedNode> Parser::parseEnumerated()
 {
     auto enumeratedNode = std::make_unique<EnumeratedNode>();
@@ -390,6 +422,7 @@ std::unique_ptr<EnumeratedNode> Parser::parseEnumerated()
     return enumeratedNode;
 }
 
+// This parses a record type and its internal field list.
 std::unique_ptr<RecordTypeNode> Parser::parseRecordType()
 {
     auto recordTypeNode = std::make_unique<RecordTypeNode>();
@@ -399,6 +432,7 @@ std::unique_ptr<RecordTypeNode> Parser::parseRecordType()
     return recordTypeNode;
 }
 
+// This parses the semicolon-separated field declarations inside a record.
 std::unique_ptr<FieldListNode> Parser::parseFieldList()
 {
     auto fieldListNode = std::make_unique<FieldListNode>();
@@ -417,6 +451,7 @@ std::unique_ptr<FieldListNode> Parser::parseFieldList()
     return fieldListNode;
 }
 
+// This parses one record field declaration of the form identifiers ':' type.
 std::unique_ptr<FieldPartNode> Parser::parseFieldPart()
 {
     auto fieldPartNode = std::make_unique<FieldPartNode>();
@@ -426,6 +461,7 @@ std::unique_ptr<FieldPartNode> Parser::parseFieldPart()
     return fieldPartNode;
 }
 
+// This chooses between a procedure and function declaration inside the declaration part.
 std::unique_ptr<SubprogramDeclarationNode> Parser::parseSubprogramDeclaration()
 {
     auto subprogramDeclarationNode = std::make_unique<SubprogramDeclarationNode>();
@@ -445,6 +481,7 @@ std::unique_ptr<SubprogramDeclarationNode> Parser::parseSubprogramDeclaration()
     throwSyntaxError("proceduresy or functionsy");
 }
 
+// This parses a full procedure declaration including parameters and body.
 std::unique_ptr<ProcedureDeclarationNode> Parser::parseProcedureDeclaration()
 {
     auto procedureDeclarationNode = std::make_unique<ProcedureDeclarationNode>();
@@ -462,6 +499,7 @@ std::unique_ptr<ProcedureDeclarationNode> Parser::parseProcedureDeclaration()
     return procedureDeclarationNode;
 }
 
+// This parses a full function declaration including its return type and body.
 std::unique_ptr<FunctionDeclarationNode> Parser::parseFunctionDeclaration()
 {
     auto functionDeclarationNode = std::make_unique<FunctionDeclarationNode>();
@@ -481,6 +519,7 @@ std::unique_ptr<FunctionDeclarationNode> Parser::parseFunctionDeclaration()
     return functionDeclarationNode;
 }
 
+// This parses the nested declaration part followed by the compound statement body.
 std::unique_ptr<BlockNode> Parser::parseBlock()
 {
     auto blockNode = std::make_unique<BlockNode>();
@@ -489,6 +528,7 @@ std::unique_ptr<BlockNode> Parser::parseBlock()
     return blockNode;
 }
 
+// This parses the parenthesized parameter groups on a procedure or function header.
 std::unique_ptr<FormalParameterListNode> Parser::parseFormalParameterList()
 {
     auto formalParameterListNode = std::make_unique<FormalParameterListNode>();
@@ -505,6 +545,7 @@ std::unique_ptr<FormalParameterListNode> Parser::parseFormalParameterList()
     return formalParameterListNode;
 }
 
+// This parses one parameter group with shared type information.
 std::unique_ptr<ParameterGroupNode> Parser::parseParameterGroup()
 {
     auto parameterGroupNode = std::make_unique<ParameterGroupNode>();
@@ -521,6 +562,7 @@ std::unique_ptr<ParameterGroupNode> Parser::parseParameterGroup()
     return parameterGroupNode;
 }
 
+// This parses a begin-end block that wraps a statement list.
 std::unique_ptr<CompoundStatementNode> Parser::parseCompoundStatement()
 {
     auto compoundStatementNode = std::make_unique<CompoundStatementNode>();
@@ -530,6 +572,7 @@ std::unique_ptr<CompoundStatementNode> Parser::parseCompoundStatement()
     return compoundStatementNode;
 }
 
+// This parses semicolon-separated statements until the surrounding construct closes.
 std::unique_ptr<StatementListNode> Parser::parseStatementList()
 {
     auto statementListNode = std::make_unique<StatementListNode>();
@@ -548,6 +591,7 @@ std::unique_ptr<StatementListNode> Parser::parseStatementList()
     return statementListNode;
 }
 
+// This dispatches to the concrete statement form that matches the current token.
 std::unique_ptr<StatementNode> Parser::parseStatement()
 {
     auto statementNode = std::make_unique<StatementNode>();
@@ -610,6 +654,7 @@ std::unique_ptr<StatementNode> Parser::parseStatement()
     throwSyntaxError("statement");
 }
 
+// This parses a variable and then folds any chained component or index access.
 std::unique_ptr<VariableNode> Parser::parseVariable()
 {
     auto variableNode = std::make_unique<VariableNode>();
@@ -617,6 +662,7 @@ std::unique_ptr<VariableNode> Parser::parseVariable()
     return parseVariableWithBase(std::move(variableNode));
 }
 
+// This parses one array index or field access step on top of an existing variable.
 std::unique_ptr<ComponentVariableNode> Parser::parseComponentVariable(std::unique_ptr<VariableNode> baseVariable)
 {
     auto componentVariableNode = std::make_unique<ComponentVariableNode>();
@@ -635,6 +681,7 @@ std::unique_ptr<ComponentVariableNode> Parser::parseComponentVariable(std::uniqu
     return componentVariableNode;
 }
 
+// This parses the simple index list used by milestone 2 array access.
 std::unique_ptr<IndexListNode> Parser::parseIndexList()
 {
     auto indexListNode = std::make_unique<IndexListNode>();
@@ -658,6 +705,7 @@ std::unique_ptr<IndexListNode> Parser::parseIndexList()
     return indexListNode;
 }
 
+// This parses a variable followed by an assignment expression.
 std::unique_ptr<AssignmentStatementNode> Parser::parseAssignmentStatement()
 {
     auto assignmentStatementNode = std::make_unique<AssignmentStatementNode>();
@@ -667,6 +715,7 @@ std::unique_ptr<AssignmentStatementNode> Parser::parseAssignmentStatement()
     return assignmentStatementNode;
 }
 
+// This parses an if statement with an optional else branch.
 std::unique_ptr<IfStatementNode> Parser::parseIfStatement()
 {
     auto ifStatementNode = std::make_unique<IfStatementNode>();
@@ -684,6 +733,7 @@ std::unique_ptr<IfStatementNode> Parser::parseIfStatement()
     return ifStatementNode;
 }
 
+// This parses a case statement and its nested blocks.
 std::unique_ptr<CaseStatementNode> Parser::parseCaseStatement()
 {
     auto caseStatementNode = std::make_unique<CaseStatementNode>();
@@ -695,6 +745,7 @@ std::unique_ptr<CaseStatementNode> Parser::parseCaseStatement()
     return caseStatementNode;
 }
 
+// This parses one case arm and chains the next arm when a semicolon follows.
 std::unique_ptr<CaseBlockNode> Parser::parseCaseBlock()
 {
     auto caseBlockNode = std::make_unique<CaseBlockNode>();
@@ -721,6 +772,7 @@ std::unique_ptr<CaseBlockNode> Parser::parseCaseBlock()
     return caseBlockNode;
 }
 
+// This parses a while-do loop with a single nested statement body.
 std::unique_ptr<WhileStatementNode> Parser::parseWhileStatement()
 {
     auto whileStatementNode = std::make_unique<WhileStatementNode>();
@@ -731,6 +783,7 @@ std::unique_ptr<WhileStatementNode> Parser::parseWhileStatement()
     return whileStatementNode;
 }
 
+// This parses a repeat-until loop whose body is a statement list.
 std::unique_ptr<RepeatStatementNode> Parser::parseRepeatStatement()
 {
     auto repeatStatementNode = std::make_unique<RepeatStatementNode>();
@@ -741,6 +794,7 @@ std::unique_ptr<RepeatStatementNode> Parser::parseRepeatStatement()
     return repeatStatementNode;
 }
 
+// This parses a for loop with either to or downto as its direction.
 std::unique_ptr<ForStatementNode> Parser::parseForStatement()
 {
     auto forStatementNode = std::make_unique<ForStatementNode>();
@@ -764,6 +818,7 @@ std::unique_ptr<ForStatementNode> Parser::parseForStatement()
     return forStatementNode;
 }
 
+// This parses a procedure or function call and enforces a non-empty argument list when parentheses exist.
 std::unique_ptr<ProcedureFunctionCallNode> Parser::parseProcedureFunctionCall()
 {
     auto procedureFunctionCallNode = std::make_unique<ProcedureFunctionCallNode>();
@@ -783,6 +838,7 @@ std::unique_ptr<ProcedureFunctionCallNode> Parser::parseProcedureFunctionCall()
     return procedureFunctionCallNode;
 }
 
+// This parses a comma-separated list of call arguments.
 std::unique_ptr<ParameterListNode> Parser::parseParameterList()
 {
     auto parameterListNode = std::make_unique<ParameterListNode>();
@@ -797,6 +853,7 @@ std::unique_ptr<ParameterListNode> Parser::parseParameterList()
     return parameterListNode;
 }
 
+// This parses an optional relational comparison between two simple expressions.
 std::unique_ptr<ExpressionNode> Parser::parseExpression()
 {
     auto expressionNode = std::make_unique<ExpressionNode>();
@@ -813,6 +870,7 @@ std::unique_ptr<ExpressionNode> Parser::parseExpression()
     return expressionNode;
 }
 
+// This parses leading sign handling and additive chaining for an expression.
 std::unique_ptr<SimpleExpressionNode> Parser::parseSimpleExpression()
 {
     auto simpleExpressionNode = std::make_unique<SimpleExpressionNode>();
@@ -832,6 +890,7 @@ std::unique_ptr<SimpleExpressionNode> Parser::parseSimpleExpression()
     return simpleExpressionNode;
 }
 
+// This parses multiplicative chains to preserve the grammar's operator precedence.
 std::unique_ptr<TermNode> Parser::parseTerm()
 {
     auto termNode = std::make_unique<TermNode>();
@@ -848,6 +907,7 @@ std::unique_ptr<TermNode> Parser::parseTerm()
     return termNode;
 }
 
+// This parses the smallest expression unit, including literals, variables, calls, and grouping.
 std::unique_ptr<FactorNode> Parser::parseFactor()
 {
     auto factorNode = std::make_unique<FactorNode>();
@@ -894,6 +954,7 @@ std::unique_ptr<FactorNode> Parser::parseFactor()
     throwSyntaxError("factor");
 }
 
+// This wraps a relational token inside the dedicated parse tree node.
 std::unique_ptr<RelationalOperatorNode> Parser::parseRelationalOperator()
 {
     auto relationalOperatorNode = std::make_unique<RelationalOperatorNode>();
@@ -909,6 +970,7 @@ std::unique_ptr<RelationalOperatorNode> Parser::parseRelationalOperator()
     throwSyntaxError("relational operator");
 }
 
+// This wraps an additive token inside the dedicated parse tree node.
 std::unique_ptr<AdditiveOperatorNode> Parser::parseAdditiveOperator()
 {
     auto additiveOperatorNode = std::make_unique<AdditiveOperatorNode>();
@@ -922,6 +984,7 @@ std::unique_ptr<AdditiveOperatorNode> Parser::parseAdditiveOperator()
     throwSyntaxError("additive operator");
 }
 
+// This wraps a multiplicative token inside the dedicated parse tree node.
 std::unique_ptr<MultiplicativeOperatorNode> Parser::parseMultiplicativeOperator()
 {
     auto multiplicativeOperatorNode = std::make_unique<MultiplicativeOperatorNode>();

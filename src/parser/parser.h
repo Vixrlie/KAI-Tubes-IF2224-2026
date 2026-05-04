@@ -9,6 +9,7 @@
 #include "../lexer/token.h"
 #include "parse_tree_node.h"
 
+// This header defines the parser interface and the nonterminal parsing entry points.
 class ParserError : public std::runtime_error
 {
 public:
