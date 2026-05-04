@@ -3,6 +3,7 @@
 
 #include <string>
 
+// This header lists every token shape that the lexer and parser agree on.
 enum class TokenType {
     INTCON,
     REALCON,

@@ -1,5 +1,6 @@
 #include "token.h"
 
+// This converts a token type enum into the lowercase label used in output.
 std::string tokenTypeToString(TokenType type) {
     switch (type) {
         case TokenType::INTCON:       return "intcon";
@@ -60,6 +61,7 @@ std::string tokenTypeToString(TokenType type) {
     return "unknown";
 }
 
+// This marks which token kinds must print an attached value.
 bool tokenHasValue(TokenType type) {
     return type == TokenType::IDENT   ||
            type == TokenType::INTCON  ||
@@ -71,6 +73,7 @@ bool tokenHasValue(TokenType type) {
            type == TokenType::ERROR;
 }
 
+// This formats one token exactly the way the lexer output expects it.
 std::string formatToken(const Token& token) {
     if (tokenHasValue(token.type)) {
         return tokenTypeToString(token.type) + " (" + token.value + ")";
