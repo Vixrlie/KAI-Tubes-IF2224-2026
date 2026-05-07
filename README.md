@@ -129,7 +129,7 @@ Tim **Kai**:
 ## Tabel Kontribusi
 | No | Nama Lengkap | NIM | Deskripsi Pekerjaan | Persentase Kontribusi (%) |
 |---|---|---|---|---:|
-| 1 | Jonathan Kris Wicaksono | 13524023 | Implementasi parser recursive descent dan validasi token | 25 |
-| 2 | Vincent Rionarlie | 13524031 | Desain grammar dan pemetaan produksi pada parser | 25 |
-| 3 | Muhammad Aufar Rizqi Kusuma | 13524061 | Dokumentasi laporan milestone 2 dan pengujian | 25 |
-| 4 | Bryan Pratama Putra Hendra | 13524067 | Implementasi parse tree dan utilitas traversal | 25 |
+| 1 | Jonathan Kris Wicaksono | 13524023 | Merevisi pembacaan separator (spasi, new-line, dan tab) | 25 |
+| 2 | Vincent Rionarlie | 13524031 | Menyusun laporan akhir | 25 |
+| 3 | Muhammad Aufar Rizqi Kusuma | 13524061 | Membuat struktur data keseluruhan untuk Parse Tree | 25 |
+| 4 | Bryan Pratama Putra Hendra | 13524067 | Membuat algoritma core dari parser | 25 |
