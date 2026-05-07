@@ -14,7 +14,7 @@
 \usepackage{float}
 \usepackage{tikz}
 \usetikzlibrary{automata,positioning,arrows,shapes.geometric}
-\bibliographystyle{IEEEtran}
+\bibliographystyle{plain}
 % ---------- Paket lain ----------
 \usepackage[most]{tcolorbox}
 \usepackage{forest}
@@ -31,6 +31,7 @@
 \usepackage{tabularx}
 \usepackage{algorithm}
 \usepackage{algpseudocode}\usepackage{listings}
+\usepackage{listingsutf8}
 
 % Konfigurasi styling untuk code listings
 \lstset{
@@ -41,6 +42,9 @@
     stringstyle=\color[rgb]{0.627, 0.126, 0.941},
     numberstyle=\tiny\color[rgb]{0.5, 0.5, 0.5},
     breaklines=false,
+    inputencoding=utf8,
+    extendedchars=true,
+    literate={├}{{|}}1 {└}{{`}}1 {│}{{|}}1 {─}{{-}}1,
     showstringspaces=false,
     upquote=true,
     tabsize=4,
@@ -125,7 +129,7 @@
     \vspace{0.8cm}
     {\large IF2224 Teori Bahasa Formal dan Otomata\par}
     \vspace{0.2cm}
-    {\large Lexical Analysis\par}
+    {\large Semantic Analysis\par}
     \vspace{0.2cm}
     {\large Semester 2 Tahun 2025/2026\par}
 
@@ -179,6 +183,7 @@
 \chapter{Lampiran}
 \input{sections/06-lampiran}
 
+\nocite{*}
 \bibliography{dafpus}
 
 \end{document}

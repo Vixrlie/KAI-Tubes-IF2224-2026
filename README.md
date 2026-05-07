@@ -1,23 +1,23 @@
 # KAI-Tubes-IF2224-2026
 
 ## Deskripsi Umum Program
-Proyek ini adalah implementasi **Lexical Analyzer (Lexer)** untuk bahasa pemrograman **Arion** pada Milestone 1 Tugas Besar IF2224 Teori Bahasa Formal dan Otomata. Program membaca source code dari berkas `.txt`, memproses karakter demi karakter menggunakan pendekatan **Deterministic Finite Automata (DFA)**, kemudian menghasilkan daftar token sesuai spesifikasi bahasa Arion.
+Proyek ini adalah implementasi **parser Recursive Descent** untuk bahasa pemrograman **Arion** pada Milestone 2 Tugas Besar IF2224 Teori Bahasa Formal dan Otomata. Program membaca source code Arion atau token stream hasil Milestone 1, lalu membangun **parse tree** sesuai grammar Arion dan menampilkan hasilnya.
 
 ## Fitur Program
-- Tokenisasi source code Arion menjadi token stream.
-- Mendukung 52 jenis token (literal, operator, delimiter, keyword, identifier, dan komentar).
-- Mendukung komentar `{ ... }` dan `(* ... *)` termasuk multiline comment.
-- Pengenalan keyword secara case-insensitive.
-- Pelaporan lexical error tanpa menghentikan seluruh proses tokenisasi.
-- Output dapat ditampilkan ke terminal dan/atau disimpan ke file output `.txt`.
-- Menyisipkan baris kosong pada output untuk menjaga keterbacaan sesuai struktur baris source.
+- Lexer untuk source code Arion dan pembacaan token stream hasil milestone 1.
+- Recursive Descent Parser untuk seluruh non-terminal grammar Arion.
+- Membangun parse tree yang dicetak dengan struktur pohon.
+- Lookahead satu token untuk pemilihan produksi tanpa backtracking.
+- Pelaporan syntax error dengan informasi baris dan kolom.
+- Menolak token `ERROR` dan `UNKNOWN` sejak awal parsing.
+- Output dapat ditampilkan ke terminal dan/atau disimpan ke file keluaran.
 
 ## Requirement Menjalankan Program
 - OS Windows/Linux/macOS.
 - Compiler C++ dengan dukungan C++17 (disarankan `g++`).
 - Shell/terminal untuk build dan run.
 
-## How To Run Program
+## Cara Menjalankan (Milestone 2)
 ### 1. Build
 ```bash
 make
@@ -25,12 +25,12 @@ make
 
 ### 2. Run (output ke terminal)
 ```bash
-make run INPUT=test/milestone-1/input-1.txt
+make run INPUT=test/milestone-2/input-1.txt
 ```
 
 ### 3. Run (output ke file)
 ```bash
-make run-output INPUT=test/milestone-1/input-1.txt OUTPUT=test/milestone-1/output-1.txt
+make run-output INPUT=test/milestone-2/input-1.txt OUTPUT=test/milestone-2/output-1.txt
 ```
 
 ### 4. Clean hasil build
@@ -44,7 +44,7 @@ Catatan:
 
 ## Format Input File `.txt`
 Program menerima dua bentuk input:
-- Source code Arion biasa, sesuai alur milestone 2.
+- Source code Arion biasa.
 - Daftar token hasil milestone 1 dalam format `.txt`, misalnya `test/milestone-1/output-1.txt`.
 
 Contoh source code:
@@ -53,12 +53,12 @@ Contoh source code:
 program Hello;
 
 var
-	a, b: integer;
+    a, b: integer;
 
 begin
-	a := 5;
-	b := a + 10;
-	writeln('Result = ', b);
+    a := 5;
+    b := a + 10;
+    writeln('Result = ', b);
 end.
 ```
 
@@ -83,7 +83,8 @@ KAI-Tubes-IF2224-2026/
 ├── Makefile
 ├── README.md
 ├── doc/
-│   └── laporan-milestone-1/
+│   ├── laporan-milestone-1/
+│   └── laporan-milestone-2/
 │       ├── main.tex
 │       ├── dafpus.bib
 │       ├── sections/
@@ -96,19 +97,26 @@ KAI-Tubes-IF2224-2026/
 │       └── public/
 ├── src/
 │   ├── main.cpp
-│   └── lexer/
-│       ├── lexer.h
-│       ├── lexer.cpp
-│       ├── token.h
-│       └── token.cpp
+│   ├── lexer/
+│   │   ├── lexer.h
+│   │   ├── lexer.cpp
+│   │   ├── token.h
+│   │   └── token.cpp
+│   └── parser/
+│       ├── parser.h
+│       ├── parser.cpp
+│       ├── parse_tree_node.h
+│       ├── parse_tree_node.cpp
+│       ├── parse_tree_utils.h
+│       └── parse_tree_utils.cpp
 └── test/
-		├── milestone-1/
-		│   ├── input-*.txt
-		│   ├── expected-*.txt
-		│   └── output-*.txt
-		├── milestone-2/
-		├── milestone-3/
-		└── milestone-4/
+    ├── milestone-1/
+    │   ├── input-*.txt
+    │   ├── expected-*.txt
+    │   └── output-*.txt
+    ├── milestone-2/
+    ├── milestone-3/
+    └── milestone-4/
 ```
 
 ## Author Program
@@ -121,7 +129,7 @@ Tim **Kai**:
 ## Tabel Kontribusi
 | No | Nama Lengkap | NIM | Deskripsi Pekerjaan | Persentase Kontribusi (%) |
 |---|---|---|---|---:|
-| 1 | Jonathan Kris Wicaksono | 13524023 | Membuat konsep algoritma program, menyusun `lexer.h` serta `lexer.cpp` | 25 |
-| 2 | Vincent Rionarlie | 13524031 | Melakukan pembagian tugas, mendesain diagram transisi DFA | 25 |
-| 3 | Muhammad Aufar Rizqi Kusuma | 13524061 | Menyusun laporan akhir | 25 |
-| 4 | Bryan Pratama Putra Hendra | 13524067 | Mengkodekan `token.h` dan `token.cpp` | 25 |
+| 1 | Jonathan Kris Wicaksono | 13524023 | Merevisi pembacaan separator (spasi, new-line, dan tab) | 25 |
+| 2 | Vincent Rionarlie | 13524031 | Menyusun laporan akhir | 25 |
+| 3 | Muhammad Aufar Rizqi Kusuma | 13524061 | Membuat struktur data keseluruhan untuk Parse Tree | 25 |
+| 4 | Bryan Pratama Putra Hendra | 13524067 | Membuat algoritma core dari parser | 25 |
