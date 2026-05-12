@@ -1,0 +1,25 @@
+\section{Kesimpulan}
+Milestone 2 berhasil merealisasikan komponen parser untuk Arion Compiler dengan 
+algoritma Recursive Descent yang terstruktur. Parser menerima daftar token dari 
+lexer atau token stream, memverifikasi kesesuaian token dengan grammar Arion, 
+serta membangun parse tree sebagai representasi hierarkis program. Implementasi 
+yang modular memisahkan tanggung jawab antara pembacaan input, pemrosesan token, 
+parsing, dan pencetakan parse tree, sehingga alur kerja mudah ditelusuri.
+
+Hasil pengujian dirancang untuk menunjukkan bahwa parser mampu menangani konstruksi 
+sintaks utama seperti deklarasi, pernyataan kontrol, dan ekspresi, serta melaporkan 
+kesalahan sintaks secara informatif dengan lokasi baris dan kolom. Dengan demikian, 
+parser Milestone 2 telah menyediakan fondasi yang diperlukan untuk melanjutkan ke 
+tahap semantic analysis pada milestone berikutnya.
+
+\section{Saran}
+Pengembangan pada milestone selanjutnya dapat memanfaatkan parse tree yang sudah 
+dihasilkan sebagai masukan untuk semantic analysis, termasuk pengecekan tipe, 
+scope, dan konsistensi deklarasi. Selain itu, pengujian dapat diperluas dengan 
+menambahkan variasi kasus yang lebih kompleks, terutama pada struktur subprogram, 
+record, dan array multi-dimensi agar cakupan grammar tervalidasi lebih luas.
+
+Ke depan, kualitas error handling juga dapat ditingkatkan melalui strategi 
+recovery sederhana agar parser mampu melanjutkan parsing setelah menemukan 
+error pertama. Hal ini akan membuat pelaporan error lebih lengkap dalam satu 
+kali eksekusi dan mempermudah proses debugging bagi pengguna.
