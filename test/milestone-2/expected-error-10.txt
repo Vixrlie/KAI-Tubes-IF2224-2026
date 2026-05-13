@@ -1,0 +1,5 @@
+﻿Syntax error at line 11, column 5: unexpected token ident, expected semicolon
+    + CategoryInfo          : NotSpecified: (Syntax error at...ected semicolon 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
