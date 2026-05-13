@@ -1,0 +1,5 @@
+﻿Syntax error at line 4, column 6: unexpected token intcon, expected colon
+    + CategoryInfo          : NotSpecified: (Syntax error at... expected colon 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 

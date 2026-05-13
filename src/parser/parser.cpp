@@ -772,14 +772,19 @@ std::unique_ptr<CaseBlockNode> Parser::parseCaseBlock()
     return caseBlockNode;
 }
 
-// This parses a while-do loop with a single nested statement body.
+// This parses a while-do loop that requires a compound statement body.
 std::unique_ptr<WhileStatementNode> Parser::parseWhileStatement()
 {
     auto whileStatementNode = std::make_unique<WhileStatementNode>();
     whileStatementNode->addChild(makeTerminalNode(consume(TokenType::WHILESY, "whilesy")));
     whileStatementNode->addChild(parseExpression());
     whileStatementNode->addChild(makeTerminalNode(consume(TokenType::DOSY, "dosy")));
-    whileStatementNode->addChild(parseStatement());
+    whileStatementNode->addChild(parseCompoundStatement());
+
+    if (!check(TokenType::SEMICOLON))
+    {
+        throwSyntaxError("semicolon");
+    }
     return whileStatementNode;
 }
 
@@ -794,7 +799,7 @@ std::unique_ptr<RepeatStatementNode> Parser::parseRepeatStatement()
     return repeatStatementNode;
 }
 
-// This parses a for loop with either to or downto as its direction.
+// This parses a for loop with either to or downto and a compound statement body.
 std::unique_ptr<ForStatementNode> Parser::parseForStatement()
 {
     auto forStatementNode = std::make_unique<ForStatementNode>();
@@ -814,7 +819,12 @@ std::unique_ptr<ForStatementNode> Parser::parseForStatement()
 
     forStatementNode->addChild(parseExpression());
     forStatementNode->addChild(makeTerminalNode(consume(TokenType::DOSY, "dosy")));
-    forStatementNode->addChild(parseStatement());
+    forStatementNode->addChild(parseCompoundStatement());
+
+    if (!check(TokenType::SEMICOLON))
+    {
+        throwSyntaxError("semicolon");
+    }
     return forStatementNode;
 }
 

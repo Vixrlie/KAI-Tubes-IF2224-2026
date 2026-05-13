@@ -1,0 +1,5 @@
+program EmptyOk;
+
+begin
+    ;
+end.

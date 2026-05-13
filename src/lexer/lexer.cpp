@@ -323,12 +323,12 @@ void Lexer::handleStart()
     }
 }
 
-// This keeps consuming letters and digits for identifiers and keywords.
+// This keeps consuming letters for identifiers and keywords.
 void Lexer::handleInIdent()
 {
     char c = current();
 
-    if (std::isalnum(c))
+    if (std::isalpha(c))
     {
         buffer += c;
         advance();
