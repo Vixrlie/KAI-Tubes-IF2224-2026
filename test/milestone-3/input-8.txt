@@ -1,0 +1,24 @@
+program NestedBlocks;
+
+var
+  i, j: integer;
+
+begin
+  begin
+    i := 1;
+    j := 2;
+    begin
+      i := i + j;
+    end;
+  end;
+
+  while i > 0 do
+  begin
+    begin
+      i := i - 1;
+    end;
+  end;
+
+  begin;
+  end;
+end.
