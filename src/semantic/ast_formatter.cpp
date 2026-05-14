@@ -410,7 +410,13 @@ namespace AST
         }
         if (auto *str = dynamic_cast<const StringNode *>(node))
         {
-            return "String('" + str->value + "')";
+            // Strip surrounding quotes if present for cleaner display
+            std::string display = str->value;
+            if (display.size() >= 2 && display.front() == '\'' && display.back() == '\'')
+            {
+                display = display.substr(1, display.size() - 2);
+            }
+            return "String('" + display + "')";
         }
         if (auto *boolNode = dynamic_cast<const BooleanNode *>(node))
         {
