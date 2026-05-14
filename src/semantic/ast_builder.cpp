@@ -173,7 +173,14 @@ namespace AST
         case TokenType::CHARCON:
         {
             auto ch = std::make_unique<CharNode>();
-            ch->value = valueToken->value.empty() ? '\0' : valueToken->value[0];
+            // Token value is like 'A' (with quotes), extract the inner char
+            const std::string &cv = valueToken->value;
+            if (cv.size() >= 3 && cv.front() == '\'')
+                ch->value = cv[1];
+            else if (!cv.empty())
+                ch->value = cv[0];
+            else
+                ch->value = '\0';
             return ch;
         }
         case TokenType::STRING:
@@ -759,7 +766,13 @@ namespace AST
                         else if (terminal->token().type == TokenType::CHARCON)
                         {
                             auto ch = std::make_unique<CharNode>();
-                            ch->value = terminal->token().value.empty() ? '\0' : terminal->token().value[0];
+                            const std::string &cv = terminal->token().value;
+                            if (cv.size() >= 3 && cv.front() == '\'')
+                                ch->value = cv[1];
+                            else if (!cv.empty())
+                                ch->value = cv[0];
+                            else
+                                ch->value = '\0';
                             access->indices.push_back(std::move(ch));
                         }
                         else if (terminal->token().type == TokenType::IDENT)
@@ -1203,7 +1216,13 @@ namespace AST
             case TokenType::CHARCON:
             {
                 auto ch = std::make_unique<CharNode>();
-                ch->value = terminal->token().value.empty() ? '\0' : terminal->token().value[0];
+                const std::string &cv = terminal->token().value;
+                if (cv.size() >= 3 && cv.front() == '\'')
+                    ch->value = cv[1];
+                else if (!cv.empty())
+                    ch->value = cv[0];
+                else
+                    ch->value = '\0';
                 return ch;
             }
             case TokenType::STRING:
