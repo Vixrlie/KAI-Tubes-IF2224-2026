@@ -1,0 +1,23 @@
+program StructuredTypes;
+
+type
+  Point == record
+    x, y: integer;
+  end;
+
+var
+  p: Point;
+  scores: array[1..5] of integer;
+  grade: char;
+
+begin
+  p.x := 10;
+  p.y := 20;
+  scores[1] := p.x + p.y;
+
+  grade := 'A';
+  case grade of
+    'A': writeln('Excellent');
+    'B', 'C': writeln('Good');
+  end;
+end.
