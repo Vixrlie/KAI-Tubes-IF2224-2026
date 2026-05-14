@@ -184,6 +184,19 @@ namespace AST
         }
         case TokenType::IDENT:
         {
+            // Handle boolean constant identifiers
+            if (valueToken->value == "True" || valueToken->value == "true")
+            {
+                auto boolNode = std::make_unique<BooleanNode>();
+                boolNode->value = true;
+                return boolNode;
+            }
+            if (valueToken->value == "False" || valueToken->value == "false")
+            {
+                auto boolNode = std::make_unique<BooleanNode>();
+                boolNode->value = false;
+                return boolNode;
+            }
             auto var = std::make_unique<VarRefNode>();
             var->name = valueToken->value;
             return var;
