@@ -1,0 +1,18 @@
+=== Abstract Syntax Tree ===
+Program('Hello')
+├── VarDecl('a')
+│   └── Type('integer')
+├── VarDecl('b')
+│   └── Type('integer')
+└── Block
+    ├── Assign
+    │   ├── Var('a')
+    │   └── Num(5)
+    ├── Assign
+    │   ├── Var('b')
+    │   └── BinOp('+')
+    │       ├── Var('a')
+    │       └── Num(10)
+    └── ProcCall('writeln')
+        ├── String('Result = ')
+        └── Var('b')
