@@ -1,0 +1,23 @@
+program ControlFlow;
+
+var
+  i, sum: integer;
+
+begin
+  sum := 0;
+
+  while sum < 100 do
+  begin
+    sum := sum + 1;
+  end;
+
+  for i := 10 downto 1 do
+  begin
+    sum := sum - i;
+  end;
+
+  repeat
+    sum := sum + 5;
+    i := i + 1;
+  until sum >= 50;
+end.
