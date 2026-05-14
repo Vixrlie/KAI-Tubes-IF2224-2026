@@ -1064,8 +1064,7 @@ namespace AST
     std::unique_ptr<ASTNode> ASTBuilder::visitSimpleExpression(const ParseTreeNode *node)
     {
         // Check for leading sign
-        bool hasSign = false;
-        std::string sign;
+        bool hasNegSign = false;
 
         auto terms = findChildren(node, "<term>");
         auto addOps = findChildren(node, "<additive-operator>");
@@ -1076,12 +1075,11 @@ namespace AST
             const auto *firstTerminal = dynamic_cast<const ParseTreeTerminalNode *>(node->children()[0].get());
             if (firstTerminal)
             {
-                if (firstTerminal->token().type == TokenType::PLUS ||
-                    firstTerminal->token().type == TokenType::MINUS)
+                if (firstTerminal->token().type == TokenType::MINUS)
                 {
-                    hasSign = true;
-                    sign = firstTerminal->token().value;
+                    hasNegSign = true;
                 }
+                // PLUS sign is a no-op
             }
         }
 
@@ -1093,8 +1091,8 @@ namespace AST
         // Build the first term
         std::unique_ptr<ASTNode> result = visitTerm(terms[0]);
 
-        // Apply leading sign as unary operator
-        if (hasSign && sign == "-")
+        // Apply leading negative sign as unary operator
+        if (hasNegSign)
         {
             auto unary = std::make_unique<UnaryOpNode>();
             unary->op = "-";
