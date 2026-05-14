@@ -1,0 +1,27 @@
+program Subprograms;
+
+var
+  result: integer;
+
+procedure PrintTwice(msg: string; count: integer);
+var i: integer;
+begin
+  for i := 1 to count do
+  begin
+    writeln(msg);
+  end;
+end;
+
+function Factorial(n: integer): integer;
+begin
+  if n <= 1 then
+    Factorial := 1
+  else
+    Factorial := n * Factorial(n - 1);
+end;
+
+begin
+  PrintTwice('hello', 3);
+  result := Factorial(5);
+  writeln(result);
+end.
