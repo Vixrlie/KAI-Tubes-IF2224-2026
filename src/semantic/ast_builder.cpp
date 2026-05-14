@@ -1203,6 +1203,19 @@ namespace AST
             }
             case TokenType::IDENT:
             {
+                // Check for boolean literals
+                if (terminal->token().value == "True" || terminal->token().value == "true")
+                {
+                    auto boolNode = std::make_unique<BooleanNode>();
+                    boolNode->value = true;
+                    return boolNode;
+                }
+                if (terminal->token().value == "False" || terminal->token().value == "false")
+                {
+                    auto boolNode = std::make_unique<BooleanNode>();
+                    boolNode->value = false;
+                    return boolNode;
+                }
                 auto var = std::make_unique<VarRefNode>();
                 var->name = terminal->token().value;
                 return var;
