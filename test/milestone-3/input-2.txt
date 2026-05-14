@@ -1,0 +1,12 @@
+program Expressions;
+
+var
+  x, y, z: integer;
+
+begin
+  x := (10 + 5) - 3 * 2;
+  y := x div 2 + 1;
+  z := -x mod 3;
+  if not (x == 0) then
+    writeln(y + z);
+end.

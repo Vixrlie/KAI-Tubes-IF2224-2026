@@ -1,0 +1,234 @@
+=== Parse Tree ===
+<program>
+├── <program-header>
+│   ├── programsy
+│   ├── ident(StructuredTypes)
+│   └── semicolon
+├── <declaration-part>
+│   ├── <type-declaration>
+│   │   ├── typesy
+│   │   ├── ident(Point)
+│   │   ├── eql
+│   │   ├── <type>
+│   │   │   └── <record-type>
+│   │   │       ├── recordsy
+│   │   │       ├── <field-list>
+│   │   │       │   ├── <field-part>
+│   │   │       │   │   ├── <identifier-list>
+│   │   │       │   │   │   ├── ident(x)
+│   │   │       │   │   │   ├── comma
+│   │   │       │   │   │   └── ident(y)
+│   │   │       │   │   ├── colon
+│   │   │       │   │   └── <type>
+│   │   │       │   │       └── ident(integer)
+│   │   │       │   └── semicolon
+│   │   │       └── endsy
+│   │   └── semicolon
+│   └── <var-declaration>
+│       ├── varsy
+│       ├── <identifier-list>
+│       │   └── ident(p)
+│       ├── colon
+│       ├── <type>
+│       │   └── ident(Point)
+│       ├── semicolon
+│       ├── <identifier-list>
+│       │   └── ident(scores)
+│       ├── colon
+│       ├── <type>
+│       │   └── <array-type>
+│       │       ├── arraysy
+│       │       ├── lbrack
+│       │       ├── <range>
+│       │       │   ├── <constant>
+│       │       │   │   └── intcon(1)
+│       │       │   ├── period
+│       │       │   ├── period
+│       │       │   └── <constant>
+│       │       │       └── intcon(5)
+│       │       ├── rbrack
+│       │       ├── ofsy
+│       │       └── <type>
+│       │           └── ident(integer)
+│       ├── semicolon
+│       ├── <identifier-list>
+│       │   └── ident(grade)
+│       ├── colon
+│       ├── <type>
+│       │   └── ident(char)
+│       └── semicolon
+├── <compound-statement>
+│   ├── beginsy
+│   ├── <statement-list>
+│   │   ├── <statement>
+│   │   │   └── <assignment-statement>
+│   │   │       ├── <variable>
+│   │   │       │   └── <component-variable>
+│   │   │       │       ├── <variable>
+│   │   │       │       │   └── ident(p)
+│   │   │       │       ├── period
+│   │   │       │       └── ident(x)
+│   │   │       ├── becomes
+│   │   │       └── <expression>
+│   │   │           └── <simple-expression>
+│   │   │               └── <term>
+│   │   │                   └── <factor>
+│   │   │                       └── intcon(10)
+│   │   ├── semicolon
+│   │   ├── <statement>
+│   │   │   └── <assignment-statement>
+│   │   │       ├── <variable>
+│   │   │       │   └── <component-variable>
+│   │   │       │       ├── <variable>
+│   │   │       │       │   └── ident(p)
+│   │   │       │       ├── period
+│   │   │       │       └── ident(y)
+│   │   │       ├── becomes
+│   │   │       └── <expression>
+│   │   │           └── <simple-expression>
+│   │   │               └── <term>
+│   │   │                   └── <factor>
+│   │   │                       └── intcon(20)
+│   │   ├── semicolon
+│   │   ├── <statement>
+│   │   │   └── <assignment-statement>
+│   │   │       ├── <variable>
+│   │   │       │   └── <component-variable>
+│   │   │       │       ├── <variable>
+│   │   │       │       │   └── ident(scores)
+│   │   │       │       ├── lbrack
+│   │   │       │       ├── <index-list>
+│   │   │       │       │   └── intcon(1)
+│   │   │       │       └── rbrack
+│   │   │       ├── becomes
+│   │   │       └── <expression>
+│   │   │           └── <simple-expression>
+│   │   │               ├── <term>
+│   │   │               │   └── <factor>
+│   │   │               │       └── <variable>
+│   │   │               │           └── <component-variable>
+│   │   │               │               ├── <variable>
+│   │   │               │               │   └── ident(p)
+│   │   │               │               ├── period
+│   │   │               │               └── ident(x)
+│   │   │               ├── <additive-operator>
+│   │   │               │   └── plus
+│   │   │               └── <term>
+│   │   │                   └── <factor>
+│   │   │                       └── <variable>
+│   │   │                           └── <component-variable>
+│   │   │                               ├── <variable>
+│   │   │                               │   └── ident(p)
+│   │   │                               ├── period
+│   │   │                               └── ident(y)
+│   │   ├── semicolon
+│   │   ├── <statement>
+│   │   │   └── <assignment-statement>
+│   │   │       ├── <variable>
+│   │   │       │   └── ident(grade)
+│   │   │       ├── becomes
+│   │   │       └── <expression>
+│   │   │           └── <simple-expression>
+│   │   │               └── <term>
+│   │   │                   └── <factor>
+│   │   │                       └── charcon('A')
+│   │   ├── semicolon
+│   │   ├── <statement>
+│   │   │   └── <case-statement>
+│   │   │       ├── casesy
+│   │   │       ├── <expression>
+│   │   │       │   └── <simple-expression>
+│   │   │       │       └── <term>
+│   │   │       │           └── <factor>
+│   │   │       │               └── ident(grade)
+│   │   │       ├── ofsy
+│   │   │       ├── <case-block>
+│   │   │       │   ├── <constant>
+│   │   │       │   │   └── charcon('A')
+│   │   │       │   ├── colon
+│   │   │       │   ├── <statement>
+│   │   │       │   │   └── <procedure/function-call>
+│   │   │       │   │       ├── ident(writeln)
+│   │   │       │   │       ├── lparent
+│   │   │       │   │       ├── <parameter-list>
+│   │   │       │   │       │   └── <expression>
+│   │   │       │   │       │       └── <simple-expression>
+│   │   │       │   │       │           └── <term>
+│   │   │       │   │       │               └── <factor>
+│   │   │       │   │       │                   └── string('Excellent')
+│   │   │       │   │       └── rparent
+│   │   │       │   ├── semicolon
+│   │   │       │   └── <case-block>
+│   │   │       │       ├── <constant>
+│   │   │       │       │   └── charcon('B')
+│   │   │       │       ├── comma
+│   │   │       │       ├── <constant>
+│   │   │       │       │   └── charcon('C')
+│   │   │       │       ├── colon
+│   │   │       │       ├── <statement>
+│   │   │       │       │   └── <procedure/function-call>
+│   │   │       │       │       ├── ident(writeln)
+│   │   │       │       │       ├── lparent
+│   │   │       │       │       ├── <parameter-list>
+│   │   │       │       │       │   └── <expression>
+│   │   │       │       │       │       └── <simple-expression>
+│   │   │       │       │       │           └── <term>
+│   │   │       │       │       │               └── <factor>
+│   │   │       │       │       │                   └── string('Good')
+│   │   │       │       │       └── rparent
+│   │   │       │       └── semicolon
+│   │   │       └── endsy
+│   │   └── semicolon
+│   └── endsy
+└── period
+
+=== Abstract Syntax Tree ===
+Program('StructuredTypes')
+├── TypeDecl('Point')
+│   └── RecordType
+│       ├── VarDecl('x')
+│       │   └── Type('integer')
+│       └── VarDecl('y')
+│           └── Type('integer')
+├── VarDecl('p')
+│   └── Type('Point')
+├── VarDecl('scores')
+│   └── ArrayType
+│       ├── Subrange
+│       │   ├── Num(1)
+│       │   └── Num(5)
+│       └── Type('integer')
+├── VarDecl('grade')
+│   └── Type('char')
+└── Block
+    ├── Assign
+    │   ├── FieldAccess(.x)
+    │   │   └── Var('p')
+    │   └── Num(10)
+    ├── Assign
+    │   ├── FieldAccess(.y)
+    │   │   └── Var('p')
+    │   └── Num(20)
+    ├── Assign
+    │   ├── ArrayAccess
+    │   │   ├── Var('scores')
+    │   │   └── Num(1)
+    │   └── BinOp('+')
+    │       ├── FieldAccess(.x)
+    │       │   └── Var('p')
+    │       └── FieldAccess(.y)
+    │           └── Var('p')
+    ├── Assign
+    │   ├── Var('grade')
+    │   └── Char('A')
+    └── Case
+        ├── Var('grade')
+        ├── CaseBranch
+        │   ├── Char('A')
+        │   └── ProcCall('writeln')
+        │       └── String('Excellent')
+        └── CaseBranch
+            ├── Char('B')
+            ├── Char('C')
+            └── ProcCall('writeln')
+                └── String('Good')

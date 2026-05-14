@@ -5,6 +5,8 @@
 #include "lexer/lexer.h"
 #include "lexer/token_stream_reader.h"
 #include "parser/parser.h"
+#include "semantic/ast_builder.h"
+#include "semantic/ast_formatter.h"
 
 int main(int argc, char *argv[])
 {
@@ -49,13 +51,26 @@ int main(int argc, char *argv[])
             }
         }
 
+        // Phase 1: Parse source into parse tree (CST)
         Parser parser(tokens);
         std::unique_ptr<ProgramNode> parseTree = parser.parseProgram();
 
-        std::ostringstream outputBuffer;
-        parseTree->print(outputBuffer);
-        const std::string output = outputBuffer.str();
+        // Phase 2: Convert parse tree to AST via Syntax-Directed Translation
+        AST::ASTBuilder astBuilder;
+        std::unique_ptr<AST::ProgramNode> ast = astBuilder.build(parseTree.get());
 
+        // Output: Print the Decorated AST
+        std::ostringstream outputBuffer;
+
+        outputBuffer << "=== Parse Tree ===" << std::endl;
+        parseTree->print(outputBuffer);
+        outputBuffer << std::endl;
+
+        outputBuffer << "=== Abstract Syntax Tree ===" << std::endl;
+        AST::ASTFormatter formatter;
+        formatter.print(outputBuffer, ast.get());
+
+        const std::string output = outputBuffer.str();
         std::cout << output;
 
         if (argc >= 3)

@@ -3,6 +3,7 @@ build/
 *.o
 *.out
 *.exe
+arion_parser
 
 # IDE / Editor
 .vscode/

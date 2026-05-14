@@ -1,0 +1,24 @@
+program BooleanLogic;
+
+var
+  a, b: boolean;
+  x, y: integer;
+
+begin
+  a := True;
+  b := False;
+
+  if (a and b) or (x > 0) then
+    writeln('yes')
+  else
+    writeln('no');
+
+  if not a then
+    x := 1
+  else
+    x := 2;
+
+  y := x * 3 + 1;
+  if (y >= 5) and (y <= 10) then
+    writeln('in range');
+end.

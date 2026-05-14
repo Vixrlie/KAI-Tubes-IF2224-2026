@@ -1,0 +1,260 @@
+=== Parse Tree ===
+<program>
+├── <program-header>
+│   ├── programsy
+│   ├── ident(Subprograms)
+│   └── semicolon
+├── <declaration-part>
+│   ├── <var-declaration>
+│   │   ├── varsy
+│   │   ├── <identifier-list>
+│   │   │   └── ident(result)
+│   │   ├── colon
+│   │   ├── <type>
+│   │   │   └── ident(integer)
+│   │   └── semicolon
+│   ├── <subprogram-declaration>
+│   │   └── <procedure-declaration>
+│   │       ├── proceduresy
+│   │       ├── ident(PrintTwice)
+│   │       ├── <formal-parameter-list>
+│   │       │   ├── lparent
+│   │       │   ├── <parameter-group>
+│   │       │   │   ├── <identifier-list>
+│   │       │   │   │   └── ident(msg)
+│   │       │   │   ├── colon
+│   │       │   │   └── ident(string)
+│   │       │   ├── semicolon
+│   │       │   ├── <parameter-group>
+│   │       │   │   ├── <identifier-list>
+│   │       │   │   │   └── ident(count)
+│   │       │   │   ├── colon
+│   │       │   │   └── ident(integer)
+│   │       │   └── rparent
+│   │       ├── semicolon
+│   │       ├── <block>
+│   │       │   ├── <declaration-part>
+│   │       │   │   └── <var-declaration>
+│   │       │   │       ├── varsy
+│   │       │   │       ├── <identifier-list>
+│   │       │   │       │   └── ident(i)
+│   │       │   │       ├── colon
+│   │       │   │       ├── <type>
+│   │       │   │       │   └── ident(integer)
+│   │       │   │       └── semicolon
+│   │       │   └── <compound-statement>
+│   │       │       ├── beginsy
+│   │       │       ├── <statement-list>
+│   │       │       │   ├── <statement>
+│   │       │       │   │   └── <for-statement>
+│   │       │       │   │       ├── forsy
+│   │       │       │   │       ├── ident(i)
+│   │       │       │   │       ├── becomes
+│   │       │       │   │       ├── <expression>
+│   │       │       │   │       │   └── <simple-expression>
+│   │       │       │   │       │       └── <term>
+│   │       │       │   │       │           └── <factor>
+│   │       │       │   │       │               └── intcon(1)
+│   │       │       │   │       ├── tosy
+│   │       │       │   │       ├── <expression>
+│   │       │       │   │       │   └── <simple-expression>
+│   │       │       │   │       │       └── <term>
+│   │       │       │   │       │           └── <factor>
+│   │       │       │   │       │               └── ident(count)
+│   │       │       │   │       ├── dosy
+│   │       │       │   │       └── <compound-statement>
+│   │       │       │   │           ├── beginsy
+│   │       │       │   │           ├── <statement-list>
+│   │       │       │   │           │   ├── <statement>
+│   │       │       │   │           │   │   └── <procedure/function-call>
+│   │       │       │   │           │   │       ├── ident(writeln)
+│   │       │       │   │           │   │       ├── lparent
+│   │       │       │   │           │   │       ├── <parameter-list>
+│   │       │       │   │           │   │       │   └── <expression>
+│   │       │       │   │           │   │       │       └── <simple-expression>
+│   │       │       │   │           │   │       │           └── <term>
+│   │       │       │   │           │   │       │               └── <factor>
+│   │       │       │   │           │   │       │                   └── ident(msg)
+│   │       │       │   │           │   │       └── rparent
+│   │       │       │   │           │   └── semicolon
+│   │       │       │   │           └── endsy
+│   │       │       │   └── semicolon
+│   │       │       └── endsy
+│   │       └── semicolon
+│   └── <subprogram-declaration>
+│       └── <function-declaration>
+│           ├── functionsy
+│           ├── ident(Factorial)
+│           ├── <formal-parameter-list>
+│           │   ├── lparent
+│           │   ├── <parameter-group>
+│           │   │   ├── <identifier-list>
+│           │   │   │   └── ident(n)
+│           │   │   ├── colon
+│           │   │   └── ident(integer)
+│           │   └── rparent
+│           ├── colon
+│           ├── ident(integer)
+│           ├── semicolon
+│           ├── <block>
+│           │   ├── <declaration-part>
+│           │   └── <compound-statement>
+│           │       ├── beginsy
+│           │       ├── <statement-list>
+│           │       │   ├── <statement>
+│           │       │   │   └── <if-statement>
+│           │       │   │       ├── ifsy
+│           │       │   │       ├── <expression>
+│           │       │   │       │   ├── <simple-expression>
+│           │       │   │       │   │   └── <term>
+│           │       │   │       │   │       └── <factor>
+│           │       │   │       │   │           └── ident(n)
+│           │       │   │       │   ├── <relational-operator>
+│           │       │   │       │   │   └── leq
+│           │       │   │       │   └── <simple-expression>
+│           │       │   │       │       └── <term>
+│           │       │   │       │           └── <factor>
+│           │       │   │       │               └── intcon(1)
+│           │       │   │       ├── thensy
+│           │       │   │       ├── <statement>
+│           │       │   │       │   └── <assignment-statement>
+│           │       │   │       │       ├── <variable>
+│           │       │   │       │       │   └── ident(Factorial)
+│           │       │   │       │       ├── becomes
+│           │       │   │       │       └── <expression>
+│           │       │   │       │           └── <simple-expression>
+│           │       │   │       │               └── <term>
+│           │       │   │       │                   └── <factor>
+│           │       │   │       │                       └── intcon(1)
+│           │       │   │       ├── elsesy
+│           │       │   │       └── <statement>
+│           │       │   │           └── <assignment-statement>
+│           │       │   │               ├── <variable>
+│           │       │   │               │   └── ident(Factorial)
+│           │       │   │               ├── becomes
+│           │       │   │               └── <expression>
+│           │       │   │                   └── <simple-expression>
+│           │       │   │                       └── <term>
+│           │       │   │                           ├── <factor>
+│           │       │   │                           │   └── ident(n)
+│           │       │   │                           ├── <multiplicative-operator>
+│           │       │   │                           │   └── times
+│           │       │   │                           └── <factor>
+│           │       │   │                               └── <procedure/function-call>
+│           │       │   │                                   ├── ident(Factorial)
+│           │       │   │                                   ├── lparent
+│           │       │   │                                   ├── <parameter-list>
+│           │       │   │                                   │   └── <expression>
+│           │       │   │                                   │       └── <simple-expression>
+│           │       │   │                                   │           ├── <term>
+│           │       │   │                                   │           │   └── <factor>
+│           │       │   │                                   │           │       └── ident(n)
+│           │       │   │                                   │           ├── <additive-operator>
+│           │       │   │                                   │           │   └── minus
+│           │       │   │                                   │           └── <term>
+│           │       │   │                                   │               └── <factor>
+│           │       │   │                                   │                   └── intcon(1)
+│           │       │   │                                   └── rparent
+│           │       │   └── semicolon
+│           │       └── endsy
+│           └── semicolon
+├── <compound-statement>
+│   ├── beginsy
+│   ├── <statement-list>
+│   │   ├── <statement>
+│   │   │   └── <procedure/function-call>
+│   │   │       ├── ident(PrintTwice)
+│   │   │       ├── lparent
+│   │   │       ├── <parameter-list>
+│   │   │       │   ├── <expression>
+│   │   │       │   │   └── <simple-expression>
+│   │   │       │   │       └── <term>
+│   │   │       │   │           └── <factor>
+│   │   │       │   │               └── string('hello')
+│   │   │       │   ├── comma
+│   │   │       │   └── <expression>
+│   │   │       │       └── <simple-expression>
+│   │   │       │           └── <term>
+│   │   │       │               └── <factor>
+│   │   │       │                   └── intcon(3)
+│   │   │       └── rparent
+│   │   ├── semicolon
+│   │   ├── <statement>
+│   │   │   └── <assignment-statement>
+│   │   │       ├── <variable>
+│   │   │       │   └── ident(result)
+│   │   │       ├── becomes
+│   │   │       └── <expression>
+│   │   │           └── <simple-expression>
+│   │   │               └── <term>
+│   │   │                   └── <factor>
+│   │   │                       └── <procedure/function-call>
+│   │   │                           ├── ident(Factorial)
+│   │   │                           ├── lparent
+│   │   │                           ├── <parameter-list>
+│   │   │                           │   └── <expression>
+│   │   │                           │       └── <simple-expression>
+│   │   │                           │           └── <term>
+│   │   │                           │               └── <factor>
+│   │   │                           │                   └── intcon(5)
+│   │   │                           └── rparent
+│   │   ├── semicolon
+│   │   ├── <statement>
+│   │   │   └── <procedure/function-call>
+│   │   │       ├── ident(writeln)
+│   │   │       ├── lparent
+│   │   │       ├── <parameter-list>
+│   │   │       │   └── <expression>
+│   │   │       │       └── <simple-expression>
+│   │   │       │           └── <term>
+│   │   │       │               └── <factor>
+│   │   │       │                   └── ident(result)
+│   │   │       └── rparent
+│   │   └── semicolon
+│   └── endsy
+└── period
+
+=== Abstract Syntax Tree ===
+Program('Subprograms')
+├── VarDecl('result')
+│   └── Type('integer')
+├── ProcedureDecl('PrintTwice')
+│   ├── Param('msg': string)
+│   ├── Param('count': integer)
+│   ├── VarDecl('i')
+│   │   └── Type('integer')
+│   └── Block
+│       └── For('i', to)
+│           ├── Num(1)
+│           ├── Var('count')
+│           └── Block
+│               └── ProcCall('writeln')
+│                   └── Var('msg')
+├── FunctionDecl('Factorial', returns: 'integer')
+│   ├── Param('n': integer)
+│   └── Block
+│       └── If
+│           ├── BinOp('<=')
+│           │   ├── Var('n')
+│           │   └── Num(1)
+│           ├── Assign
+│           │   ├── Var('Factorial')
+│           │   └── Num(1)
+│           └── Assign
+│               ├── Var('Factorial')
+│               └── BinOp('*')
+│                   ├── Var('n')
+│                   └── FuncCall('Factorial')
+│                       └── BinOp('-')
+│                           ├── Var('n')
+│                           └── Num(1)
+└── Block
+    ├── ProcCall('PrintTwice')
+    │   ├── String('hello')
+    │   └── Num(3)
+    ├── Assign
+    │   ├── Var('result')
+    │   └── FuncCall('Factorial')
+    │       └── Num(5)
+    └── ProcCall('writeln')
+        └── Var('result')
