@@ -1,3 +1,28 @@
+=== tab ===
+idx  id        obj       type  ref  nrm  lev  adr  link
+-------------------------------------------------------
+...  (reserved words 0-32)
+ 33   Integer       type     0    0    1    0    0     0
+ 34      Real       type     1    0    1    0    0    33
+ 35      Char       type     2    0    1    0    0    34
+ 36   Boolean       type     3    0    1    0    0    35
+ 37    String       type     4    0    1    0    0    36
+ 38      True      const     3    0    1    0    1    37
+ 39     False      const     3    0    1    0    0    38
+ 40   writeln  procedure    10    0    1    0    0    39
+ 41    readln  procedure    10    0    1    0    0    40
+ 42  ControlFlow  procedure    10    0    1    1    0     0
+ 43         i   variable     0    0    1    1    0    42
+ 44       sum   variable     0    0    1    1    0    43
+
+=== btab ===
+idx  last  lpar  psze  vsze
+---------------------------
+  0    41     0     0     0
+
+=== atab ===
+(empty)
+
 === Parse Tree ===
 <program>
 ├── <program-header>
@@ -155,46 +180,46 @@
 │   └── endsy
 └── period
 
-=== Abstract Syntax Tree ===
-Program('ControlFlow')
-├── VarDecl('i')
+=== Decorated AST ===
+Program('ControlFlow')  → type:Unknown, lev:1, block:0
+├── VarDecl('i')  → tab_index:43, type:Integer, lev:1, block:0
 │   └── Type('integer')
-├── VarDecl('sum')
+├── VarDecl('sum')  → tab_index:44, type:Integer, lev:1, block:0
 │   └── Type('integer')
-└── Block
-    ├── Assign
-    │   ├── Var('sum')
-    │   └── Num(0)
-    ├── While
-    │   ├── BinOp('<')
-    │   │   ├── Var('sum')
-    │   │   └── Num(100)
-    │   └── Block
-    │       └── Assign
-    │           ├── Var('sum')
-    │           └── BinOp('+')
-    │               ├── Var('sum')
-    │               └── Num(1)
-    ├── For('i', downto)
-    │   ├── Num(10)
-    │   ├── Num(1)
-    │   └── Block
-    │       └── Assign
-    │           ├── Var('sum')
-    │           └── BinOp('-')
-    │               ├── Var('sum')
-    │               └── Var('i')
-    └── Repeat
-        ├── Assign
-        │   ├── Var('sum')
-        │   └── BinOp('+')
-        │       ├── Var('sum')
-        │       └── Num(5)
-        ├── Assign
-        │   ├── Var('i')
-        │   └── BinOp('+')
-        │       ├── Var('i')
-        │       └── Num(1)
-        └── BinOp('>=')
-            ├── Var('sum')
-            └── Num(50)
+└── Block  → type:Unknown, lev:1, block:0
+    ├── Assign  → type:Unknown, lev:1, block:0
+    │   ├── Var('sum')  → tab_index:44, type:Integer, lev:1, block:0
+    │   └── Num(0)  → type:Integer, lev:1, block:0
+    ├── While  → type:Unknown, lev:1, block:0
+    │   ├── BinOp('<')  → type:Boolean, lev:1, block:0
+    │   │   ├── Var('sum')  → tab_index:44, type:Integer, lev:1, block:0
+    │   │   └── Num(100)  → type:Integer, lev:1, block:0
+    │   └── Block  → type:Unknown, lev:1, block:0
+    │       └── Assign  → type:Unknown, lev:1, block:0
+    │           ├── Var('sum')  → tab_index:44, type:Integer, lev:1, block:0
+    │           └── BinOp('+')  → type:Integer, lev:1, block:0
+    │               ├── Var('sum')  → tab_index:44, type:Integer, lev:1, block:0
+    │               └── Num(1)  → type:Integer, lev:1, block:0
+    ├── For('i', downto)  → type:Unknown, lev:1, block:0
+    │   ├── Num(10)  → type:Integer, lev:1, block:0
+    │   ├── Num(1)  → type:Integer, lev:1, block:0
+    │   └── Block  → type:Unknown, lev:1, block:0
+    │       └── Assign  → type:Unknown, lev:1, block:0
+    │           ├── Var('sum')  → tab_index:44, type:Integer, lev:1, block:0
+    │           └── BinOp('-')  → type:Integer, lev:1, block:0
+    │               ├── Var('sum')  → tab_index:44, type:Integer, lev:1, block:0
+    │               └── Var('i')  → tab_index:43, type:Integer, lev:1, block:0
+    └── Repeat  → type:Unknown, lev:1, block:0
+        ├── Assign  → type:Unknown, lev:1, block:0
+        │   ├── Var('sum')  → tab_index:44, type:Integer, lev:1, block:0
+        │   └── BinOp('+')  → type:Integer, lev:1, block:0
+        │       ├── Var('sum')  → tab_index:44, type:Integer, lev:1, block:0
+        │       └── Num(5)  → type:Integer, lev:1, block:0
+        ├── Assign  → type:Unknown, lev:1, block:0
+        │   ├── Var('i')  → tab_index:43, type:Integer, lev:1, block:0
+        │   └── BinOp('+')  → type:Integer, lev:1, block:0
+        │       ├── Var('i')  → tab_index:43, type:Integer, lev:1, block:0
+        │       └── Num(1)  → type:Integer, lev:1, block:0
+        └── BinOp('>=')  → type:Boolean, lev:1, block:0
+            ├── Var('sum')  → tab_index:44, type:Integer, lev:1, block:0
+            └── Num(50)  → type:Integer, lev:1, block:0

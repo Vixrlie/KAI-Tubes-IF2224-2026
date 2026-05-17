@@ -1,3 +1,29 @@
+=== tab ===
+idx  id        obj       type  ref  nrm  lev  adr  link
+-------------------------------------------------------
+...  (reserved words 0-32)
+ 33   Integer       type     0    0    1    0    0     0
+ 34      Real       type     1    0    1    0    0    33
+ 35      Char       type     2    0    1    0    0    34
+ 36   Boolean       type     3    0    1    0    0    35
+ 37    String       type     4    0    1    0    0    36
+ 38      True      const     3    0    1    0    1    37
+ 39     False      const     3    0    1    0    0    38
+ 40   writeln  procedure    10    0    1    0    0    39
+ 41    readln  procedure    10    0    1    0    0    40
+ 42  Expressions  procedure    10    0    1    1    0     0
+ 43         x   variable     0    0    1    1    0    42
+ 44         y   variable     0    0    1    1    0    43
+ 45         z   variable     0    0    1    1    0    44
+
+=== btab ===
+idx  last  lpar  psze  vsze
+---------------------------
+  0    41     0     0     0
+
+=== atab ===
+(empty)
+
 === Parse Tree ===
 <program>
 ├── <program-header>
@@ -130,43 +156,43 @@
 │   └── endsy
 └── period
 
-=== Abstract Syntax Tree ===
-Program('Expressions')
-├── VarDecl('x')
+=== Decorated AST ===
+Program('Expressions')  → type:Unknown, lev:1, block:0
+├── VarDecl('x')  → tab_index:43, type:Integer, lev:1, block:0
 │   └── Type('integer')
-├── VarDecl('y')
+├── VarDecl('y')  → tab_index:44, type:Integer, lev:1, block:0
 │   └── Type('integer')
-├── VarDecl('z')
+├── VarDecl('z')  → tab_index:45, type:Integer, lev:1, block:0
 │   └── Type('integer')
-└── Block
-    ├── Assign
-    │   ├── Var('x')
-    │   └── BinOp('-')
-    │       ├── BinOp('+')
-    │       │   ├── Num(10)
-    │       │   └── Num(5)
-    │       └── BinOp('*')
-    │           ├── Num(3)
-    │           └── Num(2)
-    ├── Assign
-    │   ├── Var('y')
-    │   └── BinOp('+')
-    │       ├── BinOp('div')
-    │       │   ├── Var('x')
-    │       │   └── Num(2)
-    │       └── Num(1)
-    ├── Assign
-    │   ├── Var('z')
-    │   └── UnaryOp('-')
-    │       └── BinOp('mod')
-    │           ├── Var('x')
-    │           └── Num(3)
-    └── If
-        ├── UnaryOp('not')
-        │   └── BinOp('=')
-        │       ├── Var('x')
-        │       └── Num(0)
-        └── ProcCall('writeln')
-            └── BinOp('+')
-                ├── Var('y')
-                └── Var('z')
+└── Block  → type:Unknown, lev:1, block:0
+    ├── Assign  → type:Unknown, lev:1, block:0
+    │   ├── Var('x')  → tab_index:43, type:Integer, lev:1, block:0
+    │   └── BinOp('-')  → type:Integer, lev:1, block:0
+    │       ├── BinOp('+')  → type:Integer, lev:1, block:0
+    │       │   ├── Num(10)  → type:Integer, lev:1, block:0
+    │       │   └── Num(5)  → type:Integer, lev:1, block:0
+    │       └── BinOp('*')  → type:Integer, lev:1, block:0
+    │           ├── Num(3)  → type:Integer, lev:1, block:0
+    │           └── Num(2)  → type:Integer, lev:1, block:0
+    ├── Assign  → type:Unknown, lev:1, block:0
+    │   ├── Var('y')  → tab_index:44, type:Integer, lev:1, block:0
+    │   └── BinOp('+')  → type:Integer, lev:1, block:0
+    │       ├── BinOp('div')  → type:Integer, lev:1, block:0
+    │       │   ├── Var('x')  → tab_index:43, type:Integer, lev:1, block:0
+    │       │   └── Num(2)  → type:Integer, lev:1, block:0
+    │       └── Num(1)  → type:Integer, lev:1, block:0
+    ├── Assign  → type:Unknown, lev:1, block:0
+    │   ├── Var('z')  → tab_index:45, type:Integer, lev:1, block:0
+    │   └── UnaryOp('-')  → type:Integer, lev:1, block:0
+    │       └── BinOp('mod')  → type:Integer, lev:1, block:0
+    │           ├── Var('x')  → tab_index:43, type:Integer, lev:1, block:0
+    │           └── Num(3)  → type:Integer, lev:1, block:0
+    └── If  → type:Unknown, lev:1, block:0
+        ├── UnaryOp('not')  → type:Boolean, lev:1, block:0
+        │   └── BinOp('=')  → type:Boolean, lev:1, block:0
+        │       ├── Var('x')  → tab_index:43, type:Integer, lev:1, block:0
+        │       └── Num(0)  → type:Integer, lev:1, block:0
+        └── ProcCall('writeln')  → type:Unknown, lev:1, block:0
+            └── BinOp('+')  → type:Integer, lev:1, block:0
+                ├── Var('y')  → tab_index:44, type:Integer, lev:1, block:0
+                └── Var('z')  → tab_index:45, type:Integer, lev:1, block:0

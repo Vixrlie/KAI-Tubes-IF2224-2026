@@ -1,3 +1,35 @@
+=== tab ===
+idx  id        obj       type  ref  nrm  lev  adr  link
+-------------------------------------------------------
+...  (reserved words 0-32)
+ 33   Integer       type     0    0    1    0    0     0
+ 34      Real       type     1    0    1    0    0    33
+ 35      Char       type     2    0    1    0    0    34
+ 36   Boolean       type     3    0    1    0    0    35
+ 37    String       type     4    0    1    0    0    36
+ 38      True      const     3    0    1    0    1    37
+ 39     False      const     3    0    1    0    0    38
+ 40   writeln  procedure    10    0    1    0    0    39
+ 41    readln  procedure    10    0    1    0    0    40
+ 42  Subprograms  procedure    10    0    1    1    0     0
+ 43    result   variable     0    0    1    1    0    42
+ 44  PrintTwice  procedure    10    0    1    1    0    43
+ 45       msg   variable     4    0    1    2    0     0
+ 46     count   variable     0    0    1    2    0    45
+ 47         i   variable     0    0    1    2    0    46
+ 48  Factorial   function     0    0    1    1    0    44
+ 49         n   variable     0    0    1    2    0     0
+
+=== btab ===
+idx  last  lpar  psze  vsze
+---------------------------
+  0    41     0     0     0
+  1    44     0     0     0
+  2    48     0     0     0
+
+=== atab ===
+(empty)
+
 === Parse Tree ===
 <program>
 ├── <program-header>
@@ -214,47 +246,47 @@
 │   └── endsy
 └── period
 
-=== Abstract Syntax Tree ===
-Program('Subprograms')
-├── VarDecl('result')
+=== Decorated AST ===
+Program('Subprograms')  → type:Unknown, lev:1, block:0
+├── VarDecl('result')  → tab_index:43, type:Integer, lev:1, block:0
 │   └── Type('integer')
-├── ProcedureDecl('PrintTwice')
-│   ├── Param('msg': string)
-│   ├── Param('count': integer)
-│   ├── VarDecl('i')
+├── ProcedureDecl('PrintTwice')  → type:Unknown, lev:2, block:1
+│   ├── Param('msg': string)  → type:String, lev:2, block:1
+│   ├── Param('count': integer)  → type:Integer, lev:2, block:1
+│   ├── VarDecl('i')  → tab_index:47, type:Integer, lev:2, block:1
 │   │   └── Type('integer')
-│   └── Block
-│       └── For('i', to)
-│           ├── Num(1)
-│           ├── Var('count')
-│           └── Block
-│               └── ProcCall('writeln')
-│                   └── Var('msg')
-├── FunctionDecl('Factorial', returns: 'integer')
-│   ├── Param('n': integer)
-│   └── Block
-│       └── If
-│           ├── BinOp('<=')
-│           │   ├── Var('n')
-│           │   └── Num(1)
-│           ├── Assign
-│           │   ├── Var('Factorial')
-│           │   └── Num(1)
-│           └── Assign
-│               ├── Var('Factorial')
-│               └── BinOp('*')
-│                   ├── Var('n')
-│                   └── FuncCall('Factorial')
-│                       └── BinOp('-')
-│                           ├── Var('n')
-│                           └── Num(1)
-└── Block
-    ├── ProcCall('PrintTwice')
-    │   ├── String('hello')
-    │   └── Num(3)
-    ├── Assign
-    │   ├── Var('result')
-    │   └── FuncCall('Factorial')
-    │       └── Num(5)
-    └── ProcCall('writeln')
-        └── Var('result')
+│   └── Block  → type:Unknown, lev:2, block:1
+│       └── For('i', to)  → type:Unknown, lev:2, block:1
+│           ├── Num(1)  → type:Integer, lev:2, block:1
+│           ├── Var('count')  → tab_index:46, type:Integer, lev:2, block:1
+│           └── Block  → type:Unknown, lev:2, block:1
+│               └── ProcCall('writeln')  → type:Unknown, lev:2, block:1
+│                   └── Var('msg')  → tab_index:45, type:String, lev:2, block:1
+├── FunctionDecl('Factorial', returns: 'integer')  → type:Integer, lev:2, block:2
+│   ├── Param('n': integer)  → type:Integer, lev:2, block:2
+│   └── Block  → type:Unknown, lev:2, block:2
+│       └── If  → type:Unknown, lev:2, block:2
+│           ├── BinOp('<=')  → type:Boolean, lev:2, block:2
+│           │   ├── Var('n')  → tab_index:49, type:Integer, lev:2, block:2
+│           │   └── Num(1)  → type:Integer, lev:2, block:2
+│           ├── Assign  → type:Unknown, lev:2, block:2
+│           │   ├── Var('Factorial')  → tab_index:48, type:Integer, lev:2, block:2
+│           │   └── Num(1)  → type:Integer, lev:2, block:2
+│           └── Assign  → type:Unknown, lev:2, block:2
+│               ├── Var('Factorial')  → tab_index:48, type:Integer, lev:2, block:2
+│               └── BinOp('*')  → type:Integer, lev:2, block:2
+│                   ├── Var('n')  → tab_index:49, type:Integer, lev:2, block:2
+│                   └── FuncCall('Factorial')  → tab_index:48, type:Integer, lev:2, block:2
+│                       └── BinOp('-')  → type:Integer, lev:2, block:2
+│                           ├── Var('n')  → tab_index:49, type:Integer, lev:2, block:2
+│                           └── Num(1)  → type:Integer, lev:2, block:2
+└── Block  → type:Unknown, lev:1, block:0
+    ├── ProcCall('PrintTwice')  → type:Unknown, lev:1, block:0
+    │   ├── String('hello')  → type:String, lev:1, block:0
+    │   └── Num(3)  → type:Integer, lev:1, block:0
+    ├── Assign  → type:Unknown, lev:1, block:0
+    │   ├── Var('result')  → tab_index:43, type:Integer, lev:1, block:0
+    │   └── FuncCall('Factorial')  → tab_index:48, type:Integer, lev:1, block:0
+    │       └── Num(5)  → type:Integer, lev:1, block:0
+    └── ProcCall('writeln')  → type:Unknown, lev:1, block:0
+        └── Var('result')  → tab_index:43, type:Integer, lev:1, block:0
