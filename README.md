@@ -142,25 +142,6 @@ Jika ditemukan semantic error, program mengembalikan exit code `1` dan menampilk
 - Undefined identifier: x
 ```
 
-## Cara Menjalankan Semua Test Milestone 3
-Untuk shell Unix-like:
-
-```bash
-make -B
-for i in 1 2 3 4 5 6 7 8; do
-  ./arion_parser test/milestone-3/input-$i.txt output-$i.txt
-done
-```
-
-Untuk membandingkan dengan output yang sudah disimpan:
-
-```bash
-for i in 1 2 3 4 5 6 7 8; do
-  ./arion_parser test/milestone-3/input-$i.txt output-$i.txt
-  diff -q output-$i.txt test/milestone-3/output-$i.txt
-done
-```
-
 ## Format Input File `.txt`
 Program utama `arion_parser` menerima tiga bentuk input:
 
@@ -263,7 +244,7 @@ Tim **Kai**:
 ## Tabel Kontribusi
 | No | Nama Lengkap | NIM | Deskripsi Pekerjaan | Persentase Kontribusi (%) |
 |---|---|---|---|---:|
-| 1 | Jonathan Kris Wicaksono | 13524023 | Merevisi pembacaan separator (spasi, new-line, dan tab) | 25 |
-| 2 | Vincent Rionarlie | 13524031 | Menyusun laporan akhir | 25 |
-| 3 | Muhammad Aufar Rizqi Kusuma | 13524061 | Membuat struktur data keseluruhan untuk Parse Tree | 25 |
-| 4 | Bryan Pratama Putra Hendra | 13524067 | Membuat algoritma core dari parser | 25 |
+| 1 | Jonathan Kris Wicaksono | 13524023 | AST: merancang node hierarchy AST, Syntax-Directed Translation untuk konversi parse tree ke AST, dan AST formatter untuk output Decorated AST. | 25 |
+| 2 | Vincent Rionarlie | 13524031 | Semantic Analyzer: implementasi visit functions untuk setiap node, type checking & compatibility rules, inferensi tipe, anotasi node AST, dan control flow validation. | 25 |
+| 3 | Muhammad Aufar Rizqi Kusuma | 13524061 | Symbol Table: implementasi tab, btab, atab, manajemen scope push/pop, registrasi & lookup identifier, dan inisialisasi predefined identifier. | 25 |
+| 4 | Bryan Pratama Putra Hendra | 13524067 | Laporan & README: penulisan laporan lengkap dan README, serta quality assurance. | 25 |
