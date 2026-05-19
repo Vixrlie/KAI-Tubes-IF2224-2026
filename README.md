@@ -1,51 +1,172 @@
 # KAI-Tubes-IF2224-2026
 
 ## Deskripsi Umum Program
-Proyek ini adalah implementasi **parser Recursive Descent** untuk bahasa pemrograman **Arion** pada Milestone 2 Tugas Besar IF2224 Teori Bahasa Formal dan Otomata. Program membaca source code Arion atau token stream hasil Milestone 1, lalu membangun **parse tree** sesuai grammar Arion dan menampilkan hasilnya.
+Proyek ini adalah implementasi frontend compiler untuk bahasa pemrograman **Arion** pada Tugas Besar IF2224 Teori Bahasa Formal dan Otomata. Implementasi mencakup:
+
+- **Milestone 1:** lexical analysis untuk mengubah source code menjadi token.
+- **Milestone 2:** syntax analysis dengan Recursive Descent Parser untuk membangun parse tree.
+- **Milestone 3:** semantic analysis untuk membangun AST, melakukan pengecekan tipe dan scope, serta menghasilkan symbol table.
+
+Program utama pada versi terbaru adalah `arion_parser`. Program ini dapat membaca source code Arion, token stream hasil Milestone 1, atau parse tree hasil Milestone 2. Output Milestone 3 berisi `tab`, `btab`, `atab`, parse tree, dan decorated AST.
 
 ## Fitur Program
-- Lexer untuk source code Arion dan pembacaan token stream hasil milestone 1.
-- Recursive Descent Parser untuk seluruh non-terminal grammar Arion.
-- Membangun parse tree yang dicetak dengan struktur pohon.
-- Lookahead satu token untuk pemilihan produksi tanpa backtracking.
-- Pelaporan syntax error dengan informasi baris dan kolom.
-- Menolak token `ERROR` dan `UNKNOWN` sejak awal parsing.
-- Output dapat ditampilkan ke terminal dan/atau disimpan ke file keluaran.
+- Lexer untuk source code Arion.
+- Pembacaan token stream hasil Milestone 1.
+- Recursive Descent Parser untuk grammar Arion.
+- Pembacaan parse tree hasil Milestone 2.
+- Konversi parse tree menjadi AST.
+- Semantic analysis dengan pengecekan deklarasi, scope, tipe data, assignment, procedure/function call, control-flow condition, array access, record field access, dan function result.
+- Symbol table `tab`, `btab`, dan `atab`.
+- Decorated AST dengan anotasi tipe, lexical level, block index, dan index symbol table.
+- Error handling untuk lexical error, syntax error, dan semantic error.
+- Output dapat ditampilkan ke terminal dan/atau disimpan ke file.
 
 ## Requirement Menjalankan Program
 - OS Windows/Linux/macOS.
-- Compiler C++ dengan dukungan C++17 (disarankan `g++`).
-- Shell/terminal untuk build dan run.
+- Compiler C++ dengan dukungan C++17, disarankan `g++`.
+- `make` untuk build melalui Makefile.
+- Shell/terminal untuk menjalankan command.
 
-## Cara Menjalankan (Milestone 2)
-### 1. Build
+## Build dan Clean
+Build program utama:
+
 ```bash
 make
 ```
 
-### 2. Run (output ke terminal)
+Build ulang dari awal:
+
 ```bash
-make run INPUT=test/milestone-2/input-1.txt
+make -B
 ```
 
-### 3. Run (output ke file)
-```bash
-make run-output INPUT=test/milestone-2/input-1.txt OUTPUT=test/milestone-2/output-1.txt
-```
+Membersihkan hasil build:
 
-### 4. Clean hasil build
 ```bash
 make clean
 ```
 
 Catatan:
-- Makefile sudah mendukung Windows dan Unix-like shell.
+- Makefile sudah menggunakan `-std=c++17`.
 - Jika `make` belum tersedia di Windows, jalankan dari MSYS2/MinGW/Git Bash, atau gunakan `mingw32-make` sesuai environment.
 
+## Cara Menjalankan Milestone 1
+Milestone 1 adalah tahap lexical analysis. Jika executable standalone `lexer` tersedia, jalankan:
+
+```bash
+./lexer test/milestone-1/input-1.txt
+```
+
+Untuk menyimpan token stream ke file:
+
+```bash
+./lexer test/milestone-1/input-1.txt output-m1.txt
+```
+
+Pada Windows:
+
+```bash
+.\lexer.exe test\milestone-1\input-1.txt output-m1.txt
+```
+
+Format output lexer berupa token stream, misalnya:
+
+```txt
+programsy
+ident (Hello)
+semicolon
+varsy
+ident (a)
+```
+
+Pada versi Milestone 3, lexer juga dipakai otomatis oleh `arion_parser` saat input yang diberikan adalah source code Arion.
+
+## Cara Menjalankan Milestone 2
+Milestone 2 adalah tahap syntax analysis. Pada versi terbaru, parse tree tetap dicetak pada bagian `=== Parse Tree ===` dari output program utama.
+
+Run dari source code Arion:
+
+```bash
+make run INPUT=test/milestone-2/input-1.txt
+```
+
+Run dari token stream hasil Milestone 1:
+
+```bash
+make run INPUT=test/milestone-1/output-1.txt
+```
+
+Simpan output ke file:
+
+```bash
+make run-output INPUT=test/milestone-2/input-1.txt OUTPUT=output-m2.txt
+```
+
+Output program versi terbaru tidak hanya parse tree, tetapi juga symbol table dan decorated AST karena pipeline sudah dilanjutkan sampai Milestone 3.
+
+## Cara Menjalankan Milestone 3
+Milestone 3 adalah tahap semantic analysis. Program menerima source code, token stream, atau parse tree sebagai input.
+
+Run dari source code Arion:
+
+```bash
+make run INPUT=test/milestone-3/input-1.txt
+```
+
+Run dari parse tree hasil Milestone 2:
+
+```bash
+make run INPUT=test/milestone-2/output-1.txt
+```
+
+Simpan output ke file:
+
+```bash
+make run-output INPUT=test/milestone-3/input-1.txt OUTPUT=output-m3.txt
+```
+
+Output Milestone 3 memiliki bagian berikut:
+
+```txt
+=== tab ===
+=== btab ===
+=== atab ===
+=== Parse Tree ===
+=== Decorated AST ===
+```
+
+Jika ditemukan semantic error, program mengembalikan exit code `1` dan menampilkan daftar error, misalnya:
+
+```txt
+=== Semantic Errors ===
+- Undefined identifier: x
+```
+
+## Cara Menjalankan Semua Test Milestone 3
+Untuk shell Unix-like:
+
+```bash
+make -B
+for i in 1 2 3 4 5 6 7 8; do
+  ./arion_parser test/milestone-3/input-$i.txt output-$i.txt
+done
+```
+
+Untuk membandingkan dengan output yang sudah disimpan:
+
+```bash
+for i in 1 2 3 4 5 6 7 8; do
+  ./arion_parser test/milestone-3/input-$i.txt output-$i.txt
+  diff -q output-$i.txt test/milestone-3/output-$i.txt
+done
+```
+
 ## Format Input File `.txt`
-Program menerima dua bentuk input:
-- Source code Arion biasa.
-- Daftar token hasil milestone 1 dalam format `.txt`, misalnya `test/milestone-1/output-1.txt`.
+Program utama `arion_parser` menerima tiga bentuk input:
+
+1. Source code Arion biasa.
+2. Token stream hasil Milestone 1.
+3. Parse tree hasil Milestone 2.
 
 Contoh source code:
 
@@ -53,16 +174,16 @@ Contoh source code:
 program Hello;
 
 var
-    a, b: integer;
+  a, b: integer;
 
 begin
-    a := 5;
-    b := a + 10;
-    writeln('Result = ', b);
+  a := 5;
+  b := a + 10;
+  writeln('Result = ', b);
 end.
 ```
 
-Contoh input token stream:
+Contoh token stream:
 
 ```txt
 programsy
@@ -77,6 +198,16 @@ ident (integer)
 semicolon
 ```
 
+Contoh parse tree:
+
+```txt
+<program>
+├── <program-header>
+│   ├── programsy
+│   ├── ident(Hello)
+│   └── semicolon
+```
+
 ## Struktur Direktori Program
 ```text
 KAI-Tubes-IF2224-2026/
@@ -84,39 +215,42 @@ KAI-Tubes-IF2224-2026/
 ├── README.md
 ├── doc/
 │   ├── laporan-milestone-1/
-│   └── laporan-milestone-2/
-│       ├── main.tex
-│       ├── dafpus.bib
-│       ├── sections/
-│       │   ├── 01-pendahuluan.tex
-│       │   ├── 02-dasar-teori.tex
-│       │   ├── 03-implementasi.tex
-│       │   ├── 04-eksperimen.tex
-│       │   ├── 05-penutup.tex
-│       │   └── 06-lampiran.tex
-│       └── public/
+│   ├── laporan-milestone-2/
+│   └── laporan-milestone-3/
 ├── src/
 │   ├── main.cpp
 │   ├── lexer/
 │   │   ├── lexer.h
 │   │   ├── lexer.cpp
 │   │   ├── token.h
-│   │   └── token.cpp
-│   └── parser/
-│       ├── parser.h
-│       ├── parser.cpp
-│       ├── parse_tree_node.h
-│       ├── parse_tree_node.cpp
-│       ├── parse_tree_utils.h
-│       └── parse_tree_utils.cpp
+│   │   ├── token.cpp
+│   │   ├── token_stream_reader.h
+│   │   └── token_stream_reader.cpp
+│   ├── parser/
+│   │   ├── parser.h
+│   │   ├── parser.cpp
+│   │   ├── parse_tree_node.h
+│   │   ├── parse_tree_node.cpp
+│   │   ├── parse_tree_reader.h
+│   │   ├── parse_tree_reader.cpp
+│   │   ├── parse_tree_utils.h
+│   │   └── parse_tree_utils.cpp
+│   └── semantic/
+│       ├── ast_builder.h
+│       ├── ast_builder.cpp
+│       ├── ast_formatter.h
+│       ├── ast_formatter.cpp
+│       ├── ast_node.h
+│       ├── ast_node.cpp
+│       ├── semantic_analyzer.h
+│       ├── semantic_analyzer.cpp
+│       ├── symbol_table.h
+│       └── symbol_table.cpp
 └── test/
     ├── milestone-1/
-    │   ├── input-*.txt
-    │   ├── expected-*.txt
-    │   └── output-*.txt
     ├── milestone-2/
     ├── milestone-3/
-    └── milestone-4/
+    └── semantic/
 ```
 
 ## Author Program
