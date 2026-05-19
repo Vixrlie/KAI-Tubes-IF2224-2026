@@ -1,19 +1,27 @@
 \section{Tautan GitHub}
-\href{https://github.com/Vixrlie/KAI-Tubes-IF2224-2026}{Link GitHub}
+\begin{itemize}
+    \item Repository: \href{https://github.com/Vixrlie/KAI-Tubes-IF2224-2026}{https://github.com/Vixrlie/KAI-Tubes-IF2224-2026}
+    \item Halaman release: \href{https://github.com/Vixrlie/KAI-Tubes-IF2224-2026/releases}{https://github.com/Vixrlie/KAI-Tubes-IF2224-2026/releases}
+\end{itemize}
 
 \section{Tabel Kontribusi}
 \begin{center}
     \rowcolors{2}{gray!15}{white}
-    \begin{tabularx}{\linewidth}{C{0.8cm} Y C{2.8cm} Y C{2.2cm}}
+    \begin{tabularx}{\linewidth}{C{0.8cm} Y C{2.6cm} L C{1.6cm}}
         \toprule
-        \textbf{No} & \textbf{Nama Lengkap}       & \textbf{NIM} & \textbf{Deskripsi Pekerjaan}                                        & \textbf{Persentase Kontribusi (\%)} \\
+        \textbf{No} & \textbf{Nama Lengkap} & \textbf{NIM} & \textbf{Deskripsi Pekerjaan} & \textbf{Kontribusi} \\
         \midrule
-        1           & Jonathan Kris Wicaksono     & 13524023     & Merevisi pembacaan separator (spasi, new-line, dan tab)             & 25                                  \\
-        2           & Vincent Rionarlie           & 13524031     & Menyusun laporan akhir                                              & 25                                  \\
-        3           & Muhammad Aufar Rizqi Kusuma & 13524061     & Membuat struktur data keseluruhan untuk Parse Tree                  & 25                                  \\
-        4           & Bryan Pratama Putra Hendra  & 13524067     & Membuat algoritma core dari parser                                  & 25                                  \\
+        1 & Jonathan Kris Wicaksono & 13524023 & AST: merancang node hierarchy AST, Syntax-Directed Translation untuk konversi parse tree ke AST, dan AST formatter untuk output Decorated AST. & 25\% \\
+        2 & Vincent Rionarlie & 13524031 & Semantic Analyzer: implementasi visit functions untuk setiap node, type checking dan compatibility rules, inferensi tipe, anotasi node AST, dan control flow validation. & 25\% \\
+        3 & Muhammad Aufar Rizqi Kusuma & 13524061 & Symbol Table: implementasi \texttt{tab}, \texttt{btab}, \texttt{atab}, manajemen scope push/pop, registrasi dan lookup identifier, serta inisialisasi predefined identifier. & 25\% \\
+        4 & Bryan Pratama Putra Hendra & 13524067 & Laporan dan README: penulisan laporan lengkap dan README, penyusunan bagian teori, serta quality assurance. & 25\% \\
         \bottomrule
     \end{tabularx}
 \end{center}
 
-% Isi kolom "Deskripsi Pekerjaan" dan persentase sesuai pembagian kerja sebenarnya.
+\section{Cara Menjalankan Program}
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]
+make -B
+make run INPUT=test/milestone-3/input-1.txt
+make run-output INPUT=test/milestone-3/input-1.txt OUTPUT=output-m3.txt
+\end{lstlisting}
