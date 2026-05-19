@@ -328,7 +328,7 @@ void Lexer::handleInIdent()
 {
     char c = current();
 
-    if (std::isalnum(c))
+    if (std::isalpha(static_cast<unsigned char>(c)))
     {
         buffer += c;
         advance();
