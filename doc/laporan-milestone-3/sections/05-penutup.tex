@@ -1,25 +1,11 @@
 \section{Kesimpulan}
-Milestone 2 berhasil merealisasikan komponen parser untuk Arion Compiler dengan 
-algoritma Recursive Descent yang terstruktur. Parser menerima daftar token dari 
-lexer atau token stream, memverifikasi kesesuaian token dengan grammar Arion, 
-serta membangun parse tree sebagai representasi hierarkis program. Implementasi 
-yang modular memisahkan tanggung jawab antara pembacaan input, pemrosesan token, 
-parsing, dan pencetakan parse tree, sehingga alur kerja mudah ditelusuri.
+Milestone 3 berhasil menambahkan tahap semantic analysis pada Arion Compiler. Program dapat menerima source code, token stream, atau parse tree, kemudian menghasilkan parse tree, AST, symbol table, dan decorated AST. Implementasi AST membuat representasi program menjadi lebih ringkas dibanding parse tree, sedangkan semantic analyzer menambahkan informasi tipe, scope, block, dan referensi symbol table.
 
-Hasil pengujian dirancang untuk menunjukkan bahwa parser mampu menangani konstruksi 
-sintaks utama seperti deklarasi, pernyataan kontrol, dan ekspresi, serta melaporkan 
-kesalahan sintaks secara informatif dengan lokasi baris dan kolom. Dengan demikian, 
-parser Milestone 2 telah menyediakan fondasi yang diperlukan untuk melanjutkan ke 
-tahap semantic analysis pada milestone berikutnya.
+Symbol table \texttt{tab}, \texttt{btab}, dan \texttt{atab} telah diimplementasikan untuk menyimpan identifier, block, dan array. Program juga telah mendukung predefined identifier, registrasi deklarasi, lookup identifier, pengecekan redeklarasi, type checking, assignment compatibility, procedure/function call, array access, record field access, serta validasi kondisi control flow.
+
+Berdasarkan pengujian, program berhasil menangani kasus dasar, ekspresi, control flow, structured type, dan subprogram. Program juga mampu melaporkan beberapa semantic error secara informatif tanpa crash.
 
 \section{Saran}
-Pengembangan pada milestone selanjutnya dapat memanfaatkan parse tree yang sudah 
-dihasilkan sebagai masukan untuk semantic analysis, termasuk pengecekan tipe, 
-scope, dan konsistensi deklarasi. Selain itu, pengujian dapat diperluas dengan 
-menambahkan variasi kasus yang lebih kompleks, terutama pada struktur subprogram, 
-record, dan array multi-dimensi agar cakupan grammar tervalidasi lebih luas.
+Pengembangan berikutnya dapat menambahkan analisis data-flow yang lebih lengkap untuk mendeteksi penggunaan variabel sebelum inisialisasi pada seluruh jalur eksekusi. Selain itu, pengecekan string length, kompatibilitas record anonymous, dan validasi cakupan nilai subrange pada ekspresi non-literal dapat diperluas agar semakin dekat dengan bahasa Pascal-like yang lengkap.
 
-Ke depan, kualitas error handling juga dapat ditingkatkan melalui strategi 
-recovery sederhana agar parser mampu melanjutkan parsing setelah menemukan 
-error pertama. Hal ini akan membuat pelaporan error lebih lengkap dalam satu 
-kali eksekusi dan mempermudah proses debugging bagi pengguna.
+Untuk tahap selanjutnya, decorated AST yang sudah tersedia dapat dimanfaatkan sebagai dasar intermediate representation atau code generation. Pengujian juga dapat diperluas dengan kasus error yang lebih banyak, termasuk nested procedure/function, array bertingkat, record di dalam array, dan kombinasi scope yang lebih kompleks.
