@@ -10,6 +10,7 @@ namespace Semantic
 {
     enum class ObjectClass
     {
+        PROGRAM,
         CONST,
         VAR,
         TYPE,
