@@ -34,6 +34,7 @@ public:
 private:
     std::vector<Token> parserTokens;
     std::size_t currentIndex;
+    bool statementConsumedTerminator;
 
     bool isAtEnd() const;
     bool check(TokenType type) const;
