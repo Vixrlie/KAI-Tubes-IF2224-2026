@@ -17,9 +17,9 @@ namespace Semantic
     {
         ensureBaseScope();
         BtabEntry block{};
-        block.last = currentScopeLast();
         btabEntries.push_back(block);
         scopeLastStack.push_back(0);
+        scopeBlockStack.push_back(static_cast<int>(btabEntries.size()) - 1);
         return static_cast<int>(btabEntries.size()) - 1;
     }
 
@@ -31,6 +31,7 @@ namespace Semantic
         }
 
         scopeLastStack.pop_back();
+        scopeBlockStack.pop_back();
     }
 
     bool SymbolTable::registerIdentifier(const std::string &identifier,
@@ -38,7 +39,8 @@ namespace Semantic
                                          const TypeInfo &type,
                                          int nrm,
                                          int adr,
-                                         std::string &error)
+                                         std::string &error,
+                                         bool isParameter)
     {
         ensureBaseScope();
         if (existsInScope(currentScopeLast(), identifier))
@@ -56,8 +58,42 @@ namespace Semantic
         entry.lev = currentLevel();
         entry.adr = adr;
 
+        int blockIndex = currentScopeBlock();
+        if (blockIndex >= 0 && blockIndex < static_cast<int>(btabEntries.size()))
+        {
+            BtabEntry &block = btabEntries[blockIndex];
+            if (obj == ObjectClass::VAR)
+            {
+                if (isParameter)
+                {
+                    if (entry.adr < 0)
+                    {
+                        entry.adr = block.psze;
+                    }
+                    block.psze += typeSize(type);
+                }
+                else
+                {
+                    if (entry.adr < 0)
+                    {
+                        entry.adr = block.vsze;
+                    }
+                    block.vsze += typeSize(type);
+                }
+            }
+        }
+
         int index = appendTabEntry(entry);
         setCurrentScopeLast(index);
+        if (blockIndex >= 0 && blockIndex < static_cast<int>(btabEntries.size()))
+        {
+            BtabEntry &block = btabEntries[blockIndex];
+            block.last = index;
+            if (isParameter)
+            {
+                block.lpar = index;
+            }
+        }
         error.clear();
         return true;
     }
@@ -173,7 +209,12 @@ namespace Semantic
     {
         if (scopeLastStack.empty())
         {
+            if (btabEntries.empty())
+            {
+                btabEntries.push_back(BtabEntry{});
+            }
             scopeLastStack.push_back(0);
+            scopeBlockStack.push_back(0);
         }
     }
 
@@ -182,8 +223,26 @@ namespace Semantic
         return scopeLastStack.back();
     }
 
+    int SymbolTable::currentScopeBlock() const
+    {
+        return scopeBlockStack.empty() ? -1 : scopeBlockStack.back();
+    }
+
     void SymbolTable::setCurrentScopeLast(int index)
     {
         scopeLastStack.back() = index;
+    }
+
+    int SymbolTable::typeSize(const TypeInfo &type) const
+    {
+        if (type.kind == BasicType::ARRAY &&
+            type.ref >= 0 &&
+            type.ref < static_cast<int>(atabEntries.size()) &&
+            atabEntries[type.ref].size > 0)
+        {
+            return atabEntries[type.ref].size;
+        }
+
+        return 1;
     }
 }
