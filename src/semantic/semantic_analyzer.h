@@ -52,6 +52,7 @@ namespace Semantic
             bool hasParamInfo = false;
             TypeInfo returnType;
             std::vector<TypeInfo> params;
+            std::vector<bool> byRefParams;
         };
 
         SymbolTable symbols;
@@ -61,6 +62,7 @@ namespace Semantic
         std::vector<EnumInfo> enums;
         std::unordered_map<int, int> recordFieldLast;
         std::unordered_map<std::string, ProcSignature> procSignatures;
+        std::vector<std::string> functionStack;
 
         void addError(const std::string &message);
         void addBuiltinProcedures();
@@ -102,6 +104,12 @@ namespace Semantic
         void visitCaseBranch(AST::CaseBranchNode *node, const TypeResult &selectorType);
         void visitProcCall(AST::ProcCallNode *node);
         TypeResult visitFuncCall(AST::FuncCallNode *node);
+
+        bool isAssignableTarget(AST::ASTNode *node);
+        bool isVariableLike(AST::ASTNode *node) const;
+        bool guaranteesFunctionResult(AST::ASTNode *node, const std::string &functionName) const;
+        bool assignsFunctionResult(AST::AssignNode *node, const std::string &functionName) const;
+        int stringLiteralLength(const AST::ASTNode *node) const;
 
         bool isNumeric(const TypeInfo &type) const;
         bool isIntegerLike(const TypeInfo &type) const;
