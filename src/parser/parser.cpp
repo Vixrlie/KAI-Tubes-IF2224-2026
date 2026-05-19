@@ -35,7 +35,7 @@ int ParserError::column() const
 
 // This constructor filters out comments and rejects lexical error tokens up front.
 Parser::Parser(const std::vector<Token> &tokens)
-    : currentIndex(0)
+    : currentIndex(0), statementConsumedTerminator(false)
 {
     parserTokens.reserve(tokens.size());
     for (const Token &token : tokens)
@@ -549,6 +549,10 @@ std::unique_ptr<FormalParameterListNode> Parser::parseFormalParameterList()
 std::unique_ptr<ParameterGroupNode> Parser::parseParameterGroup()
 {
     auto parameterGroupNode = std::make_unique<ParameterGroupNode>();
+    if (check(TokenType::VARSY))
+    {
+        parameterGroupNode->addChild(makeTerminalNode(advance()));
+    }
     parameterGroupNode->addChild(parseIdentifierList());
     parameterGroupNode->addChild(makeTerminalNode(consume(TokenType::COLON, "colon")));
 
@@ -569,6 +573,7 @@ std::unique_ptr<CompoundStatementNode> Parser::parseCompoundStatement()
     compoundStatementNode->addChild(makeTerminalNode(consume(TokenType::BEGINSY, "beginsy")));
     compoundStatementNode->addChild(parseStatementList());
     compoundStatementNode->addChild(makeTerminalNode(consume(TokenType::ENDSY, "endsy")));
+    statementConsumedTerminator = false;
     return compoundStatementNode;
 }
 
@@ -578,14 +583,31 @@ std::unique_ptr<StatementListNode> Parser::parseStatementList()
     auto statementListNode = std::make_unique<StatementListNode>();
     statementListNode->addChild(parseStatement());
 
-    while (check(TokenType::SEMICOLON))
+    while (true)
     {
-        statementListNode->addChild(makeTerminalNode(advance()));
-        if (check(TokenType::ENDSY) || check(TokenType::UNTILSY))
+        if (check(TokenType::SEMICOLON))
         {
-            break;
+            statementListNode->addChild(makeTerminalNode(advance()));
+            if (check(TokenType::ENDSY) || check(TokenType::UNTILSY))
+            {
+                break;
+            }
+            statementListNode->addChild(parseStatement());
+            continue;
         }
-        statementListNode->addChild(parseStatement());
+
+        if (statementConsumedTerminator)
+        {
+            statementConsumedTerminator = false;
+            if (check(TokenType::ENDSY) || check(TokenType::ELSESY) || check(TokenType::UNTILSY))
+            {
+                break;
+            }
+            statementListNode->addChild(parseStatement());
+            continue;
+        }
+
+        break;
     }
 
     return statementListNode;
@@ -594,6 +616,7 @@ std::unique_ptr<StatementListNode> Parser::parseStatementList()
 // This dispatches to the concrete statement form that matches the current token.
 std::unique_ptr<StatementNode> Parser::parseStatement()
 {
+    statementConsumedTerminator = false;
     auto statementNode = std::make_unique<StatementNode>();
 
     if (check(TokenType::IDENT))
@@ -612,6 +635,7 @@ std::unique_ptr<StatementNode> Parser::parseStatement()
     if (check(TokenType::BEGINSY))
     {
         statementNode->addChild(parseCompoundStatement());
+        statementConsumedTerminator = false;
         return statementNode;
     }
 
@@ -730,6 +754,7 @@ std::unique_ptr<IfStatementNode> Parser::parseIfStatement()
         ifStatementNode->addChild(parseStatement());
     }
 
+    statementConsumedTerminator = false;
     return ifStatementNode;
 }
 
@@ -742,6 +767,7 @@ std::unique_ptr<CaseStatementNode> Parser::parseCaseStatement()
     caseStatementNode->addChild(makeTerminalNode(consume(TokenType::OFSY, "ofsy")));
     caseStatementNode->addChild(parseCaseBlock());
     caseStatementNode->addChild(makeTerminalNode(consume(TokenType::ENDSY, "endsy")));
+    statementConsumedTerminator = false;
     return caseStatementNode;
 }
 
@@ -781,10 +807,8 @@ std::unique_ptr<WhileStatementNode> Parser::parseWhileStatement()
     whileStatementNode->addChild(makeTerminalNode(consume(TokenType::DOSY, "dosy")));
     whileStatementNode->addChild(parseCompoundStatement());
 
-    if (!check(TokenType::SEMICOLON))
-    {
-        throwSyntaxError("semicolon");
-    }
+    whileStatementNode->addChild(makeTerminalNode(consume(TokenType::SEMICOLON, "semicolon")));
+    statementConsumedTerminator = true;
     return whileStatementNode;
 }
 
@@ -796,6 +820,7 @@ std::unique_ptr<RepeatStatementNode> Parser::parseRepeatStatement()
     repeatStatementNode->addChild(parseStatementList());
     repeatStatementNode->addChild(makeTerminalNode(consume(TokenType::UNTILSY, "untilsy")));
     repeatStatementNode->addChild(parseExpression());
+    statementConsumedTerminator = false;
     return repeatStatementNode;
 }
 
@@ -821,10 +846,8 @@ std::unique_ptr<ForStatementNode> Parser::parseForStatement()
     forStatementNode->addChild(makeTerminalNode(consume(TokenType::DOSY, "dosy")));
     forStatementNode->addChild(parseCompoundStatement());
 
-    if (!check(TokenType::SEMICOLON))
-    {
-        throwSyntaxError("semicolon");
-    }
+    forStatementNode->addChild(makeTerminalNode(consume(TokenType::SEMICOLON, "semicolon")));
+    statementConsumedTerminator = true;
     return forStatementNode;
 }
 
