@@ -11,14 +11,15 @@ idx  id        obj       type  ref  nrm  lev  adr  link
  39     False      const     3    0    1    0    0    38
  40   writeln  procedure    10    0    1    0    0    39
  41    readln  procedure    10    0    1    0    0    40
- 42  NestedBlocks  procedure    10    0    1    1    0     0
- 43         i   variable     0    0    1    1    0    42
- 44         j   variable     0    0    1    1    0    43
+ 42  NestedBlocks    program    10    0    1    0    0    41
+ 43         i   variable     0    0    1    0    0    42
+ 44         j   variable     0    0    1    0    1    43
 
 === btab ===
 idx  last  lpar  psze  vsze
 ---------------------------
-  0    41     0     0     0
+  0    44     0     0     2
+  1     0     0     0     0
 
 === atab ===
 (empty)
@@ -108,33 +109,33 @@ idx  last  lpar  psze  vsze
 │   │   │       │           └── <factor>
 │   │   │       │               └── intcon(0)
 │   │   │       ├── dosy
-│   │   │       └── <compound-statement>
-│   │   │           ├── beginsy
-│   │   │           ├── <statement-list>
-│   │   │           │   ├── <statement>
-│   │   │           │   │   └── <compound-statement>
-│   │   │           │   │       ├── beginsy
-│   │   │           │   │       ├── <statement-list>
-│   │   │           │   │       │   ├── <statement>
-│   │   │           │   │       │   │   └── <assignment-statement>
-│   │   │           │   │       │   │       ├── <variable>
-│   │   │           │   │       │   │       │   └── ident(i)
-│   │   │           │   │       │   │       ├── becomes
-│   │   │           │   │       │   │       └── <expression>
-│   │   │           │   │       │   │           └── <simple-expression>
-│   │   │           │   │       │   │               ├── <term>
-│   │   │           │   │       │   │               │   └── <factor>
-│   │   │           │   │       │   │               │       └── ident(i)
-│   │   │           │   │       │   │               ├── <additive-operator>
-│   │   │           │   │       │   │               │   └── minus
-│   │   │           │   │       │   │               └── <term>
-│   │   │           │   │       │   │                   └── <factor>
-│   │   │           │   │       │   │                       └── intcon(1)
-│   │   │           │   │       │   └── semicolon
-│   │   │           │   │       └── endsy
-│   │   │           │   └── semicolon
-│   │   │           └── endsy
-│   │   ├── semicolon
+│   │   │       ├── <compound-statement>
+│   │   │       │   ├── beginsy
+│   │   │       │   ├── <statement-list>
+│   │   │       │   │   ├── <statement>
+│   │   │       │   │   │   └── <compound-statement>
+│   │   │       │   │   │       ├── beginsy
+│   │   │       │   │   │       ├── <statement-list>
+│   │   │       │   │   │       │   ├── <statement>
+│   │   │       │   │   │       │   │   └── <assignment-statement>
+│   │   │       │   │   │       │   │       ├── <variable>
+│   │   │       │   │   │       │   │       │   └── ident(i)
+│   │   │       │   │   │       │   │       ├── becomes
+│   │   │       │   │   │       │   │       └── <expression>
+│   │   │       │   │   │       │   │           └── <simple-expression>
+│   │   │       │   │   │       │   │               ├── <term>
+│   │   │       │   │   │       │   │               │   └── <factor>
+│   │   │       │   │   │       │   │               │       └── ident(i)
+│   │   │       │   │   │       │   │               ├── <additive-operator>
+│   │   │       │   │   │       │   │               │   └── minus
+│   │   │       │   │   │       │   │               └── <term>
+│   │   │       │   │   │       │   │                   └── <factor>
+│   │   │       │   │   │       │   │                       └── intcon(1)
+│   │   │       │   │   │       │   └── semicolon
+│   │   │       │   │   │       └── endsy
+│   │   │       │   │   └── semicolon
+│   │   │       │   └── endsy
+│   │   │       └── semicolon
 │   │   ├── <statement>
 │   │   │   └── <compound-statement>
 │   │   │       ├── beginsy
@@ -148,35 +149,35 @@ idx  last  lpar  psze  vsze
 └── period
 
 === Decorated AST ===
-Program('NestedBlocks')  → type:Unknown, lev:1, block:0
-├── VarDecl('i')  → tab_index:43, type:Integer, lev:1, block:0
+Program('NestedBlocks')  → type:Unknown, lev:0, block:0
+├── VarDecl('i')  → tab_index:43, type:Integer, lev:0, block:0
 │   └── Type('integer')
-├── VarDecl('j')  → tab_index:44, type:Integer, lev:1, block:0
+├── VarDecl('j')  → tab_index:44, type:Integer, lev:0, block:0
 │   └── Type('integer')
-└── Block  → type:Unknown, lev:1, block:0
-    ├── Block  → type:Unknown, lev:1, block:0
-    │   ├── Assign  → type:Unknown, lev:1, block:0
-    │   │   ├── Var('i')  → tab_index:43, type:Integer, lev:1, block:0
-    │   │   └── Num(1)  → type:Integer, lev:1, block:0
-    │   ├── Assign  → type:Unknown, lev:1, block:0
-    │   │   ├── Var('j')  → tab_index:44, type:Integer, lev:1, block:0
-    │   │   └── Num(2)  → type:Integer, lev:1, block:0
-    │   └── Block  → type:Unknown, lev:1, block:0
-    │       └── Assign  → type:Unknown, lev:1, block:0
-    │           ├── Var('i')  → tab_index:43, type:Integer, lev:1, block:0
-    │           └── BinOp('+')  → type:Integer, lev:1, block:0
-    │               ├── Var('i')  → tab_index:43, type:Integer, lev:1, block:0
-    │               └── Var('j')  → tab_index:44, type:Integer, lev:1, block:0
-    ├── While  → type:Unknown, lev:1, block:0
-    │   ├── BinOp('>')  → type:Boolean, lev:1, block:0
-    │   │   ├── Var('i')  → tab_index:43, type:Integer, lev:1, block:0
-    │   │   └── Num(0)  → type:Integer, lev:1, block:0
-    │   └── Block  → type:Unknown, lev:1, block:0
-    │       └── Block  → type:Unknown, lev:1, block:0
-    │           └── Assign  → type:Unknown, lev:1, block:0
-    │               ├── Var('i')  → tab_index:43, type:Integer, lev:1, block:0
-    │               └── BinOp('-')  → type:Integer, lev:1, block:0
-    │                   ├── Var('i')  → tab_index:43, type:Integer, lev:1, block:0
-    │                   └── Num(1)  → type:Integer, lev:1, block:0
-    └── Block  → type:Unknown, lev:1, block:0
+└── Block  → type:Unknown, lev:1, block:1
+    ├── Block  → type:Unknown, lev:1, block:1
+    │   ├── Assign  → type:Unknown, lev:1, block:1
+    │   │   ├── Var('i')  → tab_index:43, type:Integer, lev:1, block:1
+    │   │   └── Num(1)  → type:Integer, lev:1, block:1
+    │   ├── Assign  → type:Unknown, lev:1, block:1
+    │   │   ├── Var('j')  → tab_index:44, type:Integer, lev:1, block:1
+    │   │   └── Num(2)  → type:Integer, lev:1, block:1
+    │   └── Block  → type:Unknown, lev:1, block:1
+    │       └── Assign  → type:Unknown, lev:1, block:1
+    │           ├── Var('i')  → tab_index:43, type:Integer, lev:1, block:1
+    │           └── BinOp('+')  → type:Integer, lev:1, block:1
+    │               ├── Var('i')  → tab_index:43, type:Integer, lev:1, block:1
+    │               └── Var('j')  → tab_index:44, type:Integer, lev:1, block:1
+    ├── While  → type:Unknown, lev:1, block:1
+    │   ├── BinOp('>')  → type:Boolean, lev:1, block:1
+    │   │   ├── Var('i')  → tab_index:43, type:Integer, lev:1, block:1
+    │   │   └── Num(0)  → type:Integer, lev:1, block:1
+    │   └── Block  → type:Unknown, lev:1, block:1
+    │       └── Block  → type:Unknown, lev:1, block:1
+    │           └── Assign  → type:Unknown, lev:1, block:1
+    │               ├── Var('i')  → tab_index:43, type:Integer, lev:1, block:1
+    │               └── BinOp('-')  → type:Integer, lev:1, block:1
+    │                   ├── Var('i')  → tab_index:43, type:Integer, lev:1, block:1
+    │                   └── Num(1)  → type:Integer, lev:1, block:1
+    └── Block  → type:Unknown, lev:1, block:1
         └── Empty

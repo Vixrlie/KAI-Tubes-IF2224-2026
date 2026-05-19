@@ -11,23 +11,24 @@ idx  id        obj       type  ref  nrm  lev  adr  link
  39     False      const     3    0    1    0    0    38
  40   writeln  procedure    10    0    1    0    0    39
  41    readln  procedure    10    0    1    0    0    40
- 42  TypesAndConsts  procedure    10    0    1    1    0     0
- 43   MaxSize      const     0    0    1    1   50    42
- 44        Pi      const     1    0    1    1    0    43
- 45     Index       type     7    0    1    1    0    44
- 46     Color       type     8    0    1    1    0    45
- 47       Red      const     8    0    1    1    0    46
- 48     Green      const     8    0    1    1    1    47
- 49      Blue      const     8    0    1    1    2    48
- 50    Matrix       type     5    0    1    1    0    49
- 51       idx   variable     7    0    1    1    0    50
- 52         c   variable     8    0    1    1    0    51
- 53         m   variable     5    0    1    1    0    52
+ 42  TypesAndConsts    program    10    0    1    0    0    41
+ 43   MaxSize      const     0    0    1    0   50    42
+ 44        Pi      const     1    0    1    0    0    43
+ 45     Index       type     7    0    1    0    0    44
+ 46     Color       type     8    0    1    0    0    45
+ 47       Red      const     8    0    1    0    0    46
+ 48     Green      const     8    0    1    0    1    47
+ 49      Blue      const     8    0    1    0    2    48
+ 50    Matrix       type     5    0    1    0    0    49
+ 51       idx   variable     7    0    1    0    0    50
+ 52         c   variable     8    0    1    0    1    51
+ 53         m   variable     5    0    1    0    2    52
 
 === btab ===
 idx  last  lpar  psze  vsze
 ---------------------------
-  0    41     0     0     0
+  0    53     0     0     5
+  1     0     0     0     0
 
 === atab ===
 idx  xtyp  etyp  eref  low  high  elsz  size
@@ -274,67 +275,67 @@ idx  xtyp  etyp  eref  low  high  elsz  size
 └── period
 
 === Decorated AST ===
-Program('TypesAndConsts')  → type:Unknown, lev:1, block:0
-├── ConstDecl('MaxSize')  → tab_index:43, type:Integer, lev:1, block:0
-│   └── Num(50)  → type:Integer, lev:1, block:0
-├── ConstDecl('Pi')  → tab_index:44, type:Real, lev:1, block:0
-│   └── Real(3.14)  → type:Real, lev:1, block:0
-├── TypeDecl('Index')  → tab_index:45, type:Subrange, lev:1, block:0
+Program('TypesAndConsts')  → type:Unknown, lev:0, block:0
+├── ConstDecl('MaxSize')  → tab_index:43, type:Integer, lev:0, block:0
+│   └── Num(50)  → type:Integer, lev:0, block:0
+├── ConstDecl('Pi')  → tab_index:44, type:Real, lev:0, block:0
+│   └── Real(3.14)  → type:Real, lev:0, block:0
+├── TypeDecl('Index')  → tab_index:45, type:Subrange, lev:0, block:0
 │   └── Subrange
-│       ├── Num(1)  → type:Integer, lev:1, block:0
-│       └── Num(100)  → type:Integer, lev:1, block:0
-├── TypeDecl('Color')  → tab_index:46, type:Enumerated, lev:1, block:0
+│       ├── Num(1)  → type:Integer, lev:0, block:0
+│       └── Num(100)  → type:Integer, lev:0, block:0
+├── TypeDecl('Color')  → tab_index:46, type:Enumerated, lev:0, block:0
 │   └── Enumerated(Red, Green, Blue)
-├── TypeDecl('Matrix')  → tab_index:50, type:Array, lev:1, block:0
+├── TypeDecl('Matrix')  → tab_index:50, type:Array, lev:0, block:0
 │   └── ArrayType
 │       ├── Subrange
-│       │   ├── Num(1)  → type:Integer, lev:1, block:0
-│       │   └── Num(3)  → type:Integer, lev:1, block:0
+│       │   ├── Num(1)  → type:Integer, lev:0, block:0
+│       │   └── Num(3)  → type:Integer, lev:0, block:0
 │       └── Type('integer')
-├── VarDecl('idx')  → tab_index:51, type:Subrange, lev:1, block:0
+├── VarDecl('idx')  → tab_index:51, type:Subrange, lev:0, block:0
 │   └── Type('Index')
-├── VarDecl('c')  → tab_index:52, type:Enumerated, lev:1, block:0
+├── VarDecl('c')  → tab_index:52, type:Enumerated, lev:0, block:0
 │   └── Type('Color')
-├── VarDecl('m')  → tab_index:53, type:Array, lev:1, block:0
+├── VarDecl('m')  → tab_index:53, type:Array, lev:0, block:0
 │   └── Type('Matrix')
-└── Block  → type:Unknown, lev:1, block:0
-    ├── Assign  → type:Unknown, lev:1, block:0
-    │   ├── Var('idx')  → tab_index:51, type:Subrange, lev:1, block:0
-    │   └── Num(1)  → type:Integer, lev:1, block:0
-    ├── Assign  → type:Unknown, lev:1, block:0
-    │   ├── ArrayAccess  → type:Integer, lev:1, block:0
-    │   │   ├── Var('m')  → tab_index:53, type:Array, lev:1, block:0
-    │   │   └── Num(1)  → type:Integer, lev:1, block:0
-    │   └── Var('MaxSize')  → tab_index:43, type:Integer, lev:1, block:0
-    ├── Assign  → type:Unknown, lev:1, block:0
-    │   ├── ArrayAccess  → type:Integer, lev:1, block:0
-    │   │   ├── Var('m')  → tab_index:53, type:Array, lev:1, block:0
-    │   │   └── Num(2)  → type:Integer, lev:1, block:0
-    │   └── BinOp('*')  → type:Integer, lev:1, block:0
-    │       ├── Var('MaxSize')  → tab_index:43, type:Integer, lev:1, block:0
-    │       └── Num(2)  → type:Integer, lev:1, block:0
-    ├── Assign  → type:Unknown, lev:1, block:0
-    │   ├── ArrayAccess  → type:Integer, lev:1, block:0
-    │   │   ├── Var('m')  → tab_index:53, type:Array, lev:1, block:0
-    │   │   └── Num(3)  → type:Integer, lev:1, block:0
-    │   └── BinOp('+')  → type:Integer, lev:1, block:0
-    │       ├── ArrayAccess  → type:Integer, lev:1, block:0
-    │       │   ├── Var('m')  → tab_index:53, type:Array, lev:1, block:0
-    │       │   └── Num(1)  → type:Integer, lev:1, block:0
-    │       └── ArrayAccess  → type:Integer, lev:1, block:0
-    │           ├── Var('m')  → tab_index:53, type:Array, lev:1, block:0
-    │           └── Num(2)  → type:Integer, lev:1, block:0
-    └── If  → type:Unknown, lev:1, block:0
-        ├── BinOp('<')  → type:Boolean, lev:1, block:0
-        │   ├── Var('idx')  → tab_index:51, type:Subrange, lev:1, block:0
-        │   └── Num(10)  → type:Integer, lev:1, block:0
-        ├── If  → type:Unknown, lev:1, block:0
-        │   ├── BinOp('>')  → type:Boolean, lev:1, block:0
-        │   │   ├── Var('idx')  → tab_index:51, type:Subrange, lev:1, block:0
-        │   │   └── Num(5)  → type:Integer, lev:1, block:0
-        │   ├── ProcCall('writeln')  → type:Unknown, lev:1, block:0
-        │   │   └── String('mid')  → type:String, lev:1, block:0
-        │   └── ProcCall('writeln')  → type:Unknown, lev:1, block:0
-        │       └── String('low')  → type:String, lev:1, block:0
-        └── ProcCall('writeln')  → type:Unknown, lev:1, block:0
-            └── String('high')  → type:String, lev:1, block:0
+└── Block  → type:Unknown, lev:1, block:1
+    ├── Assign  → type:Unknown, lev:1, block:1
+    │   ├── Var('idx')  → tab_index:51, type:Subrange, lev:1, block:1
+    │   └── Num(1)  → type:Integer, lev:1, block:1
+    ├── Assign  → type:Unknown, lev:1, block:1
+    │   ├── ArrayAccess  → type:Integer, lev:1, block:1
+    │   │   ├── Var('m')  → tab_index:53, type:Array, lev:1, block:1
+    │   │   └── Num(1)  → type:Integer, lev:1, block:1
+    │   └── Var('MaxSize')  → tab_index:43, type:Integer, lev:1, block:1
+    ├── Assign  → type:Unknown, lev:1, block:1
+    │   ├── ArrayAccess  → type:Integer, lev:1, block:1
+    │   │   ├── Var('m')  → tab_index:53, type:Array, lev:1, block:1
+    │   │   └── Num(2)  → type:Integer, lev:1, block:1
+    │   └── BinOp('*')  → type:Integer, lev:1, block:1
+    │       ├── Var('MaxSize')  → tab_index:43, type:Integer, lev:1, block:1
+    │       └── Num(2)  → type:Integer, lev:1, block:1
+    ├── Assign  → type:Unknown, lev:1, block:1
+    │   ├── ArrayAccess  → type:Integer, lev:1, block:1
+    │   │   ├── Var('m')  → tab_index:53, type:Array, lev:1, block:1
+    │   │   └── Num(3)  → type:Integer, lev:1, block:1
+    │   └── BinOp('+')  → type:Integer, lev:1, block:1
+    │       ├── ArrayAccess  → type:Integer, lev:1, block:1
+    │       │   ├── Var('m')  → tab_index:53, type:Array, lev:1, block:1
+    │       │   └── Num(1)  → type:Integer, lev:1, block:1
+    │       └── ArrayAccess  → type:Integer, lev:1, block:1
+    │           ├── Var('m')  → tab_index:53, type:Array, lev:1, block:1
+    │           └── Num(2)  → type:Integer, lev:1, block:1
+    └── If  → type:Unknown, lev:1, block:1
+        ├── BinOp('<')  → type:Boolean, lev:1, block:1
+        │   ├── Var('idx')  → tab_index:51, type:Subrange, lev:1, block:1
+        │   └── Num(10)  → type:Integer, lev:1, block:1
+        ├── If  → type:Unknown, lev:1, block:1
+        │   ├── BinOp('>')  → type:Boolean, lev:1, block:1
+        │   │   ├── Var('idx')  → tab_index:51, type:Subrange, lev:1, block:1
+        │   │   └── Num(5)  → type:Integer, lev:1, block:1
+        │   ├── ProcCall('writeln')  → type:Unknown, lev:1, block:1
+        │   │   └── String('mid')  → type:String, lev:1, block:1
+        │   └── ProcCall('writeln')  → type:Unknown, lev:1, block:1
+        │       └── String('low')  → type:String, lev:1, block:1
+        └── ProcCall('writeln')  → type:Unknown, lev:1, block:1
+            └── String('high')  → type:String, lev:1, block:1
