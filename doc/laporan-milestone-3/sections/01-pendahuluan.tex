@@ -1,113 +1,34 @@
 \section{Latar Belakang}
-Compiler adalah perangkat lunak yang menerjemahkan source code dari bahasa 
-tingkat tinggi menjadi representasi yang dapat dieksekusi oleh mesin. Keberadaan 
-compiler penting karena memungkinkan programmer menulis program dengan struktur dan 
-ekspresi yang mendekati cara manusia berpikir, namun tetap menghasilkan instruksi 
-yang dapat dipahami oleh komputer. Dalam praktik rekayasa perangkat lunak, compiler 
-tidak hanya berfungsi sebagai penerjemah, tetapi juga sebagai penjaga konsistensi 
-aturan bahasa, sehingga program yang dihasilkan bersifat benar dan dapat dijalankan.
+Compiler merupakan perangkat lunak yang menerjemahkan program dari bahasa tingkat tinggi menjadi representasi yang dapat diproses lebih lanjut oleh mesin. Tahap awal compiler tidak langsung menghasilkan kode mesin, melainkan membentuk representasi internal yang semakin kaya. Lexical analysis mengubah karakter menjadi token, syntax analysis memeriksa struktur token berdasarkan grammar, dan semantic analysis memeriksa makna program yang tidak dapat ditentukan hanya dari grammar.
 
-Proses kompilasi terdiri dari beberapa tahap yang saling bergantung. Tahap lexical 
-analysis memecah karakter menjadi token; syntax analysis memeriksa apakah urutan 
-token membentuk struktur yang sah; semantic analysis memvalidasi makna, tipe data, 
-dan aturan konteks; sedangkan code generation mengubah representasi internal menjadi 
-bentuk target. Setiap tahap memiliki peran yang kritis karena kesalahan pada tahap 
-awal akan menghambat atau merusak proses pada tahap berikutnya. Oleh sebab itu, 
-pembangunan compiler yang benar menuntut setiap tahap dikerjakan secara sistematis.
+Pada Milestone 1, Arion Compiler telah memiliki lexer yang mampu menghasilkan token stream. Pada Milestone 2, token tersebut diproses oleh Recursive Descent Parser untuk menghasilkan parse tree. Parse tree menunjukkan bahwa program valid secara sintaksis, tetapi belum menjamin bahwa program bermakna benar. Program seperti assignment string ke integer, pemakaian identifier yang belum dideklarasikan, atau pemanggilan fungsi dengan parameter yang salah dapat saja memiliki bentuk sintaks yang valid, tetapi tetap salah secara semantik.
 
-Pada mata kuliah IF2224 Teori Bahasa Formal dan Otomata, tugas besar Arion Compiler 
-dirancang untuk menghubungkan teori dengan implementasi nyata. Bahasa Arion yang 
-bersifat Pascal-like dipilih agar mahasiswa dapat menerapkan konsep grammar formal, 
-otomata, serta teknik parsing pada bahasa yang memiliki struktur jelas. Pengerjaan 
-bertahap melalui milestone mendorong pemahaman yang mendalam atas keterkaitan antar 
-komponen compiler, sekaligus memberi ruang untuk menguji hasil secara terpisah pada 
-setiap fase.
-
-Milestone 1 telah menyelesaikan pembangunan lexer yang menghasilkan daftar token 
-dari source code Arion. Token inilah yang menjadi masukan utama bagi Milestone 2, 
-yaitu pembangunan parser atau syntax analyzer. Parser bertugas memeriksa struktur 
-sintaksis program dan memastikan token-token tersebut mengikuti grammar yang telah 
-ditentukan, serta membangun parse tree sebagai representasi hierarkisnya. Dengan 
-demikian, Milestone 2 menjadi jembatan antara tokenisasi dan analisis semantik yang 
-akan dilaksanakan pada milestone berikutnya.
-
-Pembangunan parser pada milestone ini sangat terkait dengan teori Context-Free 
-Grammar (CFG) dan teknik Recursive Descent. CFG mendefinisikan struktur bahasa dalam 
-bentuk produksi non-terminal ke terminal dan non-terminal, sedangkan Recursive Descent 
-merealisasikan setiap non-terminal sebagai fungsi rekursif dalam kode C/C++. Keduanya 
-memberikan pendekatan yang langsung dan transparan dalam mengimplementasikan parser, 
-sehingga proses analisis sintaks dapat ditelusuri sesuai dengan kaidah formal yang dipelajari.
+Milestone 3 berfokus pada semantic analysis. Tahap ini mengubah parse tree menjadi Abstract Syntax Tree (AST), mengelola symbol table, melakukan type checking, mengatur scope, dan memberi anotasi pada AST sehingga setiap node memiliki informasi semantik seperti tipe data, lexical level, block index, dan referensi ke symbol table. Hasil akhirnya adalah decorated AST beserta tiga tabel simbol, yaitu \texttt{tab}, \texttt{btab}, dan \texttt{atab}.
 
 \section{Rumusan Masalah}
-Penyusunan parser untuk Arion Compiler memunculkan kebutuhan untuk merumuskan pertanyaan 
-penelitian yang menjembatani teori dan implementasi. Laporan ini berangkat dari pertanyaan 
-utama mengenai bagaimana membangun parser yang mampu menganalisis struktur sintaksis dari 
-daftar token hasil lexer sehingga sesuai dengan grammar bahasa Arion. Pertanyaan ini mencakup 
-bagaimana token-token disusun ulang menjadi konstruksi program yang valid dan bagaimana aturan 
-grammar ditegakkan secara konsisten.
+Permasalahan utama pada Milestone 3 adalah bagaimana membangun semantic analyzer yang dapat memanfaatkan parse tree hasil Milestone 2 untuk menghasilkan representasi yang lebih ringkas dan bermakna. Permasalahan tersebut diuraikan menjadi beberapa pertanyaan berikut.
 
-Secara lebih teknis, tantangan berikutnya adalah bagaimana mengimplementasikan algoritma 
-Recursive Descent agar setiap produksi grammar dapat direpresentasikan dengan jelas 
-dalam kode C/C++. Implementasi ini harus memperhatikan urutan produksi, pemilihan 
-cabang grammar berdasarkan token lookahead, serta pemetaan non-terminal menjadi 
-fungsi-fungsi parser yang terstruktur dan mudah dilacak.
-
-Selain itu, laporan ini juga mengkaji bagaimana membangun dan menampilkan parse 
-tree yang menggambarkan hierarki struktur program Arion. Parse tree tidak hanya 
-berfungsi sebagai keluaran parser, tetapi juga sebagai jembatan menuju tahap semantic 
-analysis pada milestone selanjutnya. Oleh karena itu, representasi parse tree harus 
-akurat, lengkap, dan konsisten terhadap grammar.
-
-Aspek lain yang tidak kalah penting adalah bagaimana parser menangani kesalahan 
-sintaksis secara informatif. Parser harus mampu mendeteksi token yang tidak sesuai, 
-menunjukkan lokasi kesalahan, serta memberikan pesan yang jelas agar pengguna dapat 
-memperbaiki program. Pertanyaan mengenai strategi error handling ini menjadi bagian 
-penting dalam memastikan parser bersifat robust dan dapat digunakan pada pengujian nyata.
+\begin{enumerate}
+    \item Bagaimana mengonversi parse tree menjadi AST menggunakan prinsip Syntax-Directed Translation?
+    \item Bagaimana merancang struktur AST yang cukup ekspresif untuk merepresentasikan deklarasi, statement, ekspresi, procedure, function, array, record, dan control flow?
+    \item Bagaimana mengelola symbol table \texttt{tab}, \texttt{btab}, dan \texttt{atab} untuk menyimpan identifier, block, scope, dan informasi array?
+    \item Bagaimana melakukan lookup identifier, pengecekan redeklarasi, type checking, assignment compatibility, dan validasi control flow?
+    \item Bagaimana menampilkan output semantic analysis dalam bentuk symbol table dan decorated AST yang mudah diperiksa?
+\end{enumerate}
 
 \section{Tujuan}
-Tujuan utama Milestone 2 adalah membangun komponen parser Arion Compiler yang dapat 
-menganalisis daftar token dari Milestone 1 menggunakan algoritma Recursive Descent. 
-Parser yang dibangun harus mampu memvalidasi struktur program secara sintaktis dan 
-menghasilkan parse tree sebagai keluaran utama. Pencapaian ini menjadi fondasi agar 
-pipeline kompilasi dapat berlanjut ke tahap semantic analysis pada milestone berikutnya.
+Tujuan pengerjaan Milestone 3 adalah membangun tahap semantic analysis pada Arion Compiler. Secara khusus, tujuan yang ingin dicapai adalah sebagai berikut.
 
-Tujuan berikutnya adalah merumuskan dan mengimplementasikan grammar bahasa Arion secara 
-terstruktur di dalam program C/C++. Grammar tersebut harus mencakup seluruh konstruksi 
-yang ditentukan dalam spesifikasi Milestone 2, sehingga parser memiliki cakupan yang 
-tepat terhadap fitur bahasa Arion. Dengan implementasi yang terstruktur, grammar akan 
-mudah ditelusuri dan dijadikan acuan saat melakukan pengujian.
-
-Laporan ini juga bertujuan menghasilkan parse tree yang merepresentasikan struktur 
-hierarkis program Arion secara lengkap. Parse tree harus dapat dicetak ke terminal 
-dan disimpan ke file berformat .txt sesuai spesifikasi, sehingga hasil parsing 
-dapat diverifikasi secara manual maupun digunakan kembali pada tahap berikutnya.
-
-Tujuan lain yang penting adalah menyediakan mekanisme error handling pada level parser. 
-Parser harus mendeteksi syntax error, menandai posisi kesalahan, dan menampilkan 
-pesan yang informatif agar proses debugging lebih efisien. Selain itu, tujuan 
-akhir dari milestone ini adalah memastikan bahwa keluaran parse tree dapat digunakan 
-sebagai masukan langsung untuk tahap semantic analysis yang akan datang.
+\begin{enumerate}
+    \item Membuat AST dari parse tree hasil parser.
+    \item Menghilangkan detail sintaksis yang tidak diperlukan pada tahap semantik, seperti keyword struktural dan tanda baca.
+    \item Mengimplementasikan symbol table \texttt{tab}, \texttt{btab}, dan \texttt{atab}.
+    \item Menginisialisasi predefined identifier seperti \texttt{Integer}, \texttt{Real}, \texttt{Char}, \texttt{Boolean}, \texttt{String}, \texttt{True}, \texttt{False}, \texttt{writeln}, dan \texttt{readln}.
+    \item Melakukan pengecekan deklarasi, scope, tipe ekspresi, assignment, parameter procedure/function, array access, record field access, serta kondisi pada statement kontrol.
+    \item Menghasilkan decorated AST dan symbol table sebagai output program.
+\end{enumerate}
 
 \section{Batasan Masalah}
-Pengerjaan Milestone 2 dibatasi oleh spesifikasi bahasa Arion yang ditetapkan pada 
-dokumen resmi hingga Revisi 5 tertanggal 04-05-2026. Parser yang dibangun hanya 
-mengakomodasi grammar dan aturan bahasa Arion pada milestone ini, sehingga tidak 
-mencakup bahasa lain maupun fitur di luar spesifikasi. Batasan ini menjaga fokus 
-implementasi agar sesuai dengan kebutuhan tugas besar.
+Implementasi Milestone 3 dibatasi pada frontend compiler Arion. Program tidak melakukan code generation atau eksekusi program Arion. Semantic analyzer bekerja pada AST yang dibangun dari parse tree hasil parser, sehingga validitas sintaks diasumsikan sudah diperiksa oleh tahap sebelumnya.
 
-Algoritma parsing yang digunakan terbatas pada Recursive Descent. Pendekatan ini 
-dipilih karena kesederhanaan implementasi dan kesesuaiannya dengan grammar yang 
-tersedia, sehingga algoritma lain seperti LR, LALR, atau Earley tidak digunakan. 
-Konsekuensinya, grammar harus disesuaikan agar kompatibel dengan parsing top-down.
-
-Keluaran utama parser adalah parse tree, bukan abstract syntax tree (AST). Parse 
-tree memuat seluruh simbol terminal dan non-terminal sesuai grammar, sementara 
-AST akan menjadi fokus pada milestone berikutnya. Selain itu, implementasi dilakukan 
-dalam bahasa C/C++, melanjutkan struktur kode Milestone 1, agar integrasi antara 
-lexer dan parser tetap konsisten.
-
-Masukan parser dibatasi pada file daftar token hasil lexer Milestone 1, bukan langsung 
-dari source code Arion. Meskipun secara pipeline lexer dan parser dijalankan berurutan, 
-parser tetap menerima format token stream sesuai spesifikasi. Terakhir, parser pada 
-milestone ini hanya melakukan pengecekan sintaksis dan belum mencakup analisis semantik 
-seperti pengecekan tipe data atau scope variabel.
+Pengecekan semantik yang diimplementasikan berfokus pada deklarasi identifier, scope, type checking, assignment compatibility, procedure/function call, array, record, subrange, enumerated type, dan validasi kondisi control flow. Fitur runtime seperti nilai aktual variabel saat program berjalan tidak dievaluasi secara penuh. Program juga belum melakukan analisis data-flow lengkap untuk mendeteksi seluruh kemungkinan penggunaan variabel sebelum inisialisasi.
