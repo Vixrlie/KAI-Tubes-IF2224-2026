@@ -11,14 +11,15 @@ idx  id        obj       type  ref  nrm  lev  adr  link
  39     False      const     3    0    1    0    0    38
  40   writeln  procedure    10    0    1    0    0    39
  41    readln  procedure    10    0    1    0    0    40
- 42     Hello  procedure    10    0    1    1    0     0
- 43         a   variable     0    0    1    1    0    42
- 44         b   variable     0    0    1    1    0    43
+ 42     Hello    program    10    0    1    0    0    41
+ 43         a   variable     0    0    1    0    0    42
+ 44         b   variable     0    0    1    0    1    43
 
 === btab ===
 idx  last  lpar  psze  vsze
 ---------------------------
-  0    41     0     0     0
+  0    44     0     0     2
+  1     0     0     0     0
 
 === atab ===
 (empty)
@@ -92,20 +93,20 @@ idx  last  lpar  psze  vsze
 └── period
 
 === Decorated AST ===
-Program('Hello')  → type:Unknown, lev:1, block:0
-├── VarDecl('a')  → tab_index:43, type:Integer, lev:1, block:0
+Program('Hello')  → type:Unknown, lev:0, block:0
+├── VarDecl('a')  → tab_index:43, type:Integer, lev:0, block:0
 │   └── Type('integer')
-├── VarDecl('b')  → tab_index:44, type:Integer, lev:1, block:0
+├── VarDecl('b')  → tab_index:44, type:Integer, lev:0, block:0
 │   └── Type('integer')
-└── Block  → type:Unknown, lev:1, block:0
-    ├── Assign  → type:Unknown, lev:1, block:0
-    │   ├── Var('a')  → tab_index:43, type:Integer, lev:1, block:0
-    │   └── Num(5)  → type:Integer, lev:1, block:0
-    ├── Assign  → type:Unknown, lev:1, block:0
-    │   ├── Var('b')  → tab_index:44, type:Integer, lev:1, block:0
-    │   └── BinOp('+')  → type:Integer, lev:1, block:0
-    │       ├── Var('a')  → tab_index:43, type:Integer, lev:1, block:0
-    │       └── Num(10)  → type:Integer, lev:1, block:0
-    └── ProcCall('writeln')  → type:Unknown, lev:1, block:0
-        ├── String('Result = ')  → type:String, lev:1, block:0
-        └── Var('b')  → tab_index:44, type:Integer, lev:1, block:0
+└── Block  → type:Unknown, lev:1, block:1
+    ├── Assign  → type:Unknown, lev:1, block:1
+    │   ├── Var('a')  → tab_index:43, type:Integer, lev:1, block:1
+    │   └── Num(5)  → type:Integer, lev:1, block:1
+    ├── Assign  → type:Unknown, lev:1, block:1
+    │   ├── Var('b')  → tab_index:44, type:Integer, lev:1, block:1
+    │   └── BinOp('+')  → type:Integer, lev:1, block:1
+    │       ├── Var('a')  → tab_index:43, type:Integer, lev:1, block:1
+    │       └── Num(10)  → type:Integer, lev:1, block:1
+    └── ProcCall('writeln')  → type:Unknown, lev:1, block:1
+        ├── String('Result = ')  → type:String, lev:1, block:1
+        └── Var('b')  → tab_index:44, type:Integer, lev:1, block:1

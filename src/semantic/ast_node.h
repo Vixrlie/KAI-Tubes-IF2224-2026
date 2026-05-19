@@ -203,6 +203,7 @@ namespace AST
     public:
         std::string name;
         std::string typeName;
+        std::unique_ptr<ASTNode> typeSpec;
         bool isVar = false; // var parameter (pass by reference)
 
         std::string nodeType() const override { return "Param"; }

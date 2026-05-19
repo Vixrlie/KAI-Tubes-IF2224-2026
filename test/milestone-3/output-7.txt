@@ -11,16 +11,17 @@ idx  id        obj       type  ref  nrm  lev  adr  link
  39     False      const     3    0    1    0    0    38
  40   writeln  procedure    10    0    1    0    0    39
  41    readln  procedure    10    0    1    0    0    40
- 42  BooleanLogic  procedure    10    0    1    1    0     0
- 43         a   variable     3    0    1    1    0    42
- 44         b   variable     3    0    1    1    0    43
- 45         x   variable     0    0    1    1    0    44
- 46         y   variable     0    0    1    1    0    45
+ 42  BooleanLogic    program    10    0    1    0    0    41
+ 43         a   variable     3    0    1    0    0    42
+ 44         b   variable     3    0    1    0    1    43
+ 45         x   variable     0    0    1    0    2    44
+ 46         y   variable     0    0    1    0    3    45
 
 === btab ===
 idx  last  lpar  psze  vsze
 ---------------------------
-  0    41     0     0     0
+  0    46     0     0     4
+  1     0     0     0     0
 
 === atab ===
 (empty)
@@ -241,57 +242,57 @@ idx  last  lpar  psze  vsze
 └── period
 
 === Decorated AST ===
-Program('BooleanLogic')  → type:Unknown, lev:1, block:0
-├── VarDecl('a')  → tab_index:43, type:Boolean, lev:1, block:0
+Program('BooleanLogic')  → type:Unknown, lev:0, block:0
+├── VarDecl('a')  → tab_index:43, type:Boolean, lev:0, block:0
 │   └── Type('boolean')
-├── VarDecl('b')  → tab_index:44, type:Boolean, lev:1, block:0
+├── VarDecl('b')  → tab_index:44, type:Boolean, lev:0, block:0
 │   └── Type('boolean')
-├── VarDecl('x')  → tab_index:45, type:Integer, lev:1, block:0
+├── VarDecl('x')  → tab_index:45, type:Integer, lev:0, block:0
 │   └── Type('integer')
-├── VarDecl('y')  → tab_index:46, type:Integer, lev:1, block:0
+├── VarDecl('y')  → tab_index:46, type:Integer, lev:0, block:0
 │   └── Type('integer')
-└── Block  → type:Unknown, lev:1, block:0
-    ├── Assign  → type:Unknown, lev:1, block:0
-    │   ├── Var('a')  → tab_index:43, type:Boolean, lev:1, block:0
-    │   └── Boolean(true)  → type:Boolean, lev:1, block:0
-    ├── Assign  → type:Unknown, lev:1, block:0
-    │   ├── Var('b')  → tab_index:44, type:Boolean, lev:1, block:0
-    │   └── Boolean(false)  → type:Boolean, lev:1, block:0
-    ├── If  → type:Unknown, lev:1, block:0
-    │   ├── BinOp('or')  → type:Boolean, lev:1, block:0
-    │   │   ├── BinOp('and')  → type:Boolean, lev:1, block:0
-    │   │   │   ├── Var('a')  → tab_index:43, type:Boolean, lev:1, block:0
-    │   │   │   └── Var('b')  → tab_index:44, type:Boolean, lev:1, block:0
-    │   │   └── BinOp('>')  → type:Boolean, lev:1, block:0
-    │   │       ├── Var('x')  → tab_index:45, type:Integer, lev:1, block:0
-    │   │       └── Num(0)  → type:Integer, lev:1, block:0
-    │   ├── ProcCall('writeln')  → type:Unknown, lev:1, block:0
-    │   │   └── String('yes')  → type:String, lev:1, block:0
-    │   └── ProcCall('writeln')  → type:Unknown, lev:1, block:0
-    │       └── String('no')  → type:String, lev:1, block:0
-    ├── If  → type:Unknown, lev:1, block:0
-    │   ├── UnaryOp('not')  → type:Boolean, lev:1, block:0
-    │   │   └── Var('a')  → tab_index:43, type:Boolean, lev:1, block:0
-    │   ├── Assign  → type:Unknown, lev:1, block:0
-    │   │   ├── Var('x')  → tab_index:45, type:Integer, lev:1, block:0
-    │   │   └── Num(1)  → type:Integer, lev:1, block:0
-    │   └── Assign  → type:Unknown, lev:1, block:0
-    │       ├── Var('x')  → tab_index:45, type:Integer, lev:1, block:0
-    │       └── Num(2)  → type:Integer, lev:1, block:0
-    ├── Assign  → type:Unknown, lev:1, block:0
-    │   ├── Var('y')  → tab_index:46, type:Integer, lev:1, block:0
-    │   └── BinOp('+')  → type:Integer, lev:1, block:0
-    │       ├── BinOp('*')  → type:Integer, lev:1, block:0
-    │       │   ├── Var('x')  → tab_index:45, type:Integer, lev:1, block:0
-    │       │   └── Num(3)  → type:Integer, lev:1, block:0
-    │       └── Num(1)  → type:Integer, lev:1, block:0
-    └── If  → type:Unknown, lev:1, block:0
-        ├── BinOp('and')  → type:Boolean, lev:1, block:0
-        │   ├── BinOp('>=')  → type:Boolean, lev:1, block:0
-        │   │   ├── Var('y')  → tab_index:46, type:Integer, lev:1, block:0
-        │   │   └── Num(5)  → type:Integer, lev:1, block:0
-        │   └── BinOp('<=')  → type:Boolean, lev:1, block:0
-        │       ├── Var('y')  → tab_index:46, type:Integer, lev:1, block:0
-        │       └── Num(10)  → type:Integer, lev:1, block:0
-        └── ProcCall('writeln')  → type:Unknown, lev:1, block:0
-            └── String('in range')  → type:String, lev:1, block:0
+└── Block  → type:Unknown, lev:1, block:1
+    ├── Assign  → type:Unknown, lev:1, block:1
+    │   ├── Var('a')  → tab_index:43, type:Boolean, lev:1, block:1
+    │   └── Boolean(true)  → type:Boolean, lev:1, block:1
+    ├── Assign  → type:Unknown, lev:1, block:1
+    │   ├── Var('b')  → tab_index:44, type:Boolean, lev:1, block:1
+    │   └── Boolean(false)  → type:Boolean, lev:1, block:1
+    ├── If  → type:Unknown, lev:1, block:1
+    │   ├── BinOp('or')  → type:Boolean, lev:1, block:1
+    │   │   ├── BinOp('and')  → type:Boolean, lev:1, block:1
+    │   │   │   ├── Var('a')  → tab_index:43, type:Boolean, lev:1, block:1
+    │   │   │   └── Var('b')  → tab_index:44, type:Boolean, lev:1, block:1
+    │   │   └── BinOp('>')  → type:Boolean, lev:1, block:1
+    │   │       ├── Var('x')  → tab_index:45, type:Integer, lev:1, block:1
+    │   │       └── Num(0)  → type:Integer, lev:1, block:1
+    │   ├── ProcCall('writeln')  → type:Unknown, lev:1, block:1
+    │   │   └── String('yes')  → type:String, lev:1, block:1
+    │   └── ProcCall('writeln')  → type:Unknown, lev:1, block:1
+    │       └── String('no')  → type:String, lev:1, block:1
+    ├── If  → type:Unknown, lev:1, block:1
+    │   ├── UnaryOp('not')  → type:Boolean, lev:1, block:1
+    │   │   └── Var('a')  → tab_index:43, type:Boolean, lev:1, block:1
+    │   ├── Assign  → type:Unknown, lev:1, block:1
+    │   │   ├── Var('x')  → tab_index:45, type:Integer, lev:1, block:1
+    │   │   └── Num(1)  → type:Integer, lev:1, block:1
+    │   └── Assign  → type:Unknown, lev:1, block:1
+    │       ├── Var('x')  → tab_index:45, type:Integer, lev:1, block:1
+    │       └── Num(2)  → type:Integer, lev:1, block:1
+    ├── Assign  → type:Unknown, lev:1, block:1
+    │   ├── Var('y')  → tab_index:46, type:Integer, lev:1, block:1
+    │   └── BinOp('+')  → type:Integer, lev:1, block:1
+    │       ├── BinOp('*')  → type:Integer, lev:1, block:1
+    │       │   ├── Var('x')  → tab_index:45, type:Integer, lev:1, block:1
+    │       │   └── Num(3)  → type:Integer, lev:1, block:1
+    │       └── Num(1)  → type:Integer, lev:1, block:1
+    └── If  → type:Unknown, lev:1, block:1
+        ├── BinOp('and')  → type:Boolean, lev:1, block:1
+        │   ├── BinOp('>=')  → type:Boolean, lev:1, block:1
+        │   │   ├── Var('y')  → tab_index:46, type:Integer, lev:1, block:1
+        │   │   └── Num(5)  → type:Integer, lev:1, block:1
+        │   └── BinOp('<=')  → type:Boolean, lev:1, block:1
+        │       ├── Var('y')  → tab_index:46, type:Integer, lev:1, block:1
+        │       └── Num(10)  → type:Integer, lev:1, block:1
+        └── ProcCall('writeln')  → type:Unknown, lev:1, block:1
+            └── String('in range')  → type:String, lev:1, block:1

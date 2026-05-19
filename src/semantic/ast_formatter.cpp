@@ -171,6 +171,13 @@ namespace AST
                 printChild(out, funcDecl->body.get(), childPrefix, true);
             }
         }
+        else if (auto *param = dynamic_cast<const ParamNode *>(node))
+        {
+            if (param->typeSpec)
+            {
+                printChild(out, param->typeSpec.get(), childPrefix, true);
+            }
+        }
         else if (auto *assign = dynamic_cast<const AssignNode *>(node))
         {
             if (assign->target)
@@ -377,7 +384,7 @@ namespace AST
         }
         if (auto *param = dynamic_cast<const ParamNode *>(node))
         {
-            std::string label = "Param('" + param->name + "': " + param->typeName;
+            std::string label = "Param('" + param->name + "': " + (param->typeName.empty() ? "anonymous" : param->typeName);
             if (param->isVar) label += ", var";
             label += ")";
             return label;

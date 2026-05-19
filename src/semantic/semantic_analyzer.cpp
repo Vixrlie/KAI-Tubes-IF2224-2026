@@ -28,6 +28,8 @@ namespace Semantic
         enums.clear();
         recordFieldLast.clear();
         procSignatures.clear();
+        functionStack.clear();
+        blockStack.push_back(0);
 
         addBuiltinProcedures();
 
@@ -60,12 +62,12 @@ namespace Semantic
         if (symbols.lookupInCurrentScope("writeln") == std::nullopt)
         {
             symbols.registerIdentifier("writeln", ObjectClass::PROCEDURE, unknownType, 1, 0, error);
-            procSignatures["writeln"] = ProcSignature{false, false, unknownType, {}};
+            procSignatures["writeln"] = ProcSignature{false, false, unknownType, {}, {}};
         }
         if (symbols.lookupInCurrentScope("readln") == std::nullopt)
         {
             symbols.registerIdentifier("readln", ObjectClass::PROCEDURE, unknownType, 1, 0, error);
-            procSignatures["readln"] = ProcSignature{false, false, unknownType, {}};
+            procSignatures["readln"] = ProcSignature{false, false, unknownType, {}, {}};
         }
     }
 
@@ -229,6 +231,7 @@ namespace Semantic
 
             AtabEntry arrayInfo{};
             arrayInfo.xtyp = static_cast<int>(indexType.info.kind);
+            arrayInfo.xref = indexType.info.ref;
             arrayInfo.etyp = static_cast<int>(elementType.info.kind);
             arrayInfo.eref = elementType.info.ref;
             arrayInfo.low = 0;
@@ -452,39 +455,43 @@ namespace Semantic
 
         if (auto *arrayAccess = dynamic_cast<AST::ArrayAccessNode *>(node))
         {
-            TypeResult baseType = visitExpression(arrayAccess->base.get());
-            if (baseType.info.kind != BasicType::ARRAY)
-            {
-                addError("Array access on non-array expression");
-            }
-
+            TypeResult currentType = visitExpression(arrayAccess->base.get());
             for (auto &idx : arrayAccess->indices)
             {
+                if (currentType.info.kind != BasicType::ARRAY)
+                {
+                    addError("Array access on non-array expression");
+                    TypeResult result = unknownType();
+                    annotateNode(node, result);
+                    return result;
+                }
+
                 TypeResult indexType = visitExpression(idx.get());
-                if (!isIntegerLike(indexType.info) && indexType.info.kind != BasicType::CHAR)
-                {
-                    addError("Array index must be Integer or Char");
-                }
-            }
-
-            TypeResult result = unknownType();
-            if (baseType.info.kind == BasicType::ARRAY)
-            {
-                result.info = {BasicType::UNKNOWN, 0};
-                result.name = "Unknown";
-                result.ok = true;
-
                 const std::vector<AtabEntry> &atab = symbols.atab();
-                if (baseType.info.ref >= 0 && baseType.info.ref < static_cast<int>(atab.size()))
+                if (currentType.info.ref < 0 || currentType.info.ref >= static_cast<int>(atab.size()))
                 {
-                    result.info.kind = static_cast<BasicType>(atab[baseType.info.ref].etyp);
-                    result.info.ref = atab[baseType.info.ref].eref;
-                    result.name = typeNameFromKind(result.info.kind);
+                    addError("Array type reference is invalid");
+                    TypeResult result = unknownType();
+                    annotateNode(node, result);
+                    return result;
                 }
+
+                const AtabEntry &arrayInfo = atab[currentType.info.ref];
+                TypeInfo expectedIndexType{static_cast<BasicType>(arrayInfo.xtyp), arrayInfo.xref};
+
+                if (!isAssignmentCompatible(expectedIndexType, indexType.info, idx.get()))
+                {
+                    addError("Array index type is incompatible with array index domain");
+                }
+
+                currentType.info.kind = static_cast<BasicType>(arrayInfo.etyp);
+                currentType.info.ref = arrayInfo.eref;
+                currentType.name = typeNameFromKind(currentType.info.kind);
+                currentType.ok = true;
             }
 
-            annotateNode(node, result);
-            return result;
+            annotateNode(node, currentType);
+            return currentType;
         }
 
         if (auto *fieldAccess = dynamic_cast<AST::FieldAccessNode *>(node))
@@ -598,7 +605,20 @@ namespace Semantic
             }
             else
             {
-                if (!isCompatible(left.info, right.info))
+                bool compatible = isCompatible(left.info, right.info);
+                int leftStringLength = stringLiteralLength(binOp->left.get());
+                int rightStringLength = stringLiteralLength(binOp->right.get());
+                if (compatible &&
+                    left.info.kind == BasicType::STRING &&
+                    right.info.kind == BasicType::STRING &&
+                    leftStringLength >= 0 &&
+                    rightStringLength >= 0 &&
+                    leftStringLength != rightStringLength)
+                {
+                    compatible = false;
+                }
+
+                if (!compatible)
                 {
                     addError("Relational operator applied to incompatible operands");
                 }
@@ -645,11 +665,9 @@ namespace Semantic
 
     void SemanticAnalyzer::visitProgram(AST::ProgramNode *node)
     {
-        enterScope();
-
         std::string error;
         TypeInfo programType{BasicType::UNKNOWN, 0};
-        symbols.registerIdentifier(node->name, ObjectClass::PROCEDURE, programType, 1, 0, error);
+        symbols.registerIdentifier(node->name, ObjectClass::PROGRAM, programType, 1, 0, error);
 
         annotateNode(node, basicType(BasicType::UNKNOWN));
 
@@ -660,10 +678,10 @@ namespace Semantic
 
         if (node->body)
         {
+            enterScope();
             visitCompound(node->body.get());
+            exitScope();
         }
-
-        exitScope();
     }
 
     void SemanticAnalyzer::visitDeclaration(AST::ASTNode *node)
@@ -766,7 +784,7 @@ namespace Semantic
         TypeResult typeResult = resolveTypeSpec(node->typeSpec.get());
 
         std::string error;
-        if (!symbols.registerIdentifier(node->name, ObjectClass::VAR, typeResult.info, 1, 0, error))
+        if (!symbols.registerIdentifier(node->name, ObjectClass::VAR, typeResult.info, 1, -1, error))
         {
             addError(error);
         }
@@ -794,13 +812,15 @@ namespace Semantic
 
         for (auto &param : node->params)
         {
-            TypeResult paramType = resolveNamedType(param->typeName);
+            TypeResult paramType = param->typeSpec ? resolveTypeSpec(param->typeSpec.get()) : resolveNamedType(param->typeName);
             std::string paramError;
-            if (!symbols.registerIdentifier(param->name, ObjectClass::VAR, paramType.info, 1, 0, paramError))
+            int nrm = param->isVar ? 0 : 1;
+            if (!symbols.registerIdentifier(param->name, ObjectClass::VAR, paramType.info, nrm, -1, paramError, true))
             {
                 addError(paramError);
             }
             signature.params.push_back(paramType.info);
+            signature.byRefParams.push_back(param->isVar);
             annotateNode(param.get(), paramType);
         }
 
@@ -839,18 +859,21 @@ namespace Semantic
 
         for (auto &param : node->params)
         {
-            TypeResult paramType = resolveNamedType(param->typeName);
+            TypeResult paramType = param->typeSpec ? resolveTypeSpec(param->typeSpec.get()) : resolveNamedType(param->typeName);
             std::string paramError;
-            if (!symbols.registerIdentifier(param->name, ObjectClass::VAR, paramType.info, 1, 0, paramError))
+            int nrm = param->isVar ? 0 : 1;
+            if (!symbols.registerIdentifier(param->name, ObjectClass::VAR, paramType.info, nrm, -1, paramError, true))
             {
                 addError(paramError);
             }
             signature.params.push_back(paramType.info);
+            signature.byRefParams.push_back(param->isVar);
             annotateNode(param.get(), paramType);
         }
 
         procSignatures[node->name] = signature;
 
+        functionStack.push_back(node->name);
         for (auto &decl : node->localDecls)
         {
             visitDeclaration(decl.get());
@@ -861,7 +884,13 @@ namespace Semantic
             visitCompound(node->body.get());
         }
 
+        if (!node->body || !guaranteesFunctionResult(node->body.get(), node->name))
+        {
+            addError("Function may exit without assigning a return value: " + node->name);
+        }
+
         annotateNode(node, returnType);
+        functionStack.pop_back();
         exitScope();
     }
 
@@ -936,6 +965,11 @@ namespace Semantic
 
         TypeResult targetType = visitExpression(node->target.get());
         TypeResult valueType = visitExpression(node->value.get());
+
+        if (!isAssignableTarget(node->target.get()))
+        {
+            addError("Assignment target is not assignable");
+        }
 
         if (!isAssignmentCompatible(targetType.info, valueType.info, node->value.get()))
         {
@@ -1122,6 +1156,12 @@ namespace Semantic
                 for (size_t i = 0; i < node->args.size(); ++i)
                 {
                     TypeResult argType = visitExpression(node->args[i].get());
+                    if (i < signatureIt->second.byRefParams.size() &&
+                        signatureIt->second.byRefParams[i] &&
+                        !isVariableLike(node->args[i].get()))
+                    {
+                        addError("By-reference procedure argument must be a variable: " + node->name);
+                    }
                     if (!isAssignmentCompatible(expectedParams[i], argType.info, node->args[i].get()))
                     {
                         addError("Procedure argument type mismatch: " + node->name);
@@ -1174,6 +1214,12 @@ namespace Semantic
                 for (size_t i = 0; i < node->args.size(); ++i)
                 {
                     TypeResult argType = visitExpression(node->args[i].get());
+                    if (i < signatureIt->second.byRefParams.size() &&
+                        signatureIt->second.byRefParams[i] &&
+                        !isVariableLike(node->args[i].get()))
+                    {
+                        addError("By-reference function argument must be a variable: " + node->name);
+                    }
                     if (!isAssignmentCompatible(expectedParams[i], argType.info, node->args[i].get()))
                     {
                         addError("Function argument type mismatch: " + node->name);
@@ -1197,14 +1243,135 @@ namespace Semantic
         return result;
     }
 
+    bool SemanticAnalyzer::isAssignableTarget(AST::ASTNode *node)
+    {
+        if (!node)
+        {
+            return false;
+        }
+
+        if (auto *var = dynamic_cast<AST::VarRefNode *>(node))
+        {
+            auto entry = symbols.lookup(var->name);
+            if (!entry.has_value())
+            {
+                return false;
+            }
+
+            if (entry->entry.obj == ObjectClass::VAR)
+            {
+                return true;
+            }
+
+            if (entry->entry.obj == ObjectClass::FUNCTION &&
+                !functionStack.empty() &&
+                functionStack.back() == var->name)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        if (dynamic_cast<AST::ArrayAccessNode *>(node) ||
+            dynamic_cast<AST::FieldAccessNode *>(node))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    bool SemanticAnalyzer::isVariableLike(AST::ASTNode *node) const
+    {
+        return dynamic_cast<AST::VarRefNode *>(node) ||
+               dynamic_cast<AST::ArrayAccessNode *>(node) ||
+               dynamic_cast<AST::FieldAccessNode *>(node);
+    }
+
+    bool SemanticAnalyzer::assignsFunctionResult(AST::AssignNode *node, const std::string &functionName) const
+    {
+        if (!node)
+        {
+            return false;
+        }
+
+        auto *target = dynamic_cast<AST::VarRefNode *>(node->target.get());
+        return target && target->name == functionName;
+    }
+
+    bool SemanticAnalyzer::guaranteesFunctionResult(AST::ASTNode *node, const std::string &functionName) const
+    {
+        if (!node)
+        {
+            return false;
+        }
+
+        if (auto *assign = dynamic_cast<AST::AssignNode *>(node))
+        {
+            return assignsFunctionResult(assign, functionName);
+        }
+
+        if (auto *compound = dynamic_cast<AST::CompoundNode *>(node))
+        {
+            for (const auto &stmt : compound->statements)
+            {
+                if (guaranteesFunctionResult(stmt.get(), functionName))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        if (auto *ifStmt = dynamic_cast<AST::IfNode *>(node))
+        {
+            return ifStmt->thenBranch &&
+                   ifStmt->elseBranch &&
+                   guaranteesFunctionResult(ifStmt->thenBranch.get(), functionName) &&
+                   guaranteesFunctionResult(ifStmt->elseBranch.get(), functionName);
+        }
+
+        if (auto *repeatStmt = dynamic_cast<AST::RepeatNode *>(node))
+        {
+            for (const auto &stmt : repeatStmt->statements)
+            {
+                if (guaranteesFunctionResult(stmt.get(), functionName))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    int SemanticAnalyzer::stringLiteralLength(const AST::ASTNode *node) const
+    {
+        auto *stringNode = dynamic_cast<const AST::StringNode *>(node);
+        if (!stringNode)
+        {
+            return -1;
+        }
+
+        std::string value = stringNode->value;
+        if (value.size() >= 2 && value.front() == '\'' && value.back() == '\'')
+        {
+            value = value.substr(1, value.size() - 2);
+        }
+        return static_cast<int>(value.size());
+    }
+
     bool SemanticAnalyzer::isNumeric(const TypeInfo &type) const
     {
-        return type.kind == BasicType::INTEGER || type.kind == BasicType::REAL;
+        TypeInfo baseType = unwrapSubrange(type);
+        return baseType.kind == BasicType::INTEGER || baseType.kind == BasicType::REAL;
     }
 
     bool SemanticAnalyzer::isIntegerLike(const TypeInfo &type) const
     {
-        return type.kind == BasicType::INTEGER || type.kind == BasicType::SUBRANGE;
+        TypeInfo baseType = unwrapSubrange(type);
+        return baseType.kind == BasicType::INTEGER;
     }
 
     bool SemanticAnalyzer::isBoolean(const TypeInfo &type) const
@@ -1259,7 +1426,7 @@ namespace Semantic
 
     bool SemanticAnalyzer::isAssignmentCompatible(const TypeInfo &target, const TypeInfo &value, const AST::ASTNode *valueNode)
     {
-        if (target.kind == BasicType::REAL && value.kind == BasicType::INTEGER)
+        if (target.kind == BasicType::REAL && unwrapSubrange(value).kind == BasicType::INTEGER)
         {
             return true;
         }
@@ -1279,6 +1446,17 @@ namespace Semantic
                     if (range.hasIntBounds)
                     {
                         return num->value >= range.lowInt && num->value <= range.highInt;
+                    }
+                }
+            }
+            if (auto *ch = dynamic_cast<const AST::CharNode *>(valueNode))
+            {
+                if (target.ref >= 0 && target.ref < static_cast<int>(subranges.size()))
+                {
+                    const SubrangeInfo &range = subranges[target.ref];
+                    if (range.hasCharBounds)
+                    {
+                        return ch->value >= range.lowChar && ch->value <= range.highChar;
                     }
                 }
             }

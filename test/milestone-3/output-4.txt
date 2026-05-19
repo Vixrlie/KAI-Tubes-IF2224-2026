@@ -11,19 +11,20 @@ idx  id        obj       type  ref  nrm  lev  adr  link
  39     False      const     3    0    1    0    0    38
  40   writeln  procedure    10    0    1    0    0    39
  41    readln  procedure    10    0    1    0    0    40
- 42  StructuredTypes  procedure    10    0    1    1    0     0
- 43         x   variable     0    0    1    2    0     0
- 44         y   variable     0    0    1    2    1    43
- 45     Point       type     6    1    1    1    0    42
- 46         p   variable     6    1    1    1    0    45
- 47    scores   variable     5    0    1    1    0    46
- 48     grade   variable     2    0    1    1    0    47
+ 42  StructuredTypes    program    10    0    1    0    0    41
+ 43         x   variable     0    0    1    1    0     0
+ 44         y   variable     0    0    1    1    1    43
+ 45     Point       type     6    1    1    0    0    42
+ 46         p   variable     6    1    1    0    0    45
+ 47    scores   variable     5    0    1    0    1    46
+ 48     grade   variable     2    0    1    0    6    47
 
 === btab ===
 idx  last  lpar  psze  vsze
 ---------------------------
-  0    41     0     0     0
-  1    42     0     0     0
+  0    48     0     0     7
+  1    44     0     0     2
+  2     0     0     0     0
 
 === atab ===
 idx  xtyp  etyp  eref  low  high  elsz  size
@@ -215,52 +216,52 @@ idx  xtyp  etyp  eref  low  high  elsz  size
 └── period
 
 === Decorated AST ===
-Program('StructuredTypes')  → type:Unknown, lev:1, block:0
-├── TypeDecl('Point')  → tab_index:45, type:Record, lev:1, block:0
+Program('StructuredTypes')  → type:Unknown, lev:0, block:0
+├── TypeDecl('Point')  → tab_index:45, type:Record, lev:0, block:0
 │   └── RecordType
 │       ├── VarDecl('x')
 │       │   └── Type('integer')
 │       └── VarDecl('y')
 │           └── Type('integer')
-├── VarDecl('p')  → tab_index:46, type:Record, lev:1, block:0
+├── VarDecl('p')  → tab_index:46, type:Record, lev:0, block:0
 │   └── Type('Point')
-├── VarDecl('scores')  → tab_index:47, type:Array, lev:1, block:0
+├── VarDecl('scores')  → tab_index:47, type:Array, lev:0, block:0
 │   └── ArrayType
 │       ├── Subrange
-│       │   ├── Num(1)  → type:Integer, lev:1, block:0
-│       │   └── Num(5)  → type:Integer, lev:1, block:0
+│       │   ├── Num(1)  → type:Integer, lev:0, block:0
+│       │   └── Num(5)  → type:Integer, lev:0, block:0
 │       └── Type('integer')
-├── VarDecl('grade')  → tab_index:48, type:Char, lev:1, block:0
+├── VarDecl('grade')  → tab_index:48, type:Char, lev:0, block:0
 │   └── Type('char')
-└── Block  → type:Unknown, lev:1, block:0
-    ├── Assign  → type:Unknown, lev:1, block:0
-    │   ├── FieldAccess(.x)  → tab_index:43, type:Integer, lev:1, block:0
-    │   │   └── Var('p')  → tab_index:46, type:Record, lev:1, block:0
-    │   └── Num(10)  → type:Integer, lev:1, block:0
-    ├── Assign  → type:Unknown, lev:1, block:0
-    │   ├── FieldAccess(.y)  → tab_index:44, type:Integer, lev:1, block:0
-    │   │   └── Var('p')  → tab_index:46, type:Record, lev:1, block:0
-    │   └── Num(20)  → type:Integer, lev:1, block:0
-    ├── Assign  → type:Unknown, lev:1, block:0
-    │   ├── ArrayAccess  → type:Integer, lev:1, block:0
-    │   │   ├── Var('scores')  → tab_index:47, type:Array, lev:1, block:0
-    │   │   └── Num(1)  → type:Integer, lev:1, block:0
-    │   └── BinOp('+')  → type:Integer, lev:1, block:0
-    │       ├── FieldAccess(.x)  → tab_index:43, type:Integer, lev:1, block:0
-    │       │   └── Var('p')  → tab_index:46, type:Record, lev:1, block:0
-    │       └── FieldAccess(.y)  → tab_index:44, type:Integer, lev:1, block:0
-    │           └── Var('p')  → tab_index:46, type:Record, lev:1, block:0
-    ├── Assign  → type:Unknown, lev:1, block:0
-    │   ├── Var('grade')  → tab_index:48, type:Char, lev:1, block:0
-    │   └── Char('A')  → type:Char, lev:1, block:0
-    └── Case  → type:Unknown, lev:1, block:0
-        ├── Var('grade')  → tab_index:48, type:Char, lev:1, block:0
-        ├── CaseBranch  → type:Unknown, lev:1, block:0
-        │   ├── Char('A')  → type:Char, lev:1, block:0
-        │   └── ProcCall('writeln')  → type:Unknown, lev:1, block:0
-        │       └── String('Excellent')  → type:String, lev:1, block:0
-        └── CaseBranch  → type:Unknown, lev:1, block:0
-            ├── Char('B')  → type:Char, lev:1, block:0
-            ├── Char('C')  → type:Char, lev:1, block:0
-            └── ProcCall('writeln')  → type:Unknown, lev:1, block:0
-                └── String('Good')  → type:String, lev:1, block:0
+└── Block  → type:Unknown, lev:1, block:2
+    ├── Assign  → type:Unknown, lev:1, block:2
+    │   ├── FieldAccess(.x)  → tab_index:43, type:Integer, lev:1, block:2
+    │   │   └── Var('p')  → tab_index:46, type:Record, lev:1, block:2
+    │   └── Num(10)  → type:Integer, lev:1, block:2
+    ├── Assign  → type:Unknown, lev:1, block:2
+    │   ├── FieldAccess(.y)  → tab_index:44, type:Integer, lev:1, block:2
+    │   │   └── Var('p')  → tab_index:46, type:Record, lev:1, block:2
+    │   └── Num(20)  → type:Integer, lev:1, block:2
+    ├── Assign  → type:Unknown, lev:1, block:2
+    │   ├── ArrayAccess  → type:Integer, lev:1, block:2
+    │   │   ├── Var('scores')  → tab_index:47, type:Array, lev:1, block:2
+    │   │   └── Num(1)  → type:Integer, lev:1, block:2
+    │   └── BinOp('+')  → type:Integer, lev:1, block:2
+    │       ├── FieldAccess(.x)  → tab_index:43, type:Integer, lev:1, block:2
+    │       │   └── Var('p')  → tab_index:46, type:Record, lev:1, block:2
+    │       └── FieldAccess(.y)  → tab_index:44, type:Integer, lev:1, block:2
+    │           └── Var('p')  → tab_index:46, type:Record, lev:1, block:2
+    ├── Assign  → type:Unknown, lev:1, block:2
+    │   ├── Var('grade')  → tab_index:48, type:Char, lev:1, block:2
+    │   └── Char('A')  → type:Char, lev:1, block:2
+    └── Case  → type:Unknown, lev:1, block:2
+        ├── Var('grade')  → tab_index:48, type:Char, lev:1, block:2
+        ├── CaseBranch  → type:Unknown, lev:1, block:2
+        │   ├── Char('A')  → type:Char, lev:1, block:2
+        │   └── ProcCall('writeln')  → type:Unknown, lev:1, block:2
+        │       └── String('Excellent')  → type:String, lev:1, block:2
+        └── CaseBranch  → type:Unknown, lev:1, block:2
+            ├── Char('B')  → type:Char, lev:1, block:2
+            ├── Char('C')  → type:Char, lev:1, block:2
+            └── ProcCall('writeln')  → type:Unknown, lev:1, block:2
+                └── String('Good')  → type:String, lev:1, block:2

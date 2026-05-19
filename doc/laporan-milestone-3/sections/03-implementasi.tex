@@ -1,613 +1,108 @@
 \section{Gambaran Umum Program}
-Implementasi Milestone 2 melanjutkan struktur program dari Milestone 1 dengan 
-menambahkan komponen parser pada pipeline kompilasi. Alur utama program berada 
-pada berkas \texttt{src/main.cpp}, yang bertugas membaca masukan, menjalankan lexer 
-bila masukan berupa source code, atau langsung memuat token bila masukan sudah berbentuk 
-token stream. Setelah token tersedia, parser membangun parse tree dan hasilnya dicetak ke 
-terminal serta dapat disimpan ke file keluaran. Desain ini menjaga agar pipeline tetap 
-fleksibel untuk kebutuhan pengujian: program dapat diuji langsung dari token stream hasil 
-Milestone 1 maupun dari source code Arion.
+Implementasi Milestone 3 melanjutkan pipeline Milestone 1 dan Milestone 2. Alur utama berada pada \texttt{src/main.cpp}. Program membaca file input, lalu menentukan bentuk input tersebut. Jika input adalah parse tree, program menggunakan \texttt{ParseTreeReader}. Jika input adalah token stream, program menggunakan \texttt{TokenStreamReader} lalu menjalankan parser. Jika input adalah source code Arion, program menjalankan lexer dan parser.
 
-Modul lexer tetap digunakan untuk mengubah source code menjadi daftar token, sedangkan modul
- \texttt{token\_stream\_reader} berfungsi mengonversi file token dump menjadi objek token 
- yang bisa diproses parser. Modul parser mengandung implementasi Recursive Descent untuk 
- seluruh non-terminal pada grammar Arion, dan modul parse tree menyimpan struktur node 
- beserta mekanisme pencetakan pohon. Struktur ini mencerminkan spesifikasi pada \texttt{spek2.md} 
- dan menjaga pemisahan tanggung jawab antar komponen, sehingga parser dapat fokus pada verifikasi 
- sintaks dan penyusunan parse tree.
+Setelah parse tree tersedia, program menjalankan \texttt{ASTBuilder} untuk membentuk AST. AST tersebut kemudian dianalisis oleh \texttt{SemanticAnalyzer}. Jika tidak ada error, program mencetak \texttt{tab}, \texttt{btab}, \texttt{atab}, parse tree, dan decorated AST.
 
-\section{Algoritma Parser}
-Algoritma parser yang digunakan adalah Recursive Descent dengan satu fungsi untuk setiap 
-non-terminal grammar. Parser membaca token secara berurutan dengan strategi top-down, 
-dimulai dari simbol awal \texttt{<program>}. Pada setiap fungsi, parser memeriksa token saat 
-ini menggunakan lookahead sederhana, memilih produksi yang relevan, lalu mengonsumsi token 
-jika cocok. Jika token tidak sesuai, parser menghentikan proses dan mengeluarkan pesan kesalahan 
-yang memuat lokasi baris dan kolom.
-
-Logika pencocokan token dibangun melalui tiga operasi utama: \texttt{check} untuk melakukan 
-inspeksi token tanpa menggeser posisi, \texttt{consume} untuk memvalidasi dan mengonsumsi token 
-yang diharapkan, serta \texttt{advance} untuk berpindah token ketika tipe sudah cocok. Ketika 
-terjadi mismatch, parser memanggil \texttt{throwSyntaxError} agar pesan error konsisten di seluruh 
-aturan. Pola ini membuat alur parsing mudah diikuti, karena setiap fungsi hanya berfokus pada aturan 
-produksinya sendiri.
+\begin{tcolorbox}[title=Pipeline Program,colback=gray!5,colframe=black!60,boxrule=0.5pt,arc=2mm]
+\begin{verbatim}
+Input file
+  -> Lexer / TokenStreamReader / ParseTreeReader
+  -> Parser
+  -> Parse Tree
+  -> ASTBuilder
+  -> AST
+  -> SemanticAnalyzer
+  -> Symbol Table + Decorated AST
+\end{verbatim}
+\end{tcolorbox}
 
 \section{Struktur Direktori Program}
-Struktur direktori program pada Milestone 2 mengikuti pola yang sama dengan Milestone 1, dengan penambahan modul parser. Penjelasan ringkas struktur direktori utama ditunjukkan berikut.
+Bagian Milestone 3 terutama berada pada direktori \texttt{src/semantic/}. Berkas utama yang digunakan adalah sebagai berikut.
 
 \begin{itemize}
-	\item \textbf{\texttt{src/}}. Direktori utama yang berisi seluruh source code program dalam bahasa C++. Direktori ini terbagi menjadi beberapa modul.
-		  \begin{itemize}
-			  \item \texttt{main.cpp}. Entry point program. Bertanggung jawab membaca input, menentukan apakah input berupa token stream atau source code, menjalankan lexer bila diperlukan, memanggil parser, serta mencetak dan menyimpan parse tree.
-
-			  \item \texttt{lexer/}. Subdirektori lexer dan token, berisi:
-					\begin{itemize}
-						\item \texttt{token.h} dan \texttt{token.cpp}. Definisi \texttt{TokenType}, struktur \texttt{Token}, serta fungsi utilitas format token.
-						\item \texttt{lexer.h} dan \texttt{lexer.cpp}. Implementasi DFA lexer untuk menghasilkan token dari source code.
-						\item \texttt{token\_stream\_reader.h} dan \texttt{token\_stream\_reader.cpp}. Parser token stream yang mengubah output Milestone 1 menjadi objek token.
-					\end{itemize}
-
-			  \item \texttt{parser/}. Subdirektori parser, berisi:
-					\begin{itemize}
-						\item \texttt{parser.h} dan \texttt{parser.cpp}. Implementasi Recursive Descent Parser untuk seluruh non-terminal grammar Arion.
-						\item \texttt{parse\_tree\_node.h} dan \texttt{parse\_tree\_node.cpp}. Definisi node parse tree dan fungsi pencetakan pohon.
-						\item \texttt{parse\_tree\_utils.h} dan \texttt{parse\_tree\_utils.cpp}. Kumpulan utilitas traversal dan pencarian node parse tree.
-					\end{itemize}
-		  \end{itemize}
-
-	\item \textbf{\texttt{doc/}}. Direktori dokumentasi proyek yang berisi laporan Milestone 2 dalam format LaTeX.
-
-	\item \textbf{\texttt{test/}}. Direktori test case untuk pengujian program. Di dalamnya terdapat subdirektori \texttt{milestone-2/} yang menyimpan input dan output pengujian parser.
-
-	\item \textbf{\texttt{Makefile}}. Berisi rule kompilasi program.
-
-	\item \textbf{\texttt{README.md}}. Dokumentasi ringkas program, cara build/run, serta pembagian tugas.
+    \item \texttt{ast\_node.h} dan \texttt{ast\_node.cpp}: definisi hierarchy node AST dan struktur anotasi.
+    \item \texttt{ast\_builder.h} dan \texttt{ast\_builder.cpp}: konversi parse tree menjadi AST dengan Syntax-Directed Translation.
+    \item \texttt{ast\_formatter.h} dan \texttt{ast\_formatter.cpp}: pencetakan decorated AST.
+    \item \texttt{symbol\_table.h} dan \texttt{symbol\_table.cpp}: implementasi \texttt{tab}, \texttt{btab}, \texttt{atab}, scope stack, registrasi identifier, dan lookup.
+    \item \texttt{semantic\_analyzer.h} dan \texttt{semantic\_analyzer.cpp}: traversal AST, type checking, scope checking, dan anotasi node.
+    \item \texttt{parse\_tree\_reader.h} dan \texttt{parse\_tree\_reader.cpp}: pembacaan parse tree hasil Milestone 2 sebagai input Milestone 3.
 \end{itemize}
 
-\section{Implementasi Recursive Descent Parser}
-Implementasi Recursive Descent diwujudkan dalam \texttt{parser.cpp} dan \texttt{parser.h}. Modul ini membangun parse tree dengan memetakan setiap non-terminal grammar ke fungsi rekursif, serta menegakkan aturan token yang diharapkan melalui mekanisme \texttt{check}, \texttt{consume}, dan \texttt{throwSyntaxError}.
+\section{Perancangan AST}
+AST dirancang sebagai hierarchy class berbasis polymorphism. Semua node mewarisi \texttt{ASTNode}, yang memiliki field \texttt{annotation}. Node AST yang digunakan mencakup \texttt{ProgramNode}, \texttt{VarDeclNode}, \texttt{ConstDeclNode}, \texttt{TypeDeclNode}, \texttt{ProcedureDeclNode}, \texttt{FunctionDeclNode}, \texttt{AssignNode}, \texttt{BinOpNode}, \texttt{UnaryOpNode}, \texttt{VarRefNode}, \texttt{ArrayAccessNode}, \texttt{FieldAccessNode}, \texttt{ProcCallNode}, \texttt{FuncCallNode}, \texttt{IfNode}, \texttt{WhileNode}, \texttt{RepeatNode}, \texttt{ForNode}, dan \texttt{CaseNode}.
 
-\subsection{Alur Utama Parsing}
-Parser dibentuk dari token hasil lexer atau token stream. Konstruktor \texttt{Parser} menyaring token \texttt{COMMENT} dan menolak token \texttt{ERROR}/\texttt{UNKNOWN} agar masalah leksikal tidak merusak tahap parsing. Entry point parsing adalah \texttt{parseProgram()}, yang menyusun urutan \texttt{program-header}, \texttt{declaration-part}, \texttt{compound-statement}, dan token \texttt{period}. Setelah itu parser memastikan tidak ada token tersisa. Skema ini mengikuti aturan produksi utama pada grammar Arion, menjaga determinisme, dan memastikan program selalu ditutup dengan \texttt{period}.
+Struktur anotasi pada node AST menyimpan \texttt{typeCode}, \texttt{typeName}, \texttt{tabIndex}, \texttt{blockIndex}, \texttt{level}, dan status inisialisasi. Informasi ini diisi oleh semantic analyzer setelah AST selesai dibangun.
 
-\paragraph{Flowchart}
-Diagram berikut merangkum alur kerja parser dari input hingga parse tree terbentuk.
+\section{Syntax-Directed Translation}
+Konversi parse tree ke AST dilakukan oleh \texttt{ASTBuilder}. Setiap fungsi \texttt{visit} pada builder menerima node parse tree tertentu dan mengembalikan node AST yang relevan. Detail sintaksis yang tidak diperlukan, seperti \texttt{beginsy}, \texttt{endsy}, \texttt{semicolon}, dan node grammar perantara, tidak dimasukkan ke AST.
 
-\begin{figure}[H]
-\centering
-\resizebox{\textwidth}{!}{%
-\begin{tikzpicture}[
-    node distance=1.3cm,
-    >=stealth,
-    startend/.style={ellipse, draw, minimum width=3.2cm, minimum height=0.8cm, align=center},
-    process/.style={rectangle, draw, rounded corners, minimum width=3.6cm, minimum height=0.8cm, align=center},
-    decision/.style={diamond, draw, aspect=2.2, minimum width=3.2cm, align=center},
-    connector/.style={circle, draw, minimum size=0.55cm, inner sep=0pt}
-]
-\node (input) [startend] {Input text};
-\node (stream) [decision, below=of input] {Token stream?};
-\node (lexer) [process, left=3.6cm of stream] {Lexer::tokenize};
-\node (tokenstream) [process, right=3.6cm of stream] {TokenStreamReader::tryRead};
-\node (parser) [process, below=2.1cm of stream] {Parser constructor};
-\node (parseprogram) [process, below=of parser] {parseProgram};
-\node (header) [process, below=of parseprogram] {parseProgramHeader};
-\node (decl) [process, below=of header] {parseDeclarationPart};
-\node (compound) [process, below=of decl] {parseCompoundStatement};
-\node (period) [process, below=of compound] {consume period};
-\node (endcheck) [decision, below=of period] {isAtEnd?};
-\node (ok) [startend, below=of endcheck] {Return parse tree};
-\node (error) [process, right=3.6cm of endcheck] {throwSyntaxError};
+Tabel berikut merangkum sebagian semantic action yang digunakan.
 
-\draw[->] (input) -- (stream);
-\draw[->] (stream.west) -- node[above] {no} (lexer.east);
-\draw[->] (stream.east) -- node[above] {yes} (tokenstream.west);
-\draw[->] (lexer) |- (parser);
-\draw[->] (tokenstream) |- (parser);
-\draw[->] (parser) -- (parseprogram);
-\draw[->] (parseprogram) -- (header);
-\draw[->] (header) -- (decl);
-\draw[->] (decl) -- (compound);
-\draw[->] (compound) -- (period);
-\draw[->] (period) -- (endcheck);
-\draw[->] (endcheck) -- node[left] {yes} (ok);
-\draw[->] (endcheck.east) -- node[above] {no} (error.west);
-\end{tikzpicture}%
-}
-\caption{Flowchart alur utama parser}
-\label{fig:parser-flowchart}
-\end{figure}
+\begin{longtable}{|p{5.2cm}|p{8.7cm}|}
+\caption{Contoh Semantic Action ASTBuilder} \label{tab:semantic-action} \\
+\hline
+\textbf{Produksi} & \textbf{Semantic Action} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Produksi} & \textbf{Semantic Action} \\
+\hline
+\endhead
+\texttt{<program>} & Membentuk \texttt{ProgramNode}, mengisi nama program dari header, daftar deklarasi dari declaration part, dan body dari compound statement. \\
+\hline
+\texttt{<var-declaration>} & Untuk setiap identifier pada identifier-list, membentuk satu \texttt{VarDeclNode} dengan type specification yang sama. \\
+\hline
+\texttt{<assignment-statement>} & Membentuk \texttt{AssignNode(target, value)} dari node variable dan expression. \\
+\hline
+\texttt{<expression>} & Jika terdapat relational operator, membentuk \texttt{BinOpNode}; jika tidak, meneruskan hasil simple-expression. \\
+\hline
+\texttt{<simple-expression>} & Membentuk rantai \texttt{BinOpNode} untuk operator aditif dan \texttt{UnaryOpNode} untuk tanda minus di depan. \\
+\hline
+\texttt{<factor>} & Literal menjadi node literal, identifier menjadi \texttt{VarRefNode}, procedure/function call dalam expression menjadi \texttt{FuncCallNode}, dan \texttt{not factor} menjadi \texttt{UnaryOpNode}. \\
+\hline
+\texttt{<array-type>} & Membentuk \texttt{ArrayTypeNode} berisi index type dan element type. \\
+\hline
+\texttt{<record-type>} & Membentuk \texttt{RecordTypeNode} yang menyimpan field sebagai daftar \texttt{VarDeclNode}. \\
+\hline
+\end{longtable}
 
-\paragraph{Pseudocode}
-Berikut ringkasan algoritma dari \texttt{parseProgram()} berdasarkan implementasi aktual.
+\section{Implementasi Symbol Table}
+Symbol table diimplementasikan pada class \texttt{Semantic::SymbolTable}. Constructor symbol table membuat base scope dan mengisi predefined identifier. Scope dikelola dengan stack yang menyimpan \texttt{scopeLastStack} dan \texttt{scopeBlockStack}. Ketika masuk scope baru, program menambah entri \texttt{btab}; ketika keluar scope, stack dipop.
 
-\begin{tcolorbox}[title=Pseudocode parseProgram,colback=gray!5,colframe=black!60,boxrule=0.5pt,arc=2mm,breakable]
+Registrasi identifier dilakukan oleh \texttt{registerIdentifier}. Fungsi ini mengecek redeklarasi pada scope aktif, membuat entri \texttt{tab}, mengisi \texttt{link} ke identifier sebelumnya dalam scope yang sama, memperbarui \texttt{last} pada \texttt{btab}, dan menghitung ukuran parameter atau variabel lokal. Lookup dilakukan dari scope terdalam ke scope terluar.
+
+\begin{tcolorbox}[title=Pseudocode Register Identifier,colback=gray!5,colframe=black!60,boxrule=0.5pt,arc=2mm,breakable]
 \begin{verbatim}
-function parseProgram(tokens):
-    parser = Parser(tokens)
-    node = ProgramNode()
-    node.add(parseProgramHeader())
-    node.add(parseDeclarationPart())
-    node.add(parseCompoundStatement())
-    node.add(terminal(consume(PERIOD)))
-    if not isAtEnd():
-        throwSyntaxError("end of input")
-    return node
+function registerIdentifier(name, obj, type, nrm, adr):
+    if name exists in current scope:
+        report redeclaration error
+    entry.identifier = name
+    entry.link = currentScopeLast
+    entry.obj = obj
+    entry.type = type
+    entry.lev = currentLevel
+    entry.adr = computed address
+    append entry to tab
+    current btab.last = new index
 \end{verbatim}
 \end{tcolorbox}
 
-\subsection{Pemilihan Produksi Dengan Lookahead}
-Pemilihan produksi dilakukan dengan lookahead satu token melalui \texttt{check} dan variasi \texttt{check(..., offset)}. Strategi ini dipakai ketika satu token awal bisa mengarah ke beberapa produksi. Contohnya, pada \texttt{parseStatement} parser membedakan assignment dan procedure/function call hanya dari token \texttt{ident} yang diikuti \texttt{becomes}, \texttt{lbrack}, atau \texttt{period}. Pola yang sama dipakai pada \texttt{parseFactor} untuk membedakan pemanggilan prosedur/fungsi, akses variabel berkomponen, dan ident biasa. Dengan lookahead satu token, parser tidak memerlukan backtracking sehingga tetap sederhana dan efisien.
+\section{Implementasi Semantic Analyzer}
+Semantic analyzer melakukan traversal depth-first terhadap AST. Fungsi utama \texttt{analyze} menginisialisasi ulang symbol table, predefined procedure, struktur pendukung subrange, enum, record field, signature procedure/function, dan stack function aktif. Setelah itu \texttt{visitProgram} memproses deklarasi dan body program.
 
-\begin{tcolorbox}[title=Pseudocode lookahead,colback=gray!5,colframe=black!60,boxrule=0.5pt,arc=2mm,breakable]
-\begin{verbatim}
-function check(type, offset = 0):
-    token = peek(offset)
-    return token != null and token.type == type
+Setiap kategori node memiliki fungsi visit. Deklarasi diproses oleh \texttt{visitConstDecl}, \texttt{visitTypeDecl}, \texttt{visitVarDecl}, \texttt{visitProcedureDecl}, dan \texttt{visitFunctionDecl}. Statement diproses oleh \texttt{visitAssign}, \texttt{visitIf}, \texttt{visitWhile}, \texttt{visitRepeat}, \texttt{visitFor}, \texttt{visitCase}, dan \texttt{visitProcCall}. Ekspresi diproses oleh \texttt{visitExpression}, \texttt{visitVariable}, \texttt{visitConstant}, dan \texttt{visitFuncCall}.
 
-function parseStatement():
-    if check(IDENT):
-        if check(BECOMES, 1) or check(LBRACK, 1) or check(PERIOD, 1):
-            return parseAssignmentStatement()
-        else:
-            return parseProcedureFunctionCall()
-    ...
-\end{verbatim}
-\end{tcolorbox}
+\subsection{Scope dan Block}
+Scope global dibuat saat symbol table diinisialisasi. Program didaftarkan sebagai object class \texttt{PROGRAM}. Main compound block dianalisis dalam scope baru sehingga output \texttt{btab} memiliki block terpisah untuk body utama. Procedure, function, dan record juga membuat scope baru untuk parameter, variabel lokal, atau field.
 
-\subsection{Struktur Fungsi Per Non-Terminal}
-Non-terminal deklarasi seperti 
-\texttt{const-declaration}, 
-\texttt{type-declaration}, dan \texttt{var-declaration} diimplementasikan 
-sebagai loop agar dapat menerima jumlah deklarasi yang bervariasi. 
-Non-terminal statement seperti \texttt{if}, \texttt{case}, \texttt{while}, 
-\texttt{repeat}, dan \texttt{for} dipecah ke fungsi khusus agar struktur 
-grammar tercermin langsung di dalam kode. Dengan pola ini, urutan pemanggilan 
-fungsi parser menyerupai proses derivasi grammar secara eksplisit.
+\subsection{Type Resolution}
+Tipe dasar diselesaikan melalui lookup predefined type. Tipe array menambahkan entri ke \texttt{atab}. Tipe record membuat block baru untuk field. Tipe subrange menyimpan base type dan batas bawah/atas. Tipe enumerated menyimpan daftar identifier dan mendaftarkan setiap enumerator sebagai konstanta.
 
-Fungsi dispatcher seperti \texttt{parseType()} dan \texttt{parseStatement()} memilih cabang produksi berdasarkan token saat ini. Non-terminal yang opsional (misalnya statement kosong) ditangani dengan pengecekan follow set sederhana, sehingga parser tetap konsisten dengan grammar tanpa memaksakan token yang tidak ada.
+\subsection{Type Checking}
+Type checking dilakukan pada ekspresi dan statement. Operator aritmatika memerlukan tipe numerik. Operator Boolean memerlukan Boolean. Operator relasional memerlukan operand kompatibel dan menghasilkan Boolean. Assignment memerlukan target yang assignable dan value yang assignment-compatible terhadap target.
 
-\begin{tcolorbox}[title=Pseudocode struktur non-terminal,colback=gray!5,colframe=black!60,boxrule=0.5pt,arc=2mm,breakable]
-\begin{verbatim}
-function parseDeclarationPart():
-    node = DeclarationPartNode()
-    while check(CONSTSY):
-        node.add(parseConstDeclaration())
-    while check(TYPESY):
-        node.add(parseTypeDeclaration())
-    while check(VARSY):
-        node.add(parseVarDeclaration())
-    while check(PROCEDURESY) or check(FUNCTIONSY):
-        node.add(parseSubprogramDeclaration())
-    return node
+\subsection{Procedure dan Function}
+Procedure dan function disimpan dalam \texttt{procSignatures}. Saat pemanggilan terjadi, analyzer mengecek jumlah argumen, tipe argumen, dan kebutuhan by-reference parameter. Function call pada expression menghasilkan tipe return function. Untuk function declaration, analyzer juga memeriksa apakah body function menjamin assignment ke nama function sebagai nilai return.
 
-function parseStatement():
-    node = StatementNode()
-    if check(IDENT):
-        if check(BECOMES, 1) or check(LBRACK, 1) or check(PERIOD, 1):
-            node.add(parseAssignmentStatement())
-        else:
-            node.add(parseProcedureFunctionCall())
-        return node
-    if check(BEGINSY): return node.add(parseCompoundStatement())
-    if check(IFSY): return node.add(parseIfStatement())
-    if check(CASESY): return node.add(parseCaseStatement())
-    if check(WHILESY): return node.add(parseWhileStatement())
-    if check(REPEATSY): return node.add(parseRepeatStatement())
-    if check(FORSY): return node.add(parseForStatement())
-    if isStatementFollow(): return node.add(EmptyStatementNode())
-    throwSyntaxError("statement")
-\end{verbatim}
-\end{tcolorbox}
-
-\subsection{Hierarki Ekspresi dan Prioritas Operator}
-Ekspresi dipecah menjadi empat level: 
-\texttt{expression}, 
-\texttt{simple-expression}, \texttt{term}, dan \texttt{factor}. 
-Pemisahan ini memastikan prioritas operator diproses dengan benar. 
-Operator relasional ditangani pada \texttt{expression}, operator 
-aditif pada \texttt{simple-expression}, dan operator multiplikatif 
-pada \texttt{term}. \texttt{factor} menangani literal, variabel, pemanggilan 
-prosedur/fungsi, serta ekspresi di dalam tanda kurung.
-
-Struktur ini menjaga agar ekspresi seperti \texttt{a + b * c} diproses sesuai precedence, karena \texttt{parseTerm()} selalu menyelesaikan operasi multiplikatif sebelum \texttt{parseSimpleExpression()} menggabungkannya dengan operator aditif.
-
-\begin{tcolorbox}[title=Pseudocode hierarki ekspresi,colback=gray!5,colframe=black!60,boxrule=0.5pt,arc=2mm,breakable]
-\begin{verbatim}
-function parseExpression():
-    node = ExpressionNode()
-    node.add(parseSimpleExpression())
-    if next is relop:
-        node.add(parseRelationalOperator())
-        node.add(parseSimpleExpression())
-    return node
-
-function parseSimpleExpression():
-    node = SimpleExpressionNode()
-    if next is PLUS or MINUS:
-        node.add(terminal(advance()))
-    node.add(parseTerm())
-    while next is PLUS or MINUS or ORSY:
-        node.add(parseAdditiveOperator())
-        node.add(parseTerm())
-    return node
-
-function parseTerm():
-    node = TermNode()
-    node.add(parseFactor())
-    while next is TIMES or RDIV or IDIV or IMOD or ANDSY:
-        node.add(parseMultiplicativeOperator())
-        node.add(parseFactor())
-    return node
-
-function parseFactor():
-    if next is IDENT:
-        if lookahead is LPARENT:
-            return parseProcedureFunctionCall()
-        if lookahead is LBRACK or PERIOD:
-            return parseVariable()
-        return terminal(advance())
-    if next is literal:
-        return terminal(advance())
-    if next is LPARENT:
-        advance(); node = parseExpression(); consume(RPARENT)
-		return node
-    if next is NOTSY:
-        advance(); return parseFactor()
-    throwSyntaxError("factor")
-\end{verbatim}
-\end{tcolorbox}
-
-\subsection{Variabel Dengan Komponen Berantai}
-Parser mendukung akses array dan record melalui \texttt{parseVariableWithBase} yang membungkus variabel dasar ke dalam \texttt{component-variable} secara rekursif. Variabel dasar selalu diawali \texttt{ident}. Setiap suffix berupa index \texttt{[ ... ]} atau akses field \texttt{.ident} menghasilkan node baru yang menampung base variable sebelumnya, sehingga konstruk seperti \texttt{arr[1].field} diuraikan sebagai rantai node bertingkat. Untuk Milestone 2, isi \texttt{index-list} dibatasi pada \texttt{intcon}, \texttt{charcon}, atau \texttt{ident}.
-
-\begin{tcolorbox}[title=Pseudocode variable berantai,colback=gray!5,colframe=black!60,boxrule=0.5pt,arc=2mm,breakable]
-\begin{verbatim}
-function parseVariable():
-    base = VariableNode()
-    base.add(terminal(consume(IDENT)))
-    return parseVariableWithBase(base)
-
-function parseVariableWithBase(base):
-    if not (next is LBRACK or next is PERIOD):
-        return base
-    wrapped = VariableNode()
-    wrapped.add(parseComponentVariable(base))
-    return parseVariableWithBase(wrapped)
-
-function parseComponentVariable(base):
-    node = ComponentVariableNode()
-    node.add(base)
-    if next is LBRACK:
-        node.add(terminal(advance()))
-        node.add(parseIndexList())
-        node.add(terminal(consume(RBRACK)))
-        return node
-    node.add(terminal(consume(PERIOD)))
-    node.add(terminal(consume(IDENT)))
-    return node
-
-function parseIndexList():
-    node = IndexListNode()
-    require next in {INTCON, CHARCON, IDENT}
-    node.add(terminal(advance()))
-    while next is COMMA:
-        node.add(terminal(advance()))
-        require next in {INTCON, CHARCON, IDENT}
-        node.add(terminal(advance()))
-    return node
-\end{verbatim}
-\end{tcolorbox}
-
-\subsection{Penanganan Error dan Validasi Token}
-Penanganan error dipusatkan pada \texttt{throwSyntaxError}, yang menghasilkan pesan berformat konsisten dengan informasi baris dan kolom. Parser juga memfilter token komentar serta menolak token \texttt{ERROR} dan \texttt{UNKNOWN} sejak konstruksi parser, sehingga masalah leksikal tidak merusak tahap parsing. Dengan cara ini, parser berhenti secara deterministik ketika menemukan pelanggaran grammar dan memberikan diagnosis yang jelas.
-
-\section{Implementasi Kode}
-Bagian ini menjelaskan isi setiap file dengan memisahkan penjelasan per snippet penting agar struktur implementasi mudah ditelusuri.
-
-\subsection{\texttt{main.cpp}}
-\subsubsection{Alur Utama Eksekusi}
-Snippet berikut menunjukkan alur utama: validasi argumen, pembacaan input, pemilihan jalur token stream atau lexer, pemanggilan parser, dan pencetakan output.
-
-\begin{lstlisting}[language=C++, numbers=left, numberstyle=\tiny, breaklines=true, breakatwhitespace=true, caption={Alur utama program pada main.cpp}, label={lst:main-flow}]
-if (argc < 2) {
-	std::cerr << "Usage: " << argv[0] << " <input.txt> [output.txt]" << std::endl;
-	return 1;
-}
-
-Lexer lexer(source);
-	if (!TokenStreamReader::tryRead(source, tokens, tokenStreamError)) {
-		std::cerr << "Error: " << tokenStreamError << std::endl;
-		return 1;
-	}
-} else {
-	tokens = lexer.tokenize();
-	if (lexer.hasErrors()) {
-		return 1;
-	}
-}
-
-Parser parser(tokens);
-std::unique_ptr<ProgramNode> parseTree = parser.parseProgram();
-parseTree->print(outputBuffer);
-\end{lstlisting}
-
-\subsection{\texttt{lexer/token.h}}
-\subsubsection{Enum \texttt{TokenType}}
-Enum ini mendefinisikan seluruh jenis token yang dipakai lexer dan parser.
-
-\begin{lstlisting}[language=C++, numbers=left, numberstyle=\tiny, breaklines=true, breakatwhitespace=true, caption={Enum TokenType pada token.h}, label={lst:token-enum-m2}]
-enum class TokenType {
-	INTCON, REALCON, CHARCON, STRING,
-	NOTSY, ANDSY, ORSY,
-	PLUS, MINUS, TIMES, IDIV, RDIV, IMOD,
-	EQL, NEQ, GTR, GEQ, LSS, LEQ,
-	LPARENT, RPARENT, LBRACK, RBRACK, COMMA,
-	SEMICOLON, PERIOD, COLON, BECOMES,
-	CONSTSY, TYPESY, VARSY, FUNCTIONSY, PROCEDURESY,
-	ARRAYSY, RECORDSY, PROGRAMSY,
-	IDENT, BEGINSY, IFSY, CASESY, REPEATSY,
-	WHILESY, FORSY, ENDSY, ELSESY, UNTILSY,
-	OFSY, DOSY, TOSY, DOWNTOSY, THENSY,
-	COMMENT, UNKNOWN, ERROR
-};
-\end{lstlisting}
-
-\subsubsection{Struct \texttt{Token}}
-Struct ini menyimpan informasi token beserta lokasi baris dan kolom.
-
-\begin{lstlisting}[language=C++, numbers=left, numberstyle=\tiny, breaklines=true, breakatwhitespace=true, caption={Struct Token pada token.h}, label={lst:token-struct-m2}]
-struct Token {
-	TokenType type;
-	std::string value;
-	int line;
-	int column;
-};
-\end{lstlisting}
-
-\subsection{\texttt{lexer/token.cpp}}
-\subsubsection{Format Output Token}
-Fungsi berikut memastikan token dicetak sesuai format spesifikasi.
-
-\begin{lstlisting}[language=C++, numbers=left, numberstyle=\tiny, breaklines=true, breakatwhitespace=true, caption={Implementasi formatToken pada token.cpp}, label={lst:format-token-m2}]
-std::string formatToken(const Token& token) {
-	if (tokenHasValue(token.type)) {
-		return tokenTypeToString(token.type) + 
-            " (" + token.value + ")";
-	}
-	return tokenTypeToString(token.type);
-}
-\end{lstlisting}
-
-\subsection{\texttt{lexer/token\_stream\_reader.h}}
-\subsubsection{Antarmuka Pembaca Token Stream}
-Header ini mengekspos fungsi utilitas untuk mendeteksi dan membaca token stream.
-
-\begin{lstlisting}[language=C++, numbers=left, numberstyle=\tiny, breaklines=true, breakatwhitespace=true, caption={Deklarasi TokenStreamReader}, label={lst:token-stream-api}]
-namespace TokenStreamReader {
-	bool looksLikeTokenStream(const std::string &text);
-	bool tryRead(const std::string &text, 
-        std::vector<Token> &tokens,
-        std::string &errorMessage);
-}
-\end{lstlisting}
-
-\subsection{\texttt{lexer/token\_stream\_reader.cpp}}
-\subsubsection{Pemetaan String ke TokenType}
-Token stream menggunakan label string yang dipetakan ke enum \texttt{TokenType}.
-
-\begin{lstlisting}[language=C++, numbers=left, numberstyle=\tiny, breaklines=true, breakatwhitespace=true, caption={Pemetaan token pada token\_stream\_reader.cpp}, label={lst:token-stream-map}]
-const std::unordered_map<std::string, TokenType> &tokenTypeMap()
-{
-	static const std::unordered_map<std::string, TokenType> mapping = {
-		{"intcon", TokenType::INTCON},
-		{"realcon", TokenType::REALCON},
-		{"charcon", TokenType::CHARCON},
-		{"string", TokenType::STRING},
-		{"programsy", TokenType::PROGRAMSY},
-		{"ident", TokenType::IDENT},
-		{"semicolon", TokenType::SEMICOLON},
-		{"period", TokenType::PERIOD},
-		{"error", TokenType::ERROR},
-	};
-	return mapping;
-}
-\end{lstlisting}
-
-\subsubsection{Parsing Token Stream}
-Fungsi \texttt{parseSequence} melakukan parsing token stream secara rekursif hingga akhir input.
-
-\begin{lstlisting}[language=C++, numbers=left, numberstyle=\tiny, breaklines=true, breakatwhitespace=true, caption={Bagian parseSequence pada token\_stream\_reader.cpp}, label={lst:token-stream-parse}]
-bool parseSequence(std::size_t position, std::vector<Token> &tokens) const
-{
-	position = skipSeparators(position);
-	if (position >= text.size()) {
-		tokens.clear();
-		return true;
-	}
-	return parseSequence(nextPosition, tokens);
-}
-\end{lstlisting}
-
-\subsection{\texttt{parser/parser.h}}
-\subsubsection{Kelas \texttt{ParserError}}
-Kelas ini menyimpan pesan error dan lokasi sumber error.
-
-\begin{lstlisting}[language=C++, numbers=left, numberstyle=\tiny, breaklines=true, breakatwhitespace=true, caption={ParserError pada parser.h}, label={lst:parser-error}]
-class ParserError : public std::runtime_error {
-public:
-	ParserError(std::string message, int line, int column);
-	int line() const;
-	int column() const;
-private:
-	int errorLine;
-	int errorColumn;
-};
-\end{lstlisting}
-
-\subsubsection{Kelas \texttt{Parser}}
-Kelas ini mendeklarasikan seluruh fungsi non-terminal dan utilitas parsing.
-
-\begin{lstlisting}[language=C++, numbers=left, numberstyle=\tiny, breaklines=true, breakatwhitespace=true, caption={Deklarasi inti Parser pada parser.h}, label={lst:parser-class}]
-class Parser {
-public:
-	explicit Parser(const std::vector<Token> &tokens);
-	std::unique_ptr<ProgramNode> parseProgram();
-	std::unique_ptr<ProgramHeaderNode> parseProgramHeader();
-private:
-	std::vector<Token> parserTokens;
-	std::size_t currentIndex;
-	bool check(TokenType type) const;
-	Token consume(TokenType type, const std::string &expectedName);
-	[[noreturn]] void throwSyntaxError(const std::string &expectedName) const;
-	// ... deklarasi fungsi non-terminal lainnya ...
-};
-\end{lstlisting}
-
-\subsection{\texttt{parser/parser.cpp}}
-\subsubsection{Entry Point Parsing}
-Fungsi berikut memulai parsing dan memastikan program diakhiri token \texttt{period}.
-
-\begin{lstlisting}[language=C++, numbers=left, numberstyle=\tiny, breaklines=true, breakatwhitespace=true, caption={parseProgram pada parser.cpp}, label={lst:parse-program}]
-std::unique_ptr<ProgramNode> Parser::parseProgram()
-{
-	auto programNode = std::make_unique<ProgramNode>();
-	programNode->addChild(parseProgramHeader());
-	programNode->addChild(parseDeclarationPart());
-	programNode->addChild(parseCompoundStatement());
-	programNode->addChild(makeTerminalNode(consume(
-        TokenType::PERIOD, "period")));
-
-	if (!isAtEnd()) {
-		throwSyntaxError("end of input");
-	}
-	return programNode;
-}
-\end{lstlisting}
-
-\subsubsection{Pelaporan Syntax Error}
-Penanganan error terpusat pada \texttt{throwSyntaxError} agar format pesan konsisten.
-
-\begin{lstlisting}[language=C++, numbers=left, numberstyle=\tiny, breaklines=true, breakatwhitespace=true, caption={throwSyntaxError pada parser.cpp}, label={lst:throw-syntax-error}]
-void Parser::throwSyntaxError(const std::string &expectedName) const
-{
-	std::ostringstream message;
-	if (isAtEnd()) {
-		int line = parserTokens.empty() ? 1 : parserTokens.back().line;
-		int column = parserTokens.empty() ? 1 : parserTokens.back().column;
-		message << "Syntax error at line " << line
-				<< ", column " << column
-				<< ": unexpected end of input, expected " << expectedName;
-		throw ParserError(message.str(), line, column);
-	}
-
-	const Token &token = peek();
-	message << "Syntax error at line " << token.line
-			<< ", column " << token.column
-			<< ": unexpected token " << tokenTypeToString(token.type)
-			<< ", expected " << expectedName;
-	throw ParserError(message.str(), token.line, token.column);
-}
-\end{lstlisting}
-
-\subsubsection{Pemilihan Statement}
-Parser membedakan assignment dan procedure/function call berdasarkan lookahead.
-
-\begin{lstlisting}[language=C++, numbers=left, numberstyle=\tiny, breaklines=true, breakatwhitespace=true, caption={Bagian parseStatement pada parser.cpp}, label={lst:parse-statement}]
-if (check(TokenType::IDENT)) {
-	if (check(TokenType::BECOMES, 1) || check(TokenType::LBRACK, 1) || check(TokenType::PERIOD, 1)) {
-		statementNode->addChild(parseAssignmentStatement());
-	} else {
-		statementNode->addChild(parseProcedureFunctionCall());
-	}
-	return statementNode;
-}
-\end{lstlisting}
-
-\subsection{\texttt{parser/parse\_tree\_node.h}}
-\subsubsection{Struktur Dasar Parse Tree}
-Kelas berikut adalah fondasi semua node pada parse tree.
-
-\begin{lstlisting}[language=C++, numbers=left, numberstyle=\tiny, breaklines=true, breakatwhitespace=true, caption={ParseTreeNode pada parse\_tree\_node.h}, label={lst:parse-tree-node}]
-class ParseTreeNode {
-public:
-	explicit ParseTreeNode(std::string name);
-	const std::string &name() const;
-	void addChild(std::unique_ptr<ParseTreeNode> child);
-	void print(std::ostream &out, const std::string &prefix = "", bool isLast = true) const;
-protected:
-	virtual std::string renderLabel() const;
-private:
-	std::string nodeName;
-	ParseTreeNode *parentNode;
-	std::vector<std::unique_ptr<ParseTreeNode>> childNodes;
-};
-\end{lstlisting}
-
-\subsubsection{Terminal Node}
-Node terminal menyimpan token dan mencetak label token saat output.
-
-\begin{lstlisting}[language=C++, numbers=left, numberstyle=\tiny, breaklines=true, breakatwhitespace=true, caption={ParseTreeTerminalNode pada parse\_tree\_node.h}, label={lst:parse-tree-terminal}]
-class ParseTreeTerminalNode : public ParseTreeNode {
-public:
-	explicit ParseTreeTerminalNode(const Token &token);
-	const Token &token() const;
-protected:
-	std::string renderLabel() const override;
-private:
-	Token terminalToken;
-};
-\end{lstlisting}
-
-\subsection{\texttt{parser/parse\_tree\_node.cpp}}
-\subsubsection{Pencetakan Tree Dengan Indentasi}
-Fungsi \texttt{print} membangun struktur pohon dengan simbol garis.
-
-\begin{lstlisting}[language=C++, numbers=left, numberstyle=\tiny, breaklines=true, breakatwhitespace=true, caption={ParseTreeNode::print pada parse\_tree\_node.cpp}, label={lst:parse-tree-print}]
-void ParseTreeNode::print(std::ostream &out, const std::string &prefix, bool isLast) const
-{
-	out << prefix;
-	if (parentNode != nullptr) {
-		out << (isLast ? "`-- " : "|-- ");
-	}
-	out << renderLabel() << '\n';
-
-	const std::string childPrefix = prefix + (parentNode == nullptr ? "" : (isLast ? "    " : "|   "));
-	for (std::size_t index = 0; index < childNodes.size(); ++index) {
-		const bool childIsLast = index + 1 == childNodes.size();
-		childNodes[index]->print(out, childPrefix, childIsLast);
-	}
-}
-\end{lstlisting}
-
-\subsection{\texttt{parser/parse\_tree\_utils.h}}
-\subsubsection{Deklarasi Utilitas Traversal}
-Header ini menyediakan fungsi bantu untuk inspeksi pohon.
-
-\begin{lstlisting}[language=C++, numbers=left, numberstyle=\tiny, breaklines=true, breakatwhitespace=true, caption={Deklarasi utilitas parse tree}, label={lst:parse-tree-utils-decl}]
-namespace ParseTreeUtils {
-	bool isRoot(const ParseTreeNode *node);
-	bool isLeaf(const ParseTreeNode *node);
-	std::vector<ParseTreeNode *> collectAllNodes(ParseTreeNode *node);
-	std::vector<ParseTreeNode *> collectTerminalNodes(ParseTreeNode *node);
-	std::vector<ParseTreeNode *> collectNodesByName(ParseTreeNode *node, const std::string &name);
-}
-\end{lstlisting}
-
-\subsection{\texttt{parser/parse\_tree\_utils.cpp}}
-\subsubsection{Contoh Traversal Preorder}
-Contoh berikut memperlihatkan traversal preorder untuk mengumpulkan seluruh node.
-
-\begin{lstlisting}[language=C++, numbers=left, numberstyle=\tiny, breaklines=true, breakatwhitespace=true, caption={collectAllNodes pada parse\_tree\_utils.cpp}, label={lst:parse-tree-utils-collect}]
-std::vector<ParseTreeNode *> collectAllNodes(ParseTreeNode *node)
-{
-	std::vector<ParseTreeNode *> result;
-	if (!node)
-		return result;
-
-	result.push_back(node);
-	for (auto &child : node->children()) {
-		auto childNodes = collectAllNodes(child.get());
-		result.insert(result.end(), childNodes.begin(), childNodes.end());
-	}
-	return result;
-}
-\end{lstlisting}
+\section{Format Output}
+Output program Milestone 3 terdiri dari lima bagian: \texttt{tab}, \texttt{btab}, \texttt{atab}, parse tree, dan decorated AST. Label object class mencakup \texttt{program}, \texttt{const}, \texttt{variable}, \texttt{type}, \texttt{procedure}, dan \texttt{function}. Decorated AST menampilkan anotasi seperti \texttt{tab\_index}, \texttt{type}, \texttt{lev}, dan \texttt{block}.

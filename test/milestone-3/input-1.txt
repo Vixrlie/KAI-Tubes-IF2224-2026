@@ -1,4 +1,5 @@
 program Hello;
+
 var
   a, b: integer;
 begin

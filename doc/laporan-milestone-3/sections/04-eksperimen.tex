@@ -1,120 +1,206 @@
-﻿\section{Kasus Dasar}
-Tabel berikut merangkum file pengujian kasus dasar. Isi lengkap setiap file \texttt{input} dan \texttt{output} ditampilkan pada bagian detail setelah tabel.
+\section{Strategi Pengujian}
+Pengujian dilakukan dengan membangun program menggunakan \texttt{make -B}, menjalankan \texttt{arion\_parser} pada input Milestone 3, lalu membandingkan output aktual dengan file output yang tersimpan pada direktori \texttt{test/milestone-3}. Command yang digunakan adalah sebagai berikut.
 
-\begin{longtable}{|c|>{\centering\arraybackslash}m{7cm}|>{\centering\arraybackslash}m{7cm}|}
-	\caption{Ringkasan Pengujian pada Kasus Dasar} \label{tab:ringkasan_pengujian_dasar_m2}         \\
+\begin{tcolorbox}[title=Command Pengujian,colback=gray!5,colframe=black!60,boxrule=0.5pt,arc=2mm]
+\begin{verbatim}
+make -B
+for i in 1 2 3 4 5 6 7 8; do
+  ./arion_parser test/milestone-3/input-$i.txt output-$i.txt
+  diff -q output-$i.txt test/milestone-3/output-$i.txt
+done
+\end{verbatim}
+\end{tcolorbox}
 
-	\hline
-	\textbf{No} & \textbf{Test Case}                    & \textbf{Hasil}                         \\
-	\hline
-	\endfirsthead
+Seluruh test case yang digunakan berhasil menghasilkan exit code 0 dan output yang konsisten dengan expected output. Laporan ini menampilkan lima kasus utama yang mewakili deklarasi, ekspresi, control flow, structured type, dan subprogram.
 
-	\hline
-	\textbf{No} & \textbf{Test Case}                    & \textbf{Hasil}                         \\
-	\hline
-	\endhead
-
-	\hline
-	\multicolumn{3}{r}{\textit{Lanjut ke halaman berikutnya}}                                    \\
-	\hline
-	\endfoot
-
-	\hline
-	\endlastfoot
-
-	1           & \texttt{test/milestone-2/input-1.txt} & \texttt{test/milestone-2/output-1.txt} \\
-	\hline
-	2           & \texttt{test/milestone-2/input-2.txt} & \texttt{test/milestone-2/output-2.txt} \\
-	\hline
-	3           & \texttt{test/milestone-2/input-3.txt} & \texttt{test/milestone-2/output-3.txt} \\
-	\hline
+\begin{longtable}{|c|p{4.8cm}|p{7.8cm}|}
+\caption{Ringkasan Pengujian Milestone 3} \label{tab:ringkasan-m3} \\
+\hline
+\textbf{No} & \textbf{File Input} & \textbf{Fokus Pengujian} \\
+\hline
+\endfirsthead
+\hline
+\textbf{No} & \textbf{File Input} & \textbf{Fokus Pengujian} \\
+\hline
+\endhead
+1 & \texttt{test/milestone-3/input-1.txt} & Deklarasi variabel, assignment, ekspresi aritmatika, procedure call \texttt{writeln}, \texttt{tab}/\texttt{btab}. \\
+\hline
+2 & \texttt{test/milestone-3/input-2.txt} & Operator aritmatika, \texttt{div}, \texttt{mod}, unary minus, \texttt{not}, dan kondisi Boolean. \\
+\hline
+3 & \texttt{test/milestone-3/input-3.txt} & Control flow: \texttt{while}, \texttt{for downto}, dan \texttt{repeat-until}. \\
+\hline
+4 & \texttt{test/milestone-3/input-4.txt} & Structured type: record, array, field access, array access, dan case statement. \\
+\hline
+5 & \texttt{test/milestone-3/input-5.txt} & Procedure, function, parameter, local scope, recursive function call, dan function return. \\
+\hline
 \end{longtable}
 
-\subsection*{Detail Kasus Dasar}
+\section{Detail Pengujian}
 
-\subsubsection*{Kasus 1}
+\subsection{Kasus 1: Program Dasar}
 \textbf{Input}\par
-\lstinputlisting[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]{../../test/milestone-2/input-1.txt}
-\textbf{Hasil}\par
-\lstinputlisting[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]{../../test/milestone-2/output-1.txt}
+\lstinputlisting[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]{../../test/milestone-3/input-1.txt}
+
+\textbf{Cuplikan Output}\par
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]
+=== tab ===
+ 42     Hello    program    10    0    1    0    0    41
+ 43         a   variable     0    0    1    0    0    42
+ 44         b   variable     0    0    1    0    1    43
+
+=== btab ===
+  0    44     0     0     2
+  1     0     0     0     0
+
+=== Decorated AST ===
+Program('Hello') -> type:Unknown, lev:0, block:0
+  VarDecl('a') -> tab_index:43, type:Integer
+  VarDecl('b') -> tab_index:44, type:Integer
+  Block -> type:Unknown, lev:1, block:1
+    Assign
+    ProcCall('writeln')
+\end{lstlisting}
+
+Kasus ini menunjukkan bahwa program dasar dapat dianalisis secara semantik. Identifier program dicatat sebagai \texttt{program}, variabel \texttt{a} dan \texttt{b} masuk ke \texttt{tab}, block utama masuk ke \texttt{btab}, dan decorated AST memiliki anotasi tipe serta block.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.9\linewidth]{04-eksperimen/tc1.png}
-\caption{Snippet output Kasus 1}
+\includegraphics[width=0.95\linewidth]{04-eksperimen/tc1.png}
+\caption{Bukti input dan output pengujian Kasus 1.}
 \end{figure}
 
-\subsubsection*{Kasus 2}
+\subsection{Kasus 2: Ekspresi dan Boolean}
 \textbf{Input}\par
-\lstinputlisting[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]{../../test/milestone-2/input-2.txt}
-\textbf{Hasil}\par
-\lstinputlisting[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]{../../test/milestone-2/output-2.txt}
+\lstinputlisting[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]{../../test/milestone-3/input-2.txt}
+
+\textbf{Cuplikan Output}\par
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]
+Program('Expressions') -> type:Unknown, lev:0, block:0
+  VarDecl('x') -> type:Integer
+  VarDecl('y') -> type:Integer
+  VarDecl('z') -> type:Integer
+  Block -> lev:1, block:1
+    Assign x := (10 + 5) - 3 * 2
+    Assign y := x div 2 + 1
+    Assign z := -x mod 3
+    If -> condition type:Boolean
+      ProcCall('writeln')
+\end{lstlisting}
+
+Kasus ini menguji inferensi tipe untuk operator aritmatika, integer division, modulo, unary minus, dan operator \texttt{not}. Kondisi pada \texttt{if} berhasil dianotasi sebagai Boolean.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.9\linewidth]{04-eksperimen/tc2.png}
-\caption{Snippet output Kasus 2}
+\includegraphics[width=0.95\linewidth]{04-eksperimen/tc2.png}
+\caption{Bukti input dan output pengujian Kasus 2.}
 \end{figure}
 
-\subsubsection*{Kasus 3}
+\subsection{Kasus 3: Control Flow}
 \textbf{Input}\par
-\lstinputlisting[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]{../../test/milestone-2/input-3.txt}
-\textbf{Hasil}\par
-\lstinputlisting[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]{../../test/milestone-2/output-3.txt}
+\lstinputlisting[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]{../../test/milestone-3/input-3.txt}
+
+\textbf{Cuplikan Output}\par
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]
+Program('ControlFlow') -> type:Unknown, lev:0, block:0
+  VarDecl('i') -> type:Integer
+  VarDecl('sum') -> type:Integer
+  Block -> lev:1, block:1
+    While -> condition type:Boolean
+      Assign sum := sum + 1
+    For('i', downto)
+      Assign sum := sum - i
+    Repeat
+      Assign sum := sum + 5
+      Assign i := i + 1
+      condition type:Boolean
+\end{lstlisting}
+
+Kasus ini memvalidasi bahwa semantic analyzer mampu menangani \texttt{while}, \texttt{for}, dan \texttt{repeat-until}. Ekspresi kondisi pada loop diuji agar menghasilkan tipe Boolean.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.9\linewidth]{04-eksperimen/tc3.png}
-\caption{Snippet output Kasus 3}
+\includegraphics[width=0.95\linewidth]{04-eksperimen/tc3.png}
+\caption{Bukti input dan output pengujian Kasus 3.}
 \end{figure}
 
-\section{\textit{Edge Cases}}
-Tabel berikut merangkum file pengujian edge cases. Isi lengkap setiap file \texttt{input} dan \texttt{output} ditampilkan pada bagian detail setelah tabel.
-
-\begin{longtable}{|c|>{\centering\arraybackslash}m{7cm}|>{\centering\arraybackslash}m{7cm}|}
-	\caption{Ringkasan Pengujian pada Kasus Anomali} \label{tab:ringkasan_pengujian_anomali_m2}       \\
-
-	\hline
-	\textbf{No} & \textbf{Test Case}                     & \textbf{Hasil}                          \\
-	\hline
-	\endfirsthead
-
-	\hline
-	\textbf{No} & \textbf{Test Case}                     & \textbf{Hasil}                          \\
-	\hline
-	\endhead
-
-	\hline
-	\multicolumn{3}{r}{\textit{Lanjut ke halaman berikutnya}}                                      \\
-	\hline
-	\endfoot
-
-	\hline
-	\endlastfoot
-
-	1           & \texttt{test/milestone-2/input-4.txt}  & \texttt{test/milestone-2/output-4.txt}  \\
-	\hline
-	2           & \texttt{test/milestone-2/input-5.txt}  & \texttt{test/milestone-2/output-5.txt}  \\
-	\hline
-\end{longtable}
-
-\subsection*{Detail Edge Cases}
-
-\subsubsection*{Kasus 4}
+\subsection{Kasus 4: Structured Type}
 \textbf{Input}\par
-\lstinputlisting[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]{../../test/milestone-2/input-4.txt}
-\textbf{Hasil}\par
-\lstinputlisting[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]{../../test/milestone-2/output-4.txt}
+\lstinputlisting[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]{../../test/milestone-3/input-4.txt}
+
+\textbf{Cuplikan Output}\par
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]
+=== atab ===
+idx  xtyp  etyp  eref  low  high  elsz  size
+  0     7     0     0     1     5     1     5
+
+Program('StructuredTypes') -> type:Unknown
+  TypeDecl('Point') -> type:Record
+    RecordType
+      VarDecl('x')
+      VarDecl('y')
+  VarDecl('p') -> type:Record
+  VarDecl('scores') -> type:Array
+  VarDecl('grade') -> type:Char
+  Block
+    FieldAccess(.x)
+    FieldAccess(.y)
+    ArrayAccess scores[1]
+    Case
+\end{lstlisting}
+
+Kasus ini menguji record, array, akses field, akses indeks array, serta case statement. Informasi array masuk ke \texttt{atab}, sedangkan field record disimpan melalui block record.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.9\linewidth]{04-eksperimen/tc4.png}
-\caption{Snippet output Kasus 4}
+\includegraphics[width=0.95\linewidth]{04-eksperimen/tc4.png}
+\caption{Bukti input dan output pengujian Kasus 4.}
 \end{figure}
 
-\subsubsection*{Kasus 5}
+\subsection{Kasus 5: Subprogram}
 \textbf{Input}\par
-\lstinputlisting[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]{../../test/milestone-2/input-5.txt}
-\textbf{Hasil}\par
-\lstinputlisting[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]{../../test/milestone-2/output-5.txt}
+\lstinputlisting[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]{../../test/milestone-3/input-5.txt}
+
+\textbf{Cuplikan Output}\par
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]
+Program('Subprograms') -> type:Unknown
+  VarDecl('result') -> type:Integer
+  ProcedureDecl('PrintTwice') -> block:1
+    Param('msg': string)
+    Param('count': integer)
+    VarDecl('i') -> type:Integer
+    For('i', to)
+      ProcCall('writeln')
+  FunctionDecl('Factorial', returns: 'integer') -> type:Integer, block:2
+    Param('n': integer)
+    If
+      Assign Factorial := 1
+      Assign Factorial := n * Factorial(n - 1)
+  Block -> block:3
+    ProcCall('PrintTwice')
+    FuncCall('Factorial') -> type:Integer
+    ProcCall('writeln')
+\end{lstlisting}
+
+Kasus ini menunjukkan bahwa procedure dan function dicatat dalam symbol table, parameter diproses pada scope subprogram, pemanggilan recursive function dikenali sebagai \texttt{FuncCall}, dan function \texttt{Factorial} memiliki assignment ke nama function sebagai return value.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.9\linewidth]{04-eksperimen/tc5.png}
-\caption{Snippet output Kasus 5}
+\includegraphics[width=0.95\linewidth]{04-eksperimen/tc5.png}
+\caption{Bukti input dan output pengujian Kasus 5.}
 \end{figure}
+
+\section{Pengujian Error Semantic}
+Selain kasus valid, program juga diuji secara manual terhadap input yang mengandung kesalahan semantik. Contoh kesalahan yang berhasil dideteksi adalah undefined identifier, assignment dengan tipe tidak kompatibel, kondisi \texttt{if} non-Boolean, redeklarasi identifier, index array dengan tipe salah, dan pemanggilan by-reference dengan literal.
+
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]
+Input:
+program BadType;
+var x: integer; s: string;
+begin
+  x := s;
+end.
+
+Output:
+=== Semantic Errors ===
+- Assignment types are incompatible
+\end{lstlisting}

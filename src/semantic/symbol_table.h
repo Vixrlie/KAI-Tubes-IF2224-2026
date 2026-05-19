@@ -10,6 +10,7 @@ namespace Semantic
 {
     enum class ObjectClass
     {
+        PROGRAM,
         CONST,
         VAR,
         TYPE,
@@ -60,6 +61,7 @@ namespace Semantic
     struct AtabEntry
     {
         int xtyp = 0;
+        int xref = 0;
         int etyp = 0;
         int eref = 0;
         int low = 0;
@@ -89,7 +91,8 @@ namespace Semantic
                                 const TypeInfo &type,
                                 int nrm,
                                 int adr,
-                                std::string &error);
+                                std::string &error,
+                                bool isParameter = false);
 
         std::optional<LookupResult> lookup(const std::string &identifier) const;
         std::optional<LookupResult> lookupInCurrentScope(const std::string &identifier) const;
@@ -110,6 +113,7 @@ namespace Semantic
         std::vector<BtabEntry> btabEntries;
         std::vector<AtabEntry> atabEntries;
         std::vector<int> scopeLastStack;
+        std::vector<int> scopeBlockStack;
 
         int appendTabEntry(const TabEntry &entry);
         bool existsInScope(int scopeLast, const std::string &identifier) const;
@@ -117,7 +121,9 @@ namespace Semantic
 
         void ensureBaseScope();
         int currentScopeLast() const;
+        int currentScopeBlock() const;
         void setCurrentScopeLast(int index);
+        int typeSize(const TypeInfo &type) const;
     };
 }
 

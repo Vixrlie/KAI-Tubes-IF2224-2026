@@ -6,6 +6,7 @@
 #include "lexer/lexer.h"
 #include "lexer/token_stream_reader.h"
 #include "parser/parser.h"
+#include "parser/parse_tree_reader.h"
 #include "semantic/ast_builder.h"
 #include "semantic/ast_formatter.h"
 #include "semantic/semantic_analyzer.h"
@@ -33,10 +34,15 @@ int main(int argc, char *argv[])
     Lexer lexer(source);
     try
     {
+        std::unique_ptr<ParseTreeNode> parseTree;
         std::vector<Token> tokens;
         std::string tokenStreamError;
 
-        if (TokenStreamReader::looksLikeTokenStream(source))
+        if (ParseTreeReader::looksLikeParseTree(source))
+        {
+            parseTree = ParseTreeReader::read(source);
+        }
+        else if (TokenStreamReader::looksLikeTokenStream(source))
         {
             if (!TokenStreamReader::tryRead(source, tokens, tokenStreamError))
             {
@@ -53,9 +59,12 @@ int main(int argc, char *argv[])
             }
         }
 
-        // Phase 1: Parse source into parse tree (CST)
-        Parser parser(tokens);
-        std::unique_ptr<ProgramNode> parseTree = parser.parseProgram();
+        // Phase 1: Parse source into parse tree (CST), unless a parse tree was provided.
+        if (!parseTree)
+        {
+            Parser parser(tokens);
+            parseTree = parser.parseProgram();
+        }
 
         // Phase 2: Convert parse tree to AST via Syntax-Directed Translation
         AST::ASTBuilder astBuilder;
@@ -77,6 +86,8 @@ int main(int argc, char *argv[])
         auto objectClassLabel = [](Semantic::ObjectClass obj) {
             switch (obj)
             {
+            case Semantic::ObjectClass::PROGRAM:
+                return "program";
             case Semantic::ObjectClass::CONST:
                 return "const";
             case Semantic::ObjectClass::VAR:
