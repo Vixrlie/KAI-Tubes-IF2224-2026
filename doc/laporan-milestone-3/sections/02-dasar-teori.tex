@@ -1,66 +1,58 @@
-\section{Teori Singkat}
+\section{Semantic Analysis}
+Semantic analysis adalah tahap compiler yang memeriksa makna program setelah struktur sintaksnya valid. Pada tahap ini, compiler tidak lagi hanya menanyakan apakah token tersusun sesuai grammar, tetapi juga apakah setiap konstruksi program memenuhi aturan konteks bahasa. Contohnya adalah memastikan identifier sudah dideklarasikan sebelum dipakai, operand operator memiliki tipe yang sesuai, assignment dilakukan ke target yang dapat diubah, dan ekspresi kondisi pada \texttt{if}, \texttt{while}, atau \texttt{repeat} bertipe Boolean.
 
-\subsection{Parser dan Syntax Analysis}
+Semantic analysis biasanya dilakukan dengan traversal terhadap tree hasil parser. Pada implementasi ini, parse tree terlebih dahulu dikonversi menjadi AST agar traversal semantik lebih sederhana. Setelah itu, semantic analyzer mengunjungi setiap node AST, menghitung tipe, melakukan lookup ke symbol table, dan menambahkan anotasi pada node.
 
-Parser atau syntax analyzer adalah komponen yang bertugas memeriksa struktur sintaks program berdasarkan aturan grammar bahasa. Setelah tahap lexical analysis selesai, parser menerima urutan token dan memverifikasi bahwa token-token tersebut dapat dibentuk menjadi konstruksi sintaks yang sah. Dengan kata lain, parser memeriksa apakah program mengikuti aturan bahasa, bukan lagi sekadar pola karakter.
+\section{Abstract Syntax Tree}
+Abstract Syntax Tree (AST) adalah representasi pohon yang lebih ringkas daripada parse tree. Parse tree memuat detail grammar seperti non-terminal perantara, tanda baca, dan keyword struktural. AST hanya menyimpan konstruksi yang penting secara semantik, misalnya assignment, binary operation, variable reference, procedure call, array access, record field access, dan control flow.
 
-Dalam pipeline kompilasi yang umum, posisi parser berada setelah lexer. Alur ini dapat diringkas sebagai berikut: source code diproses oleh lexer menjadi daftar token, kemudian parser mengolah token tersebut menjadi parse tree, yang selanjutnya dipakai oleh semantic analysis dan code generation. Parser tidak menerima source code mentah, melainkan daftar token yang sudah diklasifikasikan oleh lexer. Hubungan ini membuat output lexer pada Milestone 1 menjadi input utama parser pada Milestone 2.
-
-Peran parser bersifat krusial karena ia menegakkan aturan grammar dan membangun representasi hierarkis dari program. Parser memeriksa urutan token apakah sesuai dengan produksi grammar, mendeteksi kesalahan sintaks, serta menyusun struktur parse tree yang menunjukkan bagaimana bagian-bagian program saling terhubung. Representasi ini menjadi dasar untuk analisis semantik dan tahapan kompilasi berikutnya.
-
-Secara umum, parser dapat dibedakan menjadi pendekatan top-down dan bottom-up. Top-down memulai analisis dari simbol awal grammar lalu menurunkannya menjadi token yang cocok, sedangkan bottom-up membangun struktur dari token menuju simbol awal. Recursive Descent yang digunakan pada Arion Compiler adalah bentuk top-down parsing. Ketika terjadi syntax error, parser harus mampu memberikan pesan kesalahan yang informatif, misalnya menjelaskan token yang tidak sesuai dan posisi baris serta kolomnya agar proses debugging menjadi lebih efektif.
+Sebagai contoh, parse tree untuk statement \texttt{b := a + 10;} berisi node \texttt{<assignment-statement>}, \texttt{<expression>}, \texttt{<simple-expression>}, \texttt{<term>}, dan \texttt{<factor>}. Pada AST, struktur tersebut diringkas menjadi node \texttt{Assign} dengan target \texttt{Var('b')} dan value \texttt{BinOp('+')} yang memiliki anak \texttt{Var('a')} dan \texttt{Num(10)}.
 
 \begin{figure}[H]
-	\centering
-	\includegraphics[width=0.9\textwidth]{pipeline.png}
-	\caption{Diagram pipeline kompilasi untuk syntax analyzer.}
-	\label{fig:pipeline-kompilasi}
+    \centering
+    \includegraphics[width=0.85\textwidth]{parse_vs_ast.png}
+    \caption{Perbandingan parse tree dan AST.}
+    \label{fig:parse-vs-ast-m3}
 \end{figure}
 
-\subsection{Parse Tree}
+\section{Decorated AST}
+Decorated AST adalah AST yang sudah diberi informasi tambahan hasil semantic analysis. Informasi tambahan yang digunakan pada implementasi ini meliputi:
 
-Parse tree adalah representasi hierarkis dari struktur sintaks program berdasarkan grammar. Setiap simpul pada parse tree merepresentasikan penerapan aturan produksi sehingga hubungan antar bagian program dapat terlihat secara jelas. Parse tree menampilkan bagaimana sebuah program dibangun dari simbol awal hingga menghasilkan urutan token yang sesuai dengan grammar.
+\begin{itemize}
+    \item tipe data node, misalnya \texttt{Integer}, \texttt{Real}, \texttt{Boolean}, \texttt{Array}, atau \texttt{Record};
+    \item index ke \texttt{tab} untuk identifier yang berhasil ditemukan;
+    \item lexical level tempat node dianalisis;
+    \item block index yang mengacu pada \texttt{btab}.
+\end{itemize}
 
-Dalam teori CFG, komponen parse tree dapat dijelaskan sebagai berikut. Node interior diberi label non-terminal, node daun diberi label terminal atau epsilon, dan root diberi label start symbol grammar. Setiap node interior A dengan anak X1, X2, ..., Xk menggambarkan produksi A $\rightarrow$ X1X2...Xk. Dengan struktur ini, parse tree memberikan gambaran eksplisit dari proses derivasi yang menghasilkan program.
+Dengan anotasi tersebut, AST tidak hanya menunjukkan struktur program, tetapi juga hasil validasi makna program. Decorated AST menjadi dasar yang lebih siap untuk tahap lanjutan seperti intermediate representation atau code generation.
 
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.8\textwidth]{syntax-tree.png}
-	\caption{Contoh syntax tree sederhana.}
-	\label{fig:syntax-tree}
-\end{figure}
+\section{Symbol Table}
+Symbol table adalah struktur data yang menyimpan informasi identifier dan scope. Pada Milestone 3, implementasi menggunakan tiga tabel utama sesuai spesifikasi.
 
-Konsep yield pada parse tree merujuk pada string terminal yang diperoleh dengan membaca daun dari kiri ke kanan. Yield ini harus sama dengan urutan token input agar parse tree dianggap valid. Parse tree juga merupakan representasi alternatif dari derivasi leftmost atau rightmost, karena setiap derivasi tersebut dapat dipetakan ke satu parse tree yang setara secara struktural.
+\subsection{\texttt{tab}}
+\texttt{tab} menyimpan identifier seperti nama program, konstanta, variabel, tipe, procedure, dan function. Setiap entri menyimpan nama identifier, class object, tipe, referensi ke tabel lain, normal/reference flag, lexical level, address, dan link ke identifier sebelumnya dalam scope yang sama.
 
-Parse tree berbeda dengan Abstract Syntax Tree (AST). Parse tree memuat semua simbol, termasuk tanda baca dan token terminal yang berfungsi sebagai struktur sintaks. AST mengabstraksi detail sintaks tersebut dan hanya menyimpan informasi semantis penting. Pada Milestone 2 ini, keluaran parser adalah parse tree lengkap, bukan AST. Parse tree penting karena menjadi input untuk semantic analysis dan menyediakan struktur program yang terverifikasi secara sintaks.
+\subsection{\texttt{btab}}
+\texttt{btab} menyimpan informasi block. Entry block berisi pointer ke identifier terakhir, pointer ke parameter terakhir, ukuran parameter, dan ukuran variabel lokal. Pada implementasi ini, block dibuat untuk global scope, main compound block, procedure/function, dan record type.
 
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.8\textwidth]{parse-tree.png}
-	\caption{Contoh parse tree untuk ekspresi aritmatika sederhana dengan label node terminal dan non-terminal.}
-	\label{fig:parse-tree}
-\end{figure}
+\subsection{\texttt{atab}}
+\texttt{atab} menyimpan informasi array, seperti tipe index, tipe elemen, batas bawah, batas atas, ukuran elemen, dan total ukuran array. Jika sebuah tipe array dideklarasikan, semantic analyzer menambahkan informasi array tersebut ke \texttt{atab} dan menyimpan referensinya pada \texttt{tab}.
 
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.85\textwidth]{parse_vs_ast.png}
-	\caption{Perbandingan parse tree dan AST untuk ekspresi yang sama; parse tree lebih lengkap dengan semua terminal.}
-	\label{fig:parse-vs-ast}
-\end{figure}
+\section{Type Compatibility}
+Type compatibility menentukan apakah dua tipe boleh digunakan bersama dalam ekspresi atau assignment. Implementasi menggunakan aturan berikut.
 
-\subsection{Recursive Descent Parser}
+\begin{enumerate}
+    \item Dua tipe kompatibel jika jenis dan referensinya sama.
+    \item Subrange kompatibel dengan base type-nya, misalnya subrange integer dengan integer.
+    \item Assignment dari Integer ke Real diperbolehkan.
+    \item Assignment ke subrange diperbolehkan jika tipe kompatibel dan literal berada di dalam batas subrange.
+    \item Operator aritmatika hanya menerima operand numerik.
+    \item Operator \texttt{div} dan \texttt{mod} hanya menerima operand integer-like.
+    \item Operator \texttt{and}, \texttt{or}, dan \texttt{not} hanya menerima Boolean.
+    \item Operator relasional menghasilkan Boolean dan membutuhkan operand yang kompatibel.
+    \item Kondisi pada \texttt{if}, \texttt{while}, dan \texttt{repeat-until} harus bertipe Boolean.
+\end{enumerate}
 
-Recursive Descent Parser adalah metode parsing top-down yang mengimplementasikan satu fungsi rekursif untuk setiap non-terminal grammar. Ide utamanya adalah merepresentasikan aturan grammar sebagai prosedur yang secara langsung memeriksa token input dan membangun struktur parse tree. Pendekatan ini banyak digunakan karena sederhana dan mudah dipetakan ke kode program.
-
-Pada top-down parsing, proses dimulai dari start symbol, lalu diperluas ke bawah mengikuti aturan produksi sampai mencapai terminal yang cocok dengan token input. Setiap fungsi non-terminal akan memeriksa token saat ini, memilih produksi yang relevan, lalu memanggil fungsi lain sesuai urutan simbol dalam produksi. Ketika sebuah terminal diharapkan, parser mencocokkan token input; jika cocok, token dikonsumsi dan parser maju ke token berikutnya.
-
-Cara kerja recursive descent dapat dijelaskan langkah demi langkah. Setiap non-terminal memiliki fungsi parseX() yang membaca token, memanggil parseY() untuk non-terminal lain, dan mengonsumsi token ketika bertemu terminal yang diharapkan. Jika token tidak cocok, parser melempar syntax error. Fungsi-fungsi ini dipanggil secara rekursif sehingga struktur pemanggilan mengikuti struktur grammar. Contoh sederhana pada grammar ekspresi aritmatika adalah parseExpression() memanggil parseTerm(), dan parseTerm() memanggil parseFactor().
-
-Metode ini memiliki kelebihan karena mudah diimplementasikan dan struktur kodenya mencerminkan grammar. Namun, ia tidak dapat menangani grammar yang left-recursive secara langsung sehingga grammar harus ditransformasikan terlebih dahulu. Selain itu, recursive descent umumnya bersifat deterministik dan mengandalkan lookahead terbatas, seperti LL(1). Dalam Arion Compiler, grammar bahasa di-hardcode ke dalam fungsi parseX() seperti parseProgram(), parseDeclarationPart(), parseCompoundStatement(), parseStatement(), dan parseExpression(), sehingga struktur parser menjadi jelas dan teruji.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.85\textwidth]{recursivedescent.png}
-	\caption{Ilustrasi proses recursive descent sebagai pohon pemanggilan fungsi selama parsing.}
-	\label{fig:recursive-descent}
-\end{figure}
+\section{Predefined Identifier}
+Sebelum analisis program dimulai, symbol table diisi dengan predefined identifier. Identifier bawaan yang digunakan adalah \texttt{Integer}, \texttt{Real}, \texttt{Char}, \texttt{Boolean}, \texttt{String}, \texttt{True}, \texttt{False}, \texttt{writeln}, dan \texttt{readln}. Identifier \texttt{writeln} dan \texttt{readln} diperlakukan sebagai procedure bawaan dengan jumlah dan tipe argumen fleksibel.
