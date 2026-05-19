@@ -86,6 +86,8 @@ int main(int argc, char *argv[])
         auto objectClassLabel = [](Semantic::ObjectClass obj) {
             switch (obj)
             {
+            case Semantic::ObjectClass::PROGRAM:
+                return "program";
             case Semantic::ObjectClass::CONST:
                 return "const";
             case Semantic::ObjectClass::VAR:
