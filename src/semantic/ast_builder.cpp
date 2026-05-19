@@ -605,6 +605,8 @@ namespace AST
         std::vector<std::unique_ptr<ParamNode>> params;
         std::vector<std::string> idents;
         std::string typeName;
+        const ParseTreeNode *typeSpecNode = nullptr;
+        bool isVar = false;
 
         for (auto &child : node->children())
         {
@@ -612,10 +614,18 @@ namespace AST
             {
                 idents = visitIdentifierList(child.get());
             }
+            else if (child->name() == "<array-type>")
+            {
+                typeSpecNode = child.get();
+            }
             else
             {
                 const auto *terminal = dynamic_cast<const ParseTreeTerminalNode *>(child.get());
-                if (terminal && terminal->token().type == TokenType::IDENT)
+                if (terminal && terminal->token().type == TokenType::VARSY)
+                {
+                    isVar = true;
+                }
+                else if (terminal && terminal->token().type == TokenType::IDENT)
                 {
                     typeName = terminal->token().value;
                 }
@@ -627,6 +637,11 @@ namespace AST
             auto param = std::make_unique<ParamNode>();
             param->name = ident;
             param->typeName = typeName;
+            if (typeSpecNode)
+            {
+                param->typeSpec = visitArrayType(typeSpecNode);
+            }
+            param->isVar = isVar;
             params.push_back(std::move(param));
         }
 
