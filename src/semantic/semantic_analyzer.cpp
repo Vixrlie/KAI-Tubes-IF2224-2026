@@ -667,7 +667,7 @@ namespace Semantic
     {
         std::string error;
         TypeInfo programType{BasicType::UNKNOWN, 0};
-        symbols.registerIdentifier(node->name, ObjectClass::PROCEDURE, programType, 1, 0, error);
+        symbols.registerIdentifier(node->name, ObjectClass::PROGRAM, programType, 1, 0, error);
 
         annotateNode(node, basicType(BasicType::UNKNOWN));
 
@@ -678,7 +678,9 @@ namespace Semantic
 
         if (node->body)
         {
+            enterScope();
             visitCompound(node->body.get());
+            exitScope();
         }
     }
 
