@@ -4,7 +4,7 @@ Implementasi Milestone 3 melanjutkan pipeline Milestone 1 dan Milestone 2. Alur 
 Setelah parse tree tersedia, program menjalankan \texttt{ASTBuilder} untuk membentuk AST. AST tersebut kemudian dianalisis oleh \texttt{SemanticAnalyzer}. Jika tidak ada error, program mencetak \texttt{tab}, \texttt{btab}, \texttt{atab}, parse tree, dan decorated AST.
 
 \begin{tcolorbox}[title=Pipeline Program,colback=gray!5,colframe=black!60,boxrule=0.5pt,arc=2mm]
-\begin{verbatim}
+    \begin{verbatim}
 Input file
   -> Lexer / TokenStreamReader / ParseTreeReader
   -> Parser
@@ -29,7 +29,7 @@ Bagian Milestone 3 terutama berada pada direktori \texttt{src/semantic/}. Berkas
 \end{itemize}
 
 \section{Perancangan AST}
-AST dirancang sebagai hierarchy class berbasis polymorphism. Semua node mewarisi \texttt{ASTNode}, yang memiliki field \texttt{annotation}. Node AST yang digunakan mencakup \texttt{ProgramNode}, \texttt{VarDeclNode}, \texttt{ConstDeclNode}, \texttt{TypeDeclNode}, \texttt{ProcedureDeclNode}, \texttt{FunctionDeclNode}, \texttt{AssignNode}, \texttt{BinOpNode}, \texttt{UnaryOpNode}, \texttt{VarRefNode}, \texttt{ArrayAccessNode}, \texttt{FieldAccessNode}, \texttt{ProcCallNode}, \texttt{FuncCallNode}, \texttt{IfNode}, \texttt{WhileNode}, \texttt{RepeatNode}, \texttt{ForNode}, dan \texttt{CaseNode}.
+AST dirancang sebagai hierarchy class berbasis polymorphism. Semua node mewarisi \texttt{ASTNode}, yang memiliki field \texttt{annotation}. Node AST yang digunakan mencakup \texttt{ProgramNode}, \texttt{VarDeclNode}, \texttt{ConstDeclNode}, \texttt{TypeDeclNode}, \texttt{ProcedureDeclNode}, \texttt{FunctionDeclNode}, \texttt{AssignNode}, \texttt{BinOpNode}, \texttt{UnaryOpNode}, \texttt{VarRefNode}, \texttt{Array AccessNode}, \texttt{FieldAccessNode}, \texttt{ProcCallNode}, \texttt{FuncCallNode}, \texttt{IfNode}, \texttt{WhileNode}, \texttt{RepeatNode}, \texttt{ForNode}, dan \texttt{CaseNode}.
 
 Struktur anotasi pada node AST menyimpan \texttt{typeCode}, \texttt{typeName}, \texttt{tabIndex}, \texttt{blockIndex}, \texttt{level}, dan status inisialisasi. Informasi ini diisi oleh semantic analyzer setelah AST selesai dibangun.
 
@@ -39,31 +39,31 @@ Konversi parse tree ke AST dilakukan oleh \texttt{ASTBuilder}. Setiap fungsi \te
 Tabel berikut merangkum sebagian semantic action yang digunakan.
 
 \begin{longtable}{|p{5.2cm}|p{8.7cm}|}
-\caption{Contoh Semantic Action ASTBuilder} \label{tab:semantic-action} \\
-\hline
-\textbf{Produksi} & \textbf{Semantic Action} \\
-\hline
-\endfirsthead
-\hline
-\textbf{Produksi} & \textbf{Semantic Action} \\
-\hline
-\endhead
-\texttt{<program>} & Membentuk \texttt{ProgramNode}, mengisi nama program dari header, daftar deklarasi dari declaration part, dan body dari compound statement. \\
-\hline
-\texttt{<var-declaration>} & Untuk setiap identifier pada identifier-list, membentuk satu \texttt{VarDeclNode} dengan type specification yang sama. \\
-\hline
-\texttt{<assignment-statement>} & Membentuk \texttt{AssignNode(target, value)} dari node variable dan expression. \\
-\hline
-\texttt{<expression>} & Jika terdapat relational operator, membentuk \texttt{BinOpNode}; jika tidak, meneruskan hasil simple-expression. \\
-\hline
-\texttt{<simple-expression>} & Membentuk rantai \texttt{BinOpNode} untuk operator aditif dan \texttt{UnaryOpNode} untuk tanda minus di depan. \\
-\hline
-\texttt{<factor>} & Literal menjadi node literal, identifier menjadi \texttt{VarRefNode}, procedure/function call dalam expression menjadi \texttt{FuncCallNode}, dan \texttt{not factor} menjadi \texttt{UnaryOpNode}. \\
-\hline
-\texttt{<array-type>} & Membentuk \texttt{ArrayTypeNode} berisi index type dan element type. \\
-\hline
-\texttt{<record-type>} & Membentuk \texttt{RecordTypeNode} yang menyimpan field sebagai daftar \texttt{VarDeclNode}. \\
-\hline
+    \caption{Contoh Semantic Action ASTBuilder} \label{tab:semantic-action}                                                                                                                                                               \\
+    \hline
+    \textbf{Produksi}               & \textbf{Semantic Action}                                                                                                                                                                            \\
+    \hline
+    \endfirsthead
+    \hline
+    \textbf{Produksi}               & \textbf{Semantic Action}                                                                                                                                                                            \\
+    \hline
+    \endhead
+    \texttt{<program>}              & Membentuk \texttt{ProgramNode}, mengisi nama program dari header, daftar deklarasi dari declaration part, dan body dari compound statement.                                                         \\
+    \hline
+    \texttt{<var-declaration>}      & Untuk setiap identifier pada identifier-list, membentuk satu \texttt{VarDeclNode} dengan type specification yang sama.                                                                              \\
+    \hline
+    \texttt{<assignment-statement>} & Membentuk \texttt{AssignNode(target, value)} dari node variable dan expression.                                                                                                                     \\
+    \hline
+    \texttt{<expression>}           & Jika terdapat relational operator, membentuk \texttt{BinOpNode}; jika tidak, meneruskan hasil simple-expression.                                                                                    \\
+    \hline
+    \texttt{<simple-expression>}    & Membentuk rantai \texttt{BinOpNode} untuk operator aditif dan \texttt{UnaryOpNode} untuk tanda minus di depan.                                                                                      \\
+    \hline
+    \texttt{<factor>}               & Literal menjadi node literal, identifier menjadi \texttt{VarRefNode}, procedure/function call dalam expression menjadi \texttt{FuncCallNode}, dan \texttt{not factor} menjadi \texttt{UnaryOpNode}. \\
+    \hline
+    \texttt{<array-type>}           & Membentuk \texttt{ArrayTypeNode} berisi index type dan element type.                                                                                                                                \\
+    \hline
+    \texttt{<record-type>}          & Membentuk \texttt{RecordTypeNode} yang menyimpan field sebagai daftar \texttt{VarDeclNode}.                                                                                                         \\
+    \hline
 \end{longtable}
 
 \section{Implementasi Symbol Table}
@@ -72,7 +72,7 @@ Symbol table diimplementasikan pada class \texttt{Semantic::SymbolTable}. Constr
 Registrasi identifier dilakukan oleh \texttt{registerIdentifier}. Fungsi ini mengecek redeklarasi pada scope aktif, membuat entri \texttt{tab}, mengisi \texttt{link} ke identifier sebelumnya dalam scope yang sama, memperbarui \texttt{last} pada \texttt{btab}, dan menghitung ukuran parameter atau variabel lokal. Lookup dilakukan dari scope terdalam ke scope terluar.
 
 \begin{tcolorbox}[title=Pseudocode Register Identifier,colback=gray!5,colframe=black!60,boxrule=0.5pt,arc=2mm,breakable]
-\begin{verbatim}
+    \begin{verbatim}
 function registerIdentifier(name, obj, type, nrm, adr):
     if name exists in current scope:
         report redeclaration error

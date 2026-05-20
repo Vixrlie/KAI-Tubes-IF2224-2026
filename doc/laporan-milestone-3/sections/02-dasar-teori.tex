@@ -6,7 +6,8 @@ Semantic analysis biasanya dilakukan dengan traversal terhadap tree hasil parser
 \section{Abstract Syntax Tree}
 Abstract Syntax Tree (AST) adalah representasi pohon yang lebih ringkas daripada parse tree. Parse tree memuat detail grammar seperti non-terminal perantara, tanda baca, dan keyword struktural. AST hanya menyimpan konstruksi yang penting secara semantik, misalnya assignment, binary operation, variable reference, procedure call, array access, record field access, dan control flow.
 
-Sebagai contoh, parse tree untuk statement \texttt{b := a + 10;} berisi node \texttt{<assignment-statement>}, \texttt{<expression>}, \texttt{<simple-expression>}, \texttt{<term>}, dan \texttt{<factor>}. Pada AST, struktur tersebut diringkas menjadi node \texttt{Assign} dengan target \texttt{Var('b')} dan value \texttt{BinOp('+')} yang memiliki anak \texttt{Var('a')} dan \texttt{Num(10)}.
+Sebagai contoh, parse tree untuk statement \texttt{b := a + 10;} berisi node \texttt{<assignment
+    -statement>}, \texttt{<expression>}, \texttt{<simple-expression>}, \texttt{<term>}, dan \texttt{<factor>}. Pada AST, struktur tersebut diringkas menjadi node \texttt{Assign} dengan target \texttt{Var('b')} dan value \texttt{BinOp('+')} yang memiliki anak \texttt{Var('a')} dan \texttt{Num(10)}.
 
 \begin{figure}[H]
     \centering

@@ -2,7 +2,7 @@
 Pengujian dilakukan dengan membangun program menggunakan \texttt{make -B}, menjalankan \texttt{arion\_parser} pada input Milestone 3, lalu membandingkan output aktual dengan file output yang tersimpan pada direktori \texttt{test/milestone-3}. Command yang digunakan adalah sebagai berikut.
 
 \begin{tcolorbox}[title=Command Pengujian,colback=gray!5,colframe=black!60,boxrule=0.5pt,arc=2mm]
-\begin{verbatim}
+  \begin{verbatim}
 make -B
 for i in 1 2 3 4 5 6 7 8; do
   ./arion_parser test/milestone-3/input-$i.txt output-$i.txt
@@ -14,25 +14,25 @@ done
 Seluruh test case yang digunakan berhasil menghasilkan exit code 0 dan output yang konsisten dengan expected output. Laporan ini menampilkan lima kasus utama yang mewakili deklarasi, ekspresi, control flow, structured type, dan subprogram.
 
 \begin{longtable}{|c|p{4.8cm}|p{7.8cm}|}
-\caption{Ringkasan Pengujian Milestone 3} \label{tab:ringkasan-m3} \\
-\hline
-\textbf{No} & \textbf{File Input} & \textbf{Fokus Pengujian} \\
-\hline
-\endfirsthead
-\hline
-\textbf{No} & \textbf{File Input} & \textbf{Fokus Pengujian} \\
-\hline
-\endhead
-1 & \texttt{test/milestone-3/input-1.txt} & Deklarasi variabel, assignment, ekspresi aritmatika, procedure call \texttt{writeln}, \texttt{tab}/\texttt{btab}. \\
-\hline
-2 & \texttt{test/milestone-3/input-2.txt} & Operator aritmatika, \texttt{div}, \texttt{mod}, unary minus, \texttt{not}, dan kondisi Boolean. \\
-\hline
-3 & \texttt{test/milestone-3/input-3.txt} & Control flow: \texttt{while}, \texttt{for downto}, dan \texttt{repeat-until}. \\
-\hline
-4 & \texttt{test/milestone-3/input-4.txt} & Structured type: record, array, field access, array access, dan case statement. \\
-\hline
-5 & \texttt{test/milestone-3/input-5.txt} & Procedure, function, parameter, local scope, recursive function call, dan function return. \\
-\hline
+  \caption{Ringkasan Pengujian Milestone 3} \label{tab:ringkasan-m3}                                                                                                       \\
+  \hline
+  \textbf{No} & \textbf{File Input}                    & \textbf{Fokus Pengujian}                                                                                          \\
+  \hline
+  \endfirsthead
+  \hline
+  \textbf{No} & \textbf{File Input}                    & \textbf{Fokus Pengujian}                                                                                          \\
+  \hline
+  \endhead
+  1           & \texttt{test/milestone-3/input -1.txt} & Deklarasi variabel, assignment, ekspresi aritmatika, procedure call \texttt{writeln}, \texttt{tab}/\texttt{btab}. \\
+  \hline
+  2           & \texttt{test/milestone-3/input -2.txt} & Operator aritmatika, \texttt{div}, \texttt{mod}, unary minus, \texttt{not}, dan kondisi Boolean.                  \\
+  \hline
+  3           & \texttt{test/milestone-3/input -3.txt} & Control flow: \texttt{while}, \texttt{for downto}, dan \texttt{repeat-until}.                                     \\
+  \hline
+  4           & \texttt{test/milestone-3/input -4.txt} & Structured type: record, array, field access, array access, dan case statement.                                   \\
+  \hline
+  5           & \texttt{test/milestone-3/input -5.txt} & Procedure, function, parameter, local scope, recursive function call, dan function return.                        \\
+  \hline
 \end{longtable}
 
 \section{Detail Pengujian}
@@ -64,9 +64,9 @@ Program('Hello') -> type:Unknown, lev:0, block:0
 Kasus ini menunjukkan bahwa program dasar dapat dianalisis secara semantik. Identifier program dicatat sebagai \texttt{program}, variabel \texttt{a} dan \texttt{b} masuk ke \texttt{tab}, block utama masuk ke \texttt{btab}, dan decorated AST memiliki anotasi tipe serta block.
 
 \begin{figure}[H]
-\centering
-\includegraphics[width=0.95\linewidth]{04-eksperimen/tc1.png}
-\caption{Bukti input dan output pengujian Kasus 1.}
+  \centering
+  \includegraphics[width=0.95\linewidth]{04-eksperimen/tc1.png}
+  \caption{Bukti input dan output pengujian Kasus 1.}
 \end{figure}
 
 \subsection{Kasus 2: Ekspresi dan Boolean}
@@ -90,9 +90,9 @@ Program('Expressions') -> type:Unknown, lev:0, block:0
 Kasus ini menguji inferensi tipe untuk operator aritmatika, integer division, modulo, unary minus, dan operator \texttt{not}. Kondisi pada \texttt{if} berhasil dianotasi sebagai Boolean.
 
 \begin{figure}[H]
-\centering
-\includegraphics[width=0.95\linewidth]{04-eksperimen/tc2.png}
-\caption{Bukti input dan output pengujian Kasus 2.}
+  \centering
+  \includegraphics[width=0.95\linewidth]{04-eksperimen/tc2.png}
+  \caption{Bukti input dan output pengujian Kasus 2.}
 \end{figure}
 
 \subsection{Kasus 3: Control Flow}
@@ -118,9 +118,9 @@ Program('ControlFlow') -> type:Unknown, lev:0, block:0
 Kasus ini memvalidasi bahwa semantic analyzer mampu menangani \texttt{while}, \texttt{for}, dan \texttt{repeat-until}. Ekspresi kondisi pada loop diuji agar menghasilkan tipe Boolean.
 
 \begin{figure}[H]
-\centering
-\includegraphics[width=0.95\linewidth]{04-eksperimen/tc3.png}
-\caption{Bukti input dan output pengujian Kasus 3.}
+  \centering
+  \includegraphics[width=0.95\linewidth]{04-eksperimen/tc3.png}
+  \caption{Bukti input dan output pengujian Kasus 3.}
 \end{figure}
 
 \subsection{Kasus 4: Structured Type}
@@ -151,9 +151,9 @@ Program('StructuredTypes') -> type:Unknown
 Kasus ini menguji record, array, akses field, akses indeks array, serta case statement. Informasi array masuk ke \texttt{atab}, sedangkan field record disimpan melalui block record.
 
 \begin{figure}[H]
-\centering
-\includegraphics[width=0.95\linewidth]{04-eksperimen/tc4.png}
-\caption{Bukti input dan output pengujian Kasus 4.}
+  \centering
+  \includegraphics[width=0.95\linewidth]{04-eksperimen/tc4.png}
+  \caption{Bukti input dan output pengujian Kasus 4.}
 \end{figure}
 
 \subsection{Kasus 5: Subprogram}
@@ -184,9 +184,9 @@ Program('Subprograms') -> type:Unknown
 Kasus ini menunjukkan bahwa procedure dan function dicatat dalam symbol table, parameter diproses pada scope subprogram, pemanggilan recursive function dikenali sebagai \texttt{FuncCall}, dan function \texttt{Factorial} memiliki assignment ke nama function sebagai return value.
 
 \begin{figure}[H]
-\centering
-\includegraphics[width=0.95\linewidth]{04-eksperimen/tc5.png}
-\caption{Bukti input dan output pengujian Kasus 5.}
+  \centering
+  \includegraphics[width=0.95\linewidth]{04-eksperimen/tc5.png}
+  \caption{Bukti input dan output pengujian Kasus 5.}
 \end{figure}
 
 \section{Pengujian Error Semantic}
