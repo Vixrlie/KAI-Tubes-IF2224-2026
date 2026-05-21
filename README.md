@@ -247,4 +247,4 @@ Tim **Kai**:
 | 1 | Jonathan Kris Wicaksono | 13524023 | AST: merancang node hierarchy AST, Syntax-Directed Translation untuk konversi parse tree ke AST, dan AST formatter untuk output Decorated AST. | 25 |
 | 2 | Vincent Rionarlie | 13524031 | Semantic Analyzer: implementasi visit functions untuk setiap node, type checking & compatibility rules, inferensi tipe, anotasi node AST, dan control flow validation. | 25 |
 | 3 | Muhammad Aufar Rizqi Kusuma | 13524061 | Symbol Table: implementasi tab, btab, atab, manajemen scope push/pop, registrasi & lookup identifier, dan inisialisasi predefined identifier. | 25 |
-| 4 | Bryan Pratama Putra Hendra | 13524067 | Laporan & README: penulisan laporan lengkap dan README, serta quality assurance. | 25 |
+| 4 | Bryan Pratama Putra Hendra | 13524067 | Laporan & README: penulisan laporan lengkap dan README, serta quality assurance program. | 25 |
