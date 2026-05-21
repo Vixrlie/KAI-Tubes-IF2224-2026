@@ -71,7 +71,7 @@ Symbol table diimplementasikan pada class \texttt{Semantic::SymbolTable}. Constr
 
 Registrasi identifier dilakukan oleh \texttt{registerIdentifier}. Fungsi ini mengecek redeklarasi pada scope aktif, membuat entri \texttt{tab}, mengisi \texttt{link} ke identifier sebelumnya dalam scope yang sama, memperbarui \texttt{last} pada \texttt{btab}, dan menghitung ukuran parameter atau variabel lokal. Lookup dilakukan dari scope terdalam ke scope terluar.
 
-\begin{tcolorbox}[title=Pseudocode Register Identifier,colback=gray!5,colframe=black!60,boxrule=0.5pt,arc=2mm,breakable]
+\begin{tcolorbox}[title=Pseudocode Register Identifier,colback=gray!5,colframe=black!60,boxrule=0.5pt,arc=2mm]
     \begin{verbatim}
 function registerIdentifier(name, obj, type, nrm, adr):
     if name exists in current scope:

@@ -1,10 +1,10 @@
 \section{Semantic Analysis}
-Semantic analysis adalah tahap compiler yang memeriksa makna program setelah struktur sintaksnya valid. Pada tahap ini, compiler tidak lagi hanya menanyakan apakah token tersusun sesuai grammar, tetapi juga apakah setiap konstruksi program memenuhi aturan konteks bahasa. Contohnya adalah memastikan identifier sudah dideklarasikan sebelum dipakai, operand operator memiliki tipe yang sesuai, assignment dilakukan ke target yang dapat diubah, dan ekspresi kondisi pada \texttt{if}, \texttt{while}, atau \texttt{repeat} bertipe Boolean.
+Semantic analysis adalah tahap compiler yang memeriksa makna program setelah struktur sintaksnya valid. Pada tahap ini, compiler tidak lagi hanya menanyakan apakah token tersusun sesuai grammar, tetapi juga apakah setiap konstruksi program memenuhi aturan konteks bahasa. Contohnya adalah memastikan identifier sudah dideklarasikan sebelum dipakai, operand operator memiliki tipe yang sesuai, assignment dilakukan ke target yang dapat diubah, dan ekspresi kondisi pada \texttt{if}, \texttt{while}, atau \texttt{repeat} bertipe Boolean \cite{aho2007compilers,cooper2011engineering,louden1997compiler}.
 
-Semantic analysis biasanya dilakukan dengan traversal terhadap tree hasil parser. Pada implementasi ini, parse tree terlebih dahulu dikonversi menjadi AST agar traversal semantik lebih sederhana. Setelah itu, semantic analyzer mengunjungi setiap node AST, menghitung tipe, melakukan lookup ke symbol table, dan menambahkan anotasi pada node.
+Semantic analysis biasanya dilakukan dengan traversal terhadap tree hasil parser. Pada implementasi ini, parse tree terlebih dahulu dikonversi menjadi AST agar traversal semantik lebih sederhana. Setelah itu, semantic analyzer mengunjungi setiap node AST, menghitung tipe, melakukan lookup ke symbol table, dan menambahkan anotasi pada node \cite{appel1998modern,parr2010lip}.
 
 \section{Abstract Syntax Tree}
-Abstract Syntax Tree (AST) adalah representasi pohon yang lebih ringkas daripada parse tree. Parse tree memuat detail grammar seperti non-terminal perantara, tanda baca, dan keyword struktural. AST hanya menyimpan konstruksi yang penting secara semantik, misalnya assignment, binary operation, variable reference, procedure call, array access, record field access, dan control flow.
+Abstract Syntax Tree (AST) adalah representasi pohon yang lebih ringkas daripada parse tree. Parse tree memuat detail grammar seperti non-terminal perantara, tanda baca, dan keyword struktural. AST hanya menyimpan konstruksi yang penting secara semantik, misalnya assignment, binary operation, variable reference, procedure call, array access, record field access, dan control flow \cite{parr2010lip,appel1998modern}.
 
 Sebagai contoh, parse tree untuk statement \texttt{b := a + 10;} berisi node \texttt{<assignment
     -statement>}, \texttt{<expression>}, \texttt{<simple-expression>}, \texttt{<term>}, dan \texttt{<factor>}. Pada AST, struktur tersebut diringkas menjadi node \texttt{Assign} dengan target \texttt{Var('b')} dan value \texttt{BinOp('+')} yang memiliki anak \texttt{Var('a')} dan \texttt{Num(10)}.
@@ -26,10 +26,10 @@ Decorated AST adalah AST yang sudah diberi informasi tambahan hasil semantic ana
     \item block index yang mengacu pada \texttt{btab}.
 \end{itemize}
 
-Dengan anotasi tersebut, AST tidak hanya menunjukkan struktur program, tetapi juga hasil validasi makna program. Decorated AST menjadi dasar yang lebih siap untuk tahap lanjutan seperti intermediate representation atau code generation.
+Dengan anotasi tersebut, AST tidak hanya menunjukkan struktur program, tetapi juga hasil validasi makna program. Decorated AST menjadi dasar yang lebih siap untuk tahap lanjutan seperti intermediate representation atau code generation \cite{cooper2011engineering,appel1998modern}.
 
 \section{Symbol Table}
-Symbol table adalah struktur data yang menyimpan informasi identifier dan scope. Pada Milestone 3, implementasi menggunakan tiga tabel utama sesuai spesifikasi.
+Symbol table adalah struktur data yang menyimpan informasi identifier dan scope. Pada Milestone 3, implementasi menggunakan tiga tabel utama sesuai spesifikasi \cite{aho2007compilers,louden1997compiler,wirth1996compiler}.
 
 \subsection{\texttt{tab}}
 \texttt{tab} menyimpan identifier seperti nama program, konstanta, variabel, tipe, procedure, dan function. Setiap entri menyimpan nama identifier, class object, tipe, referensi ke tabel lain, normal/reference flag, lexical level, address, dan link ke identifier sebelumnya dalam scope yang sama.
@@ -41,7 +41,7 @@ Symbol table adalah struktur data yang menyimpan informasi identifier dan scope.
 \texttt{atab} menyimpan informasi array, seperti tipe index, tipe elemen, batas bawah, batas atas, ukuran elemen, dan total ukuran array. Jika sebuah tipe array dideklarasikan, semantic analyzer menambahkan informasi array tersebut ke \texttt{atab} dan menyimpan referensinya pada \texttt{tab}.
 
 \section{Type Compatibility}
-Type compatibility menentukan apakah dua tipe boleh digunakan bersama dalam ekspresi atau assignment. Implementasi menggunakan aturan berikut.
+Type compatibility menentukan apakah dua tipe boleh digunakan bersama dalam ekspresi atau assignment. Implementasi menggunakan aturan berikut \cite{cooper2011engineering,wirth1996compiler}.
 
 \begin{enumerate}
     \item Dua tipe kompatibel jika jenis dan referensinya sama.
@@ -56,4 +56,4 @@ Type compatibility menentukan apakah dua tipe boleh digunakan bersama dalam eksp
 \end{enumerate}
 
 \section{Predefined Identifier}
-Sebelum analisis program dimulai, symbol table diisi dengan predefined identifier. Identifier bawaan yang digunakan adalah \texttt{Integer}, \texttt{Real}, \texttt{Char}, \texttt{Boolean}, \texttt{String}, \texttt{True}, \texttt{False}, \texttt{writeln}, dan \texttt{readln}. Identifier \texttt{writeln} dan \texttt{readln} diperlakukan sebagai procedure bawaan dengan jumlah dan tipe argumen fleksibel.
+Sebelum analisis program dimulai, symbol table diisi dengan predefined identifier. Identifier bawaan yang digunakan adalah \texttt{Integer}, \texttt{Real}, \texttt{Char}, \texttt{Boolean}, \texttt{String}, \texttt{True}, \texttt{False}, \texttt{writeln}, dan \texttt{readln}. Identifier \texttt{writeln} dan \texttt{readln} diperlakukan sebagai procedure bawaan dengan jumlah dan tipe argumen fleksibel \cite{wirth1996compiler,aho2007compilers}.
