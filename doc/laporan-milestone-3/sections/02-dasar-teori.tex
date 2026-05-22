@@ -12,6 +12,7 @@ Dalam arsitektur compiler modern, semantic analysis umumnya dilakukan setelah pa
 
 Gambar \ref{fig:semantic-pipeline} menunjukkan bahwa semantic analysis berada di antara parser dan tahap pembentukan representasi program yang lebih tinggi. Pada posisi ini, compiler mulai menggabungkan struktur sintaks dengan informasi semantik.
 
+
 \section{Abstract Syntax Tree}
 Abstract Syntax Tree (AST) adalah representasi pohon yang menyederhanakan struktur program dengan mempertahankan hanya unsur yang relevan secara semantik. Jika parse tree memuat detail grammar secara lengkap, AST biasanya menghilangkan node perantara dan simbol sintaksis yang tidak diperlukan untuk analisis lanjutan \cite{parr2010lip,appel1998modern}.
 
@@ -37,14 +38,7 @@ Ilustrasi pada Gambar \ref{fig:syntax-tree-example} menunjukkan bahwa satu perny
 
 
 \section{Decorated Abstract Syntax Tree}
-Decorated AST adalah AST yang telah diperkaya dengan informasi hasil analisis semantik. Pada tahap ini, node AST tidak hanya menyimpan struktur program, tetapi juga atribut tambahan yang dibutuhkan untuk pemeriksaan lebih lanjut.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.9\textwidth]{decorated-ast}
-    \caption{Contoh decorated abstract syntax tree}
-    \label{fig:decorated-ast}
-\end{figure}
+Decorated AST adalah AST yang telah diperkaya dengan informasi hasil analisis semantik. Pada tahap ini, node AST tidak hanya menyimpan struktur program, tetapi juga atribut tambahan yang dibutuhkan untuk pemeriksaan lebih lanjut yang adalah sebagai berikut.
 
 \begin{itemize}
     \item tipe hasil inferensi atau verifikasi pada node
@@ -52,6 +46,14 @@ Decorated AST adalah AST yang telah diperkaya dengan informasi hasil analisis se
     \item informasi scope atau lexical level
     \item atribut tambahan yang diperlukan oleh tahap lanjutan.
 \end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{decorated-ast}
+    \caption{Contoh decorated abstract syntax tree}
+    \label{fig:decorated-ast}
+\end{figure}
+
 
 Decorated AST menunjukkan struktur program sekaligus hasil validasi semantiknya. Karena itu, representasi ini sering digunakan sebagai landasan untuk pembentukan intermediate representation atau tahap generasi kode \cite{cooper2011engineering,appel1998modern}.
 
@@ -140,7 +142,7 @@ Penjabaran formal dan prosedural ini menjadi dasar bagi implementasi praktis sep
 \end{breakablealgorithm}
 
 \section{Type Compatibility}
-Type compatibility menentukan apakah dua tipe dapat digunakan bersama dalam ekspresi, penugasan, atau pemanggilan prosedur. Konsep ini penting karena compiler perlu membedakan operasi yang sah secara sintaks tetapi tidak sah secara semantik \cite{cooper2011engineering,wirth1996compiler}.
+Type compatibility menentukan apakah dua tipe dapat digunakan bersama dalam ekspresi, penugasan, atau pemanggilan prosedur. Konsep ini penting karena compiler perlu membedakan operasi yang sah secara sintaks tetapi tidak sah secara semantik.
 
 \subsection{Simple Type}
 Secara umum, tipe sederhana mencakup tipe numerik, karakter, Boolean, string, serta tipe turunan seperti subrange dan enumerated type:
@@ -289,7 +291,7 @@ Pada pendekatan bottom-up, subtree anak dibentuk terlebih dahulu, kemudian hasil
 \end{breakablealgorithm}
 
 \subsection{Semantic Action}
-Semantic action adalah aturan tambahan yang dilekatkan pada produksi grammar untuk membentuk node AST atau menghitung atribut semantik. Contoh umum penggunaan semantic action ditunjukkan pada tabel berikut:
+Semantic action adalah aturan tambahan yang dilekatkan pada produksi grammar untuk membentuk node AST atau menghitung atribut semantik. Contoh umum penggunaan semantic action ditunjukkan pada tabel berikut.
 
 \begin{table}[H]
     \centering
@@ -330,13 +332,46 @@ Contoh inisialisasi dari predefined identifier adalah sebagai berikut ini.
     \item \texttt{tab[5] = \{identifier=``writeln'', kind=proc, params=[vararg], return=void\}}
 \end{itemize}
 
+\subsection{Semantic Error Handling}
+Semantic error handling adalah mekanisme compiler untuk mendeteksi, mengklasifikasikan, dan melaporkan kesalahan yang lolos dari analisis sintaks tetapi melanggar aturan makna bahasa. Berbeda dari syntax error yang biasanya menghentikan parsing pada token tertentu, semantic error muncul setelah struktur program sudah dapat dibaca, sehingga compiler harus mengecek konteks deklarasi, tipe, scope, dan bentuk pemakaian identifier.
 
-\section{Semantic Error Handling}
-Semantic error muncul ketika program lolos pemeriksaan sintaks tetapi melanggar aturan makna bahasa. Contoh yang umum adalah redeclaration pada scope yang sama, penggunaan identifier yang belum dideklarasikan, penugasan dengan tipe yang tidak kompatibel, dan penerapan operator pada operand yang tidak sesuai. Pesan error sebaiknya cukup informatif agar lokasi dan penyebab kesalahan mudah ditelusuri \cite{louden1997compiler}.
+Secara umum, semantic analyzer memproses node AST secara bertahap. Ketika menemukan pelanggaran, analyzer mencatat pesan error yang memuat lokasi sumber masalah, jenis kesalahan, dan kadang-kadang informasi tambahan seperti nama identifier atau tipe yang terlibat. Pada implementasi compiler, pendekatan ini penting agar pengguna tidak hanya tahu bahwa program salah, tetapi juga memahami bagian mana yang harus diperbaiki.
+
+Beberapa kategori semantic error yang umum adalah sebagai berikut.
 
 \begin{itemize}
-    \item Redeclaration error: identifier dideklarasikan dua kali pada scope yang sama.
-    \item Undeclared identifier error: identifier dipakai tetapi tidak ditemukan pada scope mana pun.
-    \item Type mismatch error: tipe ekspresi tidak cocok dengan tipe target assignment.
-    \item Invalid operand error: operator dipakai pada tipe operand yang tidak sesuai.
+    \item \textbf{Undeclared identifier}: identifier dipakai sebelum dideklarasikan atau berada di luar scope yang aktif.
+    \item \textbf{Redeclaration}: sebuah nama dideklarasikan lebih dari satu kali pada scope yang sama.
+    \item \textbf{Type mismatch}: operand, assignment, atau argumen tidak sesuai dengan tipe yang diharapkan.
+    \item \textbf{Invalid access}: akses array, record field, atau fungsi/prosedur tidak sesuai bentuk objeknya.
+    \item \textbf{Invalid control-flow use}: ekspresi Boolean dipakai di konteks numerik, atau sebaliknya, sehingga aturan kontrol alur dilanggar.
 \end{itemize}
+
+Berikut ini adalah beberapa contoh untuk setiap tipe-tipe kesalahan yang dapat memperjelas perbedaan antara tiap tipe kesalahan.
+\begin{itemize}
+    \item \textbf{Undeclared identifier}
+          \[
+              x := y + 1
+          \]
+          Jika \texttt{y} belum pernah dideklarasikan pada scope yang terlihat, compiler harus melaporkan error bahwa \texttt{y} tidak ditemukan.
+
+    \item \textbf{Type mismatch}
+          \[
+              \texttt{flag := 10}
+          \]
+          Bila \texttt{flag} bertipe Boolean, assignment di atas tidak valid karena nilai Integer tidak dapat langsung disimpan ke Boolean.
+
+    \item \textbf{Redeclaration}
+          \[
+              \texttt{var a : integer;\quad var a : real;}
+          \]
+          Dua deklarasi dengan nama yang sama pada scope yang sama harus ditolak karena menyebabkan ambiguitas lookup.
+
+    \item \textbf{Invalid access}
+          \[
+              \texttt{recordValue[1]}
+          \]
+          Akses dengan indeks hanya valid pada array. Jika \texttt{recordValue} adalah record, bentuk akses ini harus menghasilkan error.
+\end{itemize}
+
+Pada tahap implementasi, compiler biasanya tidak berhenti pada error pertama. Strategi yang lebih informatif adalah melakukan recovery terbatas, misalnya dengan menandai node bermasalah sebagai error node dan melanjutkan traversal sejauh mungkin. Dengan cara ini, compiler dapat melaporkan beberapa kesalahan dalam satu kali kompilasi, sehingga pengguna tidak perlu memperbaiki program secara bertahap satu per satu.
