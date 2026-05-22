@@ -1,0 +1,9 @@
+program InvalidIfCondition;
+
+var
+  x: integer;
+
+begin
+  if x then
+    writeln('ok');
+end.

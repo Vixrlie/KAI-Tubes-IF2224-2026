@@ -1,0 +1,10 @@
+program MissingFunctionResult;
+
+function F(n: integer): integer;
+begin
+  n := n + 1;
+end;
+
+begin
+  writeln(F(1));
+end.

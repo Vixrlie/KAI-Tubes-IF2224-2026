@@ -1,0 +1,8 @@
+program InvalidArrayAccess;
+
+var
+  x: integer;
+
+begin
+  writeln(x[1]);
+end.

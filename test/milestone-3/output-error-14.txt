@@ -1,0 +1,2 @@
+﻿=== Semantic Errors ===
+- Function may exit without assigning a return value: F

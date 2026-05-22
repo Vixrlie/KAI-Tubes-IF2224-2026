@@ -1,0 +1,2 @@
+﻿=== Semantic Errors ===
+- Array access on non-array expression

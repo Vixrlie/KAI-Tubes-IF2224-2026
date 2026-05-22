@@ -1,0 +1,9 @@
+program AssignmentMismatch;
+
+var
+  x: integer;
+  flag: boolean;
+
+begin
+  x := flag;
+end.

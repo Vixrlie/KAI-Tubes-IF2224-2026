@@ -1,0 +1,2 @@
+﻿=== Semantic Errors ===
+- Identifier already declared in this scope: x

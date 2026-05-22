@@ -1,0 +1,8 @@
+program Redeclaration;
+
+var
+  x: integer;
+  x: real;
+
+begin
+end.
