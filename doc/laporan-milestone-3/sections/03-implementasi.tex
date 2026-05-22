@@ -3,18 +3,35 @@ Implementasi Milestone 3 melanjutkan pipeline Milestone 1 dan Milestone 2. Alur 
 
 Setelah parse tree tersedia, program menjalankan \texttt{ASTBuilder} untuk membentuk AST. AST tersebut kemudian dianalisis oleh \texttt{SemanticAnalyzer}. Jika tidak ada error, program mencetak \texttt{tab}, \texttt{btab}, \texttt{atab}, parse tree, dan decorated AST.
 
-\begin{tcolorbox}[title=Pipeline Program,colback=gray!5,colframe=black!60,boxrule=0.5pt,arc=2mm]
-    \begin{verbatim}
-Input file
-  -> Lexer / TokenStreamReader / ParseTreeReader
-  -> Parser
-  -> Parse Tree
-  -> ASTBuilder
-  -> AST
-  -> SemanticAnalyzer
-  -> Symbol Table + Decorated AST
-\end{verbatim}
-\end{tcolorbox}
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[
+        scale=0.88,
+        transform shape,
+        node distance=8mm and 18mm,
+        every node/.style={draw, rounded corners, align=center, minimum width=3.4cm, minimum height=7mm, font=\small},
+        arrow/.style={-{Stealth[length=2.5mm]}, thick}
+        ]
+        \node (input) {Input file};
+        \node (lex) [below=of input] {Lexer / TokenStreamReader / ParseTreeReader};
+        \node (parser) [below=of lex] {Parser};
+        \node (parsetree) [below=of parser] {Parse Tree};
+        \node (astbuilder) [below=of parsetree] {ASTBuilder};
+        \node (ast) [below=of astbuilder] {AST};
+        \node (sem) [below=of ast] {SemanticAnalyzer};
+        \node (out) [below=of sem] {Symbol Table + Decorated AST};
+
+        \draw[arrow] (input) -- (lex);
+        \draw[arrow] (lex) -- (parser);
+        \draw[arrow] (parser) -- (parsetree);
+        \draw[arrow] (parsetree) -- (astbuilder);
+        \draw[arrow] (astbuilder) -- (ast);
+        \draw[arrow] (ast) -- (sem);
+        \draw[arrow] (sem) -- (out);
+    \end{tikzpicture}
+    \caption{Pipeline Program}
+    \label{fig:pipeline-program}
+\end{figure}
 
 \section{Struktur Direktori Program}
 Bagian Milestone 3 terutama berada pada direktori \texttt{src/semantic/}. Berkas utama yang digunakan adalah sebagai berikut.
