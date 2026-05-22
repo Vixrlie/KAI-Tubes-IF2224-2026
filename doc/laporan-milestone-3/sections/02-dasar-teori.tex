@@ -305,7 +305,24 @@ Semantic action adalah aturan tambahan yang dilekatkan pada produksi grammar unt
 \section{Predefined Identifier}
 Pada banyak compiler, symbol table diinisialisasi dengan identifier bawaan sebelum program pengguna dianalisis. Identifier ini biasanya mencakup tipe dasar, literal Boolean, serta prosedur atau fungsi I/O yang tersedia sejak awal \cite{wirth1996compiler,aho2007compilers}.
 
-Keberadaan predefined identifier membantu semantic analyzer mengenali simbol bawaan tanpa menunggu deklarasi dari program sumber.
+Keberadaan predefined identifier membantu semantic analyzer mengenali simbol bawaan tanpa menunggu deklarasi dari program sumber.Predefined identifier biasanya diinisialisasi segera setelah struktur symbol table dibuat. Tujuannya:
+
+\begin{itemize}
+    \item menyediakan tipe-tipe dasar (mis. \texttt{Integer}, \texttt{Real}, \texttt{Char}, \texttt{Boolean}, \texttt{String}) sehingga node AST dapat diberi anotasi tipe;
+    \item mendaftarkan konstanta bawaan (mis. \texttt{True}, \texttt{False}) untuk validasi literal Boolean;
+    \item menambahkan prosedur/fungsi runtime yang tersedia (mis. \texttt{readln}, \texttt{writeln}) sehingga pemanggilan dapat divalidasi tanpa deklarasi eksplisit; dan
+    \item menetapkan atribut khusus (mis. ukuran tipe, parameter fungsi, aritas) yang dipakai oleh semantic analyzer.
+\end{itemize}
+
+Contoh inisialisasi dari predefined identifier adalah sebagai berikut ini.
+\begin{itemize}
+    \item \texttt{tab[1] = \{identifier=``Integer'', kind=type, size=4\}}
+    \item \texttt{tab[2] = \{identifier=``Real'', kind=type, size=8\}}
+    \item \texttt{tab[3] = \{identifier=``True'', kind=const, type=Integer\}}
+    \item \texttt{tab[4] = \{identifier=``False'', kind=const, type=Integer\}}
+    \item \texttt{tab[5] = \{identifier=``writeln'', kind=proc, params=[vararg], return=void\}}
+\end{itemize}
+
 
 \section{Semantic Error Handling}
 Semantic error muncul ketika program lolos pemeriksaan sintaks tetapi melanggar aturan makna bahasa. Contoh yang umum adalah redeclaration pada scope yang sama, penggunaan identifier yang belum dideklarasikan, penugasan dengan tipe yang tidak kompatibel, dan penerapan operator pada operand yang tidak sesuai. Pesan error sebaiknya cukup informatif agar lokasi dan penyebab kesalahan mudah ditelusuri \cite{louden1997compiler}.
