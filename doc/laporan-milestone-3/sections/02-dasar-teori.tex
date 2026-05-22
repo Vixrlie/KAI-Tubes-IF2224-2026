@@ -39,6 +39,13 @@ Ilustrasi pada Gambar \ref{fig:syntax-tree-example} menunjukkan bahwa satu perny
 \section{Decorated Abstract Syntax Tree}
 Decorated AST adalah AST yang telah diperkaya dengan informasi hasil analisis semantik. Pada tahap ini, node AST tidak hanya menyimpan struktur program, tetapi juga atribut tambahan yang dibutuhkan untuk pemeriksaan lebih lanjut.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{decorated-ast}
+    \caption{Contoh decorated abstract syntax tree}
+    \label{fig:decorated-ast}
+\end{figure}
+
 \begin{itemize}
     \item tipe hasil inferensi atau verifikasi pada node
     \item referensi ke simbol yang terkait
@@ -49,7 +56,7 @@ Decorated AST adalah AST yang telah diperkaya dengan informasi hasil analisis se
 Decorated AST menunjukkan struktur program sekaligus hasil validasi semantiknya. Karena itu, representasi ini sering digunakan sebagai landasan untuk pembentukan intermediate representation atau tahap generasi kode \cite{cooper2011engineering,appel1998modern}.
 
 \section{Symbol Table}
-Symbol table adalah struktur data yang menyimpan informasi identifier beserta konteks kemunculannya dalam program. Dalam compiler, struktur ini digunakan untuk mendukung deklarasi, lookup, tipe data, dan pengelolaan scope \cite{aho2007compilers,louden1997compiler,wirth1996compiler}.
+Symbol table adalah struktur data yang menyimpan informasi identifier beserta konteks kemunculannya dalam program. Dalam compiler, struktur ini digunakan untuk mendukung deklarasi, lookup, tipe data, dan pengelolaan scope.
 
 \subsection{Tabel \protect\texttt{tab}}
 Salah satu tabel utama menyimpan entri identifier seperti nama program, konstanta, variabel, tipe, prosedur, dan fungsi. Setiap entri umumnya memuat nama simbol, kategori objek, tipe, level scope, serta relasi ke entri lain dalam scope yang sama.
