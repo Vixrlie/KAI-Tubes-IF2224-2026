@@ -1,59 +1,318 @@
 \section{Semantic Analysis}
-Semantic analysis adalah tahap compiler yang memeriksa makna program setelah struktur sintaksnya valid. Pada tahap ini, compiler tidak lagi hanya menanyakan apakah token tersusun sesuai grammar, tetapi juga apakah setiap konstruksi program memenuhi aturan konteks bahasa. Contohnya adalah memastikan identifier sudah dideklarasikan sebelum dipakai, operand operator memiliki tipe yang sesuai, assignment dilakukan ke target yang dapat diubah, dan ekspresi kondisi pada \texttt{if}, \texttt{while}, atau \texttt{repeat} bertipe Boolean \cite{aho2007compilers,cooper2011engineering,louden1997compiler}.
+Semantic analysis adalah tahap analisis pada compiler yang memeriksa kesesuaian makna program setelah struktur sintaksnya dinyatakan valid. Berbeda dari analisis sintaks yang berfokus pada bentuk, tahap ini menilai apakah konstruksi program memenuhi aturan semantik bahasa, misalnya kesesuaian tipe operand, keabsahan target assignment, dan keterdeklarasian identifier sebelum digunakan \cite{aho2007compilers,cooper2011engineering,louden1997compiler}.
 
-Semantic analysis biasanya dilakukan dengan traversal terhadap tree hasil parser. Pada implementasi ini, parse tree terlebih dahulu dikonversi menjadi AST agar traversal semantik lebih sederhana. Setelah itu, semantic analyzer mengunjungi setiap node AST, menghitung tipe, melakukan lookup ke symbol table, dan menambahkan anotasi pada node \cite{appel1998modern,parr2010lip}.
-
-\section{Abstract Syntax Tree}
-Abstract Syntax Tree (AST) adalah representasi pohon yang lebih ringkas daripada parse tree. Parse tree memuat detail grammar seperti non-terminal perantara, tanda baca, dan keyword struktural. AST hanya menyimpan konstruksi yang penting secara semantik, misalnya assignment, binary operation, variable reference, procedure call, array access, record field access, dan control flow \cite{parr2010lip,appel1998modern}.
-
-Sebagai contoh, parse tree untuk statement \texttt{b := a + 10;} berisi node \texttt{<assignment
-    -statement>}, \texttt{<expression>}, \texttt{<simple-expression>}, \texttt{<term>}, dan \texttt{<factor>}. Pada AST, struktur tersebut diringkas menjadi node \texttt{Assign} dengan target \texttt{Var('b')} dan value \texttt{BinOp('+')} yang memiliki anak \texttt{Var('a')} dan \texttt{Num(10)}.
+Dalam arsitektur compiler modern, semantic analysis umumnya dilakukan setelah parsing dan sebelum pembentukan representasi antara. Hasil tahap ini berupa informasi tambahan yang melekat pada node sintaks, seperti tipe, scope, dan referensi ke simbol yang terkait.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\textwidth]{parse_vs_ast.png}
-    \caption{Perbandingan parse tree dan AST.}
-    \label{fig:parse-vs-ast-m3}
+    \includegraphics[width=0.92\textwidth]{pipeline}
+    \caption{Alur umum analisis semantik dalam compiler}
+    \label{fig:semantic-pipeline}
 \end{figure}
 
-\section{Decorated AST}
-Decorated AST adalah AST yang sudah diberi informasi tambahan hasil semantic analysis. Informasi tambahan yang digunakan pada implementasi ini meliputi:
+Gambar \ref{fig:semantic-pipeline} menunjukkan bahwa semantic analysis berada di antara parser dan tahap pembentukan representasi program yang lebih tinggi. Pada posisi ini, compiler mulai menggabungkan struktur sintaks dengan informasi semantik.
+
+\section{Abstract Syntax Tree}
+Abstract Syntax Tree (AST) adalah representasi pohon yang menyederhanakan struktur program dengan mempertahankan hanya unsur yang relevan secara semantik. Jika parse tree memuat detail grammar secara lengkap, AST biasanya menghilangkan node perantara dan simbol sintaksis yang tidak diperlukan untuk analisis lanjutan \cite{parr2010lip,appel1998modern}.
+
+Secara umum, AST memudahkan proses analisis berikutnya karena relasi antaroperasi dan operand menjadi lebih jelas. Representasi ini juga lebih ringkas sehingga lebih efisien untuk ditelusuri dibanding parse tree yang lengkap.
+
+Sebagai ilustrasi, ekspresi penugasan dapat direpresentasikan sebagai node penugasan yang memiliki anak berupa target dan nilai, sedangkan ekspresi aritmetika direpresentasikan sebagai node operator biner dengan dua operand.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{parsetree_vs_ast}
+    \caption{Perbandingan parse tree dan abstract syntax tree}
+    \label{fig:parse-vs-ast}
+\end{figure}
+
+Ilustrasi pada Gambar \ref{fig:syntax-tree-example} menunjukkan bahwa satu pernyataan sederhana pun dapat menghasilkan banyak node perantara dalam parse tree. Kondisi ini menjelaskan mengapa AST biasanya dipilih sebagai representasi yang lebih efisien untuk analisis lanjutan.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.88\textwidth]{syntax-tree}
+    \caption{Contoh parse tree untuk deklarasi sederhana}
+    \label{fig:syntax-tree-example}
+\end{figure}
+
+
+\section{Decorated Abstract Syntax Tree}
+Decorated AST adalah AST yang telah diperkaya dengan informasi hasil analisis semantik. Pada tahap ini, node AST tidak hanya menyimpan struktur program, tetapi juga atribut tambahan yang dibutuhkan untuk pemeriksaan lebih lanjut.
 
 \begin{itemize}
-    \item tipe data node, misalnya \texttt{Integer}, \texttt{Real}, \texttt{Boolean}, \texttt{Array}, atau \texttt{Record};
-    \item index ke \texttt{tab} untuk identifier yang berhasil ditemukan;
-    \item lexical level tempat node dianalisis;
-    \item block index yang mengacu pada \texttt{btab}.
+    \item tipe hasil inferensi atau verifikasi pada node
+    \item referensi ke simbol yang terkait
+    \item informasi scope atau lexical level
+    \item atribut tambahan yang diperlukan oleh tahap lanjutan.
 \end{itemize}
 
-Dengan anotasi tersebut, AST tidak hanya menunjukkan struktur program, tetapi juga hasil validasi makna program. Decorated AST menjadi dasar yang lebih siap untuk tahap lanjutan seperti intermediate representation atau code generation \cite{cooper2011engineering,appel1998modern}.
+Decorated AST menunjukkan struktur program sekaligus hasil validasi semantiknya. Karena itu, representasi ini sering digunakan sebagai landasan untuk pembentukan intermediate representation atau tahap generasi kode \cite{cooper2011engineering,appel1998modern}.
 
 \section{Symbol Table}
-Symbol table adalah struktur data yang menyimpan informasi identifier dan scope. Pada Milestone 3, implementasi menggunakan tiga tabel utama sesuai spesifikasi \cite{aho2007compilers,louden1997compiler,wirth1996compiler}.
+Symbol table adalah struktur data yang menyimpan informasi identifier beserta konteks kemunculannya dalam program. Dalam compiler, struktur ini digunakan untuk mendukung deklarasi, lookup, tipe data, dan pengelolaan scope \cite{aho2007compilers,louden1997compiler,wirth1996compiler}.
 
-\subsection{\texttt{tab}}
-\texttt{tab} menyimpan identifier seperti nama program, konstanta, variabel, tipe, procedure, dan function. Setiap entri menyimpan nama identifier, class object, tipe, referensi ke tabel lain, normal/reference flag, lexical level, address, dan link ke identifier sebelumnya dalam scope yang sama.
+\subsection{Tabel \protect\texttt{tab}}
+Salah satu tabel utama menyimpan entri identifier seperti nama program, konstanta, variabel, tipe, prosedur, dan fungsi. Setiap entri umumnya memuat nama simbol, kategori objek, tipe, level scope, serta relasi ke entri lain dalam scope yang sama.
 
-\subsection{\texttt{btab}}
-\texttt{btab} menyimpan informasi block. Entry block berisi pointer ke identifier terakhir, pointer ke parameter terakhir, ukuran parameter, dan ukuran variabel lokal. Pada implementasi ini, block dibuat untuk global scope, main compound block, procedure/function, dan record type.
+\subsection{Tabel \protect\texttt{btab}}
+Tabel lain dapat digunakan untuk menyimpan informasi block atau scope, seperti batas awal dan akhir scope, parameter, serta ukuran variabel lokal. Informasi ini membantu compiler menjaga keterkaitan antara deklarasi dan ruang lingkup kemunculan identifier.
 
-\subsection{\texttt{atab}}
-\texttt{atab} menyimpan informasi array, seperti tipe index, tipe elemen, batas bawah, batas atas, ukuran elemen, dan total ukuran array. Jika sebuah tipe array dideklarasikan, semantic analyzer menambahkan informasi array tersebut ke \texttt{atab} dan menyimpan referensinya pada \texttt{tab}.
+\subsection{Tabel \protect\texttt{atab}}
+Jika bahasa mendukung tipe terstruktur seperti array, compiler lazim menyimpan atribut tambahan pada tabel terpisah, misalnya tipe indeks, tipe elemen, dan batas rentang. Pemisahan atribut semacam ini memudahkan pemeriksaan kesesuaian tipe dan perhitungan ukuran data.
 
-\section{Type Compatibility}
-Type compatibility menentukan apakah dua tipe boleh digunakan bersama dalam ekspresi atau assignment. Implementasi menggunakan aturan berikut \cite{cooper2011engineering,wirth1996compiler}.
+\subsection{Manajemen Scope dan Lookup}
+Manajemen scope dan mekanisme lookup adalah bagian krusial dari semantic analysis karena menentukan relasi antara nama (identifier) dan entri deklarasinya. Secara formal, compiler memelihara konsep lingkungan (environment) yang merepresentasikan kumpulan frame scope yang aktif pada titik tertentu dalam program. Kita dapat menulis environment sebagai urutan frame
 
+$$
+    E = [F_n, F_{n-1}, \dots, F_0]
+$$
+
+di mana setiap frame $F_i$ adalah peta (mapping) dari identifier ke informasi deklarasi (misalnya tipe, lokasi, atribut parameter). Frame teratas $F_n$ merepresentasikan scope terdalam saat ini, sedangkan $F_0$ biasanya adalah scope global.
+
+Operasi dasar pada manajemen scope adalah sebagai berikut.
 \begin{enumerate}
-    \item Dua tipe kompatibel jika jenis dan referensinya sama.
-    \item Subrange kompatibel dengan base type-nya, misalnya subrange integer dengan integer.
-    \item Assignment dari Integer ke Real diperbolehkan.
-    \item Assignment ke subrange diperbolehkan jika tipe kompatibel dan literal berada di dalam batas subrange.
-    \item Operator aritmatika hanya menerima operand numerik.
-    \item Operator \texttt{div} dan \texttt{mod} hanya menerima operand integer-like.
-    \item Operator \texttt{and}, \texttt{or}, dan \texttt{not} hanya menerima Boolean.
-    \item Operator relasional menghasilkan Boolean dan membutuhkan operand yang kompatibel.
-    \item Kondisi pada \texttt{if}, \texttt{while}, dan \texttt{repeat-until} harus bertipe Boolean.
+    \item Masuk scope (enter scope): menambahkan frame kosong di puncak environment sehingga deklarasi selanjutnya ditempatkan pada frame baru tersebut.
+    \item Keluar scope (exit scope): menghapus frame teratas dari environment sehingga deklarasi lokal tidak lagi terlihat.
+    \item Deklarasi (declare): menambahkan pasangan $(\mathrm{name}\mapsto\mathrm{info})$ ke frame teratas; jika nama sudah ada pada frame yang sama, biasanya dianggap error redeclaration.
+    \item Pencarian (lookup): mencari nama dimulai dari frame teratas ke frame yang lebih bawah hingga ditemukan atau sampai seluruh environment habis.
 \end{enumerate}
 
+Dalam notasi fungsi, lookup dapat dipandang sebagai
+
+$$
+    \operatorname{lookup}(E,\,x)=
+    \begin{cases}
+        \;F_k(x) & \text{jika } k=\min\{i\mid F_i(x)\text{ terdefinisi}\}, \\
+        \;\bot   & \text{jika tidak ditemukan}
+    \end{cases}
+$$
+
+di mana $F_i(x)$ adalah hasil pencarian identifier $x$ pada frame $F_i$, dan $\bot$ menandakan kegagalan lookup (undeclared identifier). Relasi ini menegaskan sifat terarah dari pencarian: selalu mulai dari scope terdalam.Beberapa poin penting yang perlu diperhatikan
+
+\begin{enumerate}
+    \item Shadowing: ketika sebuah deklarasi baru dengan nama yang sama muncul di scope terdalam, deklarasi tersebut menutupi (shadow) deklarasi dengan nama sama pada scope lebih luar. Shadowing adalah fenomena yang sah di banyak bahasa dan harus ditangani oleh rule lookup.
+    \item Redeclaration error: redeklarasi pada scope yang sama umumnya ditolak; ini dicegah dengan mengecek keberadaan nama pada frame teratas sebelum menambahkan entri baru.
+    \item Lexical (static) vs dynamic scoping: kebanyakan bahasa modern memakai lexical scoping, di mana lingkungan lookup ditentukan oleh struktur statis program, bukan urutan pemanggilan runtime. Implementasi yang membedakan kedua model hendaknya menegaskan asumsi scoping yang dipakai oleh compiler.
+    \item Lexical (static) vs dynamic scoping: kebanyakan bahasa modern memakai lexical scoping, di mana lingkungan lookup ditentukan oleh struktur statis program, bukan urutan pemanggilan runtime. Implementasi yang membedakan kedua model hendaknya menegaskan asumsi scoping yang dipakai oleh compiler.
+\end{enumerate}
+
+Penjabaran formal dan prosedural ini menjadi dasar bagi implementasi praktis seperti tabel-tabel \texttt{tab}, \texttt{btab}, dan stack scope yang dipakai pada banyak compiler klasik. Berikut pseudocode ringkas yang menggambarkan operasi-operasi tersebut.
+
+\begin{breakablealgorithm}[Manajemen scope dan lookup]
+    \label{alg:scope-lookup}
+    \begin{algorithmic}[1]
+        \Procedure{EnterScope}{}
+        \State \texttt{btab.append(\{last = currentLast, lpar = 0, psze = 0, vsze = 0\})}
+        \State \texttt{push(scopeLastStack, 0)}
+        \EndProcedure
+        \Procedure{ExitScope}{}
+        \State \texttt{pop(scopeLastStack)}
+        \EndProcedure
+        \Procedure{Declare}{$id, obj, typ, adr$}
+        \If{\texttt{lookupCurrentScope(id)} exists}
+        \State \Return \texttt{error("redeclared identifier")}
+        \EndIf
+        \State \texttt{entry = \{identifier = id, link = currentLast, obj = obj, type = typ,}
+        \Statex \hspace{2.6em}\texttt{nrm = 1, lev = level, adr = adr\}}
+        \State \texttt{index = tab.append(entry)}
+        \State \texttt{currentLast = index}
+        \EndProcedure
+        \Procedure{Lookup}{$id$}
+        \For{$scopeLast$ \textbf{in} \texttt{scopeLastStack} \textbf{from top}}
+        \State \texttt{idx = scopeLast}
+        \While{$idx \neq 0$}
+        \If{\texttt{tab[idx].identifier == id}}
+        \State \Return \texttt{tab[idx]}
+        \EndIf
+        \State \texttt{idx = tab[idx].link}
+        \EndWhile
+        \EndFor
+        \State \Return \texttt{error("undeclared identifier")}
+        \EndProcedure
+    \end{algorithmic}
+\end{breakablealgorithm}
+
+\section{Type Compatibility}
+Type compatibility menentukan apakah dua tipe dapat digunakan bersama dalam ekspresi, penugasan, atau pemanggilan prosedur. Konsep ini penting karena compiler perlu membedakan operasi yang sah secara sintaks tetapi tidak sah secara semantik \cite{cooper2011engineering,wirth1996compiler}.
+
+\subsection{Simple Type}
+Secara umum, tipe sederhana mencakup tipe numerik, karakter, Boolean, string, serta tipe turunan seperti subrange dan enumerated type:
+
+\begin{enumerate}
+    \item \texttt{Real}: \texttt{realcon} memiliki type Real.
+    \item \texttt{Integer}: \texttt{intcon} memiliki type Integer.
+    \item \texttt{Char}: \texttt{charcon} memiliki type Char.
+    \item \texttt{Boolean}: ekspresi yang dibentuk oleh \texttt{notsy}, \texttt{andsy}, \texttt{orsy}, dan relational operator menghasilkan Boolean.
+    \item \texttt{String}: \texttt{string} memiliki type String.
+    \item \texttt{Subrange}: type ditentukan oleh constant di dalam range, dan batas bawah tidak boleh lebih besar dari batas atas.
+    \item \texttt{Enumerated}: type ditentukan oleh ident di dalam enumerated dan seluruh ident di dalamnya harus bertipe sama.
+\end{enumerate}
+
+\subsection{Structured Type}
+Structured type dapat bersifat \textit{named} jika didefinisikan melalui deklarasi tipe, atau \textit{anonymous} jika dibentuk langsung pada deklarasi variabel.
+
+\begin{itemize}
+    \item \texttt{Array}: memiliki elemen yang diakses melalui indeks dengan domain yang terdefinisi.
+    \item \texttt{Record}: mengelompokkan beberapa field dengan tipe yang dapat berbeda.
+\end{itemize}
+
+Dalam pendekatan nominal typing, dua tipe terstruktur yang tampak sama belum tentu kompatibel bila identitas tipenya berbeda.
+
+\subsection{Assignment Compatibility}
+Assignment compatibility menjelaskan apakah suatu nilai bertipe tertentu dapat ditempatkan ke dalam lokasi penyimpanan dengan tipe target yang lain. Relasi ini tidak selalu sama dengan kesamaan tipe, karena banyak bahasa pemrograman memperbolehkan konversi implisit pada kondisi tertentu. Pemeriksaan assignment tidak hanya membandingkan label tipe, tetapi juga mempertimbangkan apakah bahasa mengizinkan \textit{widening conversion, subset relation}, atau aturan khusus untuk tipe terstruktur dan string. Secara umum, hubungan ini dapat dinyatakan sebagai berikut.
+$$
+    \operatorname{assignable}(T_2, T_1)
+$$
+
+Notasi tersebut dibaca sebagai "nilai bertipe $T_2$ dapat ditugaskan ke target bertipe $T_1$". Relasi ini bersifat terarah. Artinya, fakta bahwa $T_2$ dapat di-assign ke $T_1$ tidak otomatis berarti sebaliknya juga berlaku. Dalam praktiknya, compiler perlu memeriksa baik tipe sumber maupun tipe target, lalu menentukan apakah penugasan itu aman atau memerlukan konversi eksplisit. Beberapa aturan yang umum dipakai dapat dirangkum sebagai berikut.
+
+\begin{itemize}
+    \item Jika $T_1$ dan $T_2$ identik, assignment umumnya valid tanpa konversi tambahan.
+    \item Jika bahasa mendukung konversi numerik, nilai bertipe integer sering dapat ditugaskan ke real.
+    \item Jika nilai sumber merupakan anggota himpunan nilai yang lebih sempit, assignment hanya valid bila target memang menerima himpunan tersebut.
+    \item Untuk tipe terstruktur, kompatibilitas biasanya bergantung pada identitas tipe atau aturan kesetaraan struktur yang didefinisikan oleh bahasa.
+\end{itemize}
+
+Dalam analisis semantik, assignment compatibility dipakai pada beberapa konteks sekaligus, bukan hanya assignment statement. Pemeriksaan ini juga muncul pada argumen aktual saat pemanggilan prosedur atau fungsi, pada inisialisasi variabel, serta pada ekspresi yang melibatkan operator tertentu. Karena itu, pembahasan assignment compatibility menjadi salah satu komponen penting dalam type checking: kesalahan pada tahap ini sering kali lolos dari analisis sintaks, tetapi dapat menyebabkan perilaku program yang tidak sesuai jika tidak ditangkap oleh compiler.
+
+Pada implementasi compiler yang mendukung tipe turunan, aturan assignment compatibility biasanya dipandang sebagai kombinasi tiga lapis pemeriksaan, yaitu kesamaan atau kompatibilitas dasar tipe, izin konversi implisit, dan pembatasan khusus dari bahasa terhadap tipe tertentu seperti array, record, subrange, enumerated type, atau string. Dengan pendekatan ini, compiler dapat membedakan penugasan yang valid secara semantik dari penugasan yang hanya tampak benar secara sintaks.
+
+\subsection{Ringkasan Operator dan Hasil Tipe}
+Aturan type checking sering diringkas dalam bentuk tabel operator agar hasil inferensi tipe konsisten saat anotasi AST.
+
+\begin{table}[H]
+    \centering
+    \caption{Ringkasan operator dan hasil tipe}
+    \label{tab:operator-types}
+    \begin{tabularx}{\textwidth}{L L C{2.8cm}}
+        \toprule
+        \textbf{Operator}            & \textbf{Operand yang valid}      & \textbf{Hasil}    \\
+        \midrule
+        \texttt{+,-,*}               & Integer/Real (kombinasi numerik) & Integer atau Real \\
+        \texttt{/}                   & Integer/Real (kombinasi numerik) & Real              \\
+        \texttt{div, mod}            & Integer \(\times\) Integer       & Integer           \\
+        \texttt{and, or, not}        & Boolean                          & Boolean           \\
+        \texttt{=, <>, <, <=, >, >=} & Tipe kompatibel                  & Boolean           \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+Algoritma berikut merangkum prosedur yang dipakai untuk menentukan tipe hasil
+operasi biner pada AST. Algoritma ini menerima operator dan tipe kedua operand,
+menerapkan aturan numerik, logika, dan relasional yang ditetapkan bahasa,
+serta mengembalikan tipe hasil atau error ketika operand tidak sesuai. Hasil
+penentuan tipe ini digunakan oleh semantic analyzer untuk menandai node AST dan
+menangkap kesalahan tipe pada waktu kompilasi.
+
+\begin{breakablealgorithm}[Type checking ekspresi biner]
+    \label{alg:binary-type-check}
+    \begin{algorithmic}[1]
+        \Procedure{TypeOfBinaryOp}{$op, left, right$}
+        \State $t_l \gets$ \Call{TypeOf}{$left$}
+        \State $t_r \gets$ \Call{TypeOf}{$right$}
+        \If{$op \in \{+, -, *\}$}
+        \If{$t_l = Integer$ \textbf{and} $t_r = Integer$}
+        \State \Return Integer
+        \ElsIf{$t_l \in \{Integer, Real\}$ \textbf{and} $t_r \in \{Integer, Real\}$}
+        \State \Return Real
+        \EndIf
+        \State \Return \texttt{error("numeric operands required")}
+        \EndIf
+        \If{$op = /$}
+        \If{$t_l \in \{Integer, Real\}$ \textbf{and} $t_r \in \{Integer, Real\}$}
+        \State \Return Real
+        \EndIf
+        \State \Return \texttt{error("numeric operands required")}
+        \EndIf
+        \If{$op \in \{div, mod\}$}
+        \If{$t_l = Integer$ \textbf{and} $t_r = Integer$}
+        \State \Return Integer
+        \EndIf
+        \State \Return \texttt{error("integer operands required")}
+        \EndIf
+        \If{$op \in \{and, or\}$}
+        \If{$t_l = Boolean$ \textbf{and} $t_r = Boolean$}
+        \State \Return Boolean
+        \EndIf
+        \State \Return \texttt{error("boolean operands required")}
+        \EndIf
+        \If{$op \in \{<, \leq, >, \geq, =, \neq\}$}
+        \If{\Call{Compatible}{$t_l, t_r$}}
+        \State \Return Boolean
+        \EndIf
+        \State \Return \texttt{error("incompatible relational operands")}
+        \EndIf
+        \EndProcedure
+    \end{algorithmic}
+\end{breakablealgorithm}
+
+\section{Konversi Parse Tree ke AST}
+Transformasi parse tree menjadi AST umumnya dilakukan melalui syntax-directed translation, yaitu pendekatan yang mengaitkan produksi grammar dengan atribut atau aksi semantik tertentu. Tujuannya adalah menghilangkan detail sintaksis yang tidak relevan dan mempertahankan struktur yang penting untuk analisis lanjutan \cite{appel1998modern,parr2010lip}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{recursivedescent}
+    \caption{Ilustrasi proses penurunan sintaks pada parser rekursif-descent}
+    \label{fig:recursive-descent}
+\end{figure}
+
+
+Gambar \ref{fig:recursive-descent} memperlihatkan bahwa parser rekursif-descent membangun struktur sintaks melalui ekspansi produksi, termasuk kemungkinan backtracking pada kondisi tertentu. Mekanisme ini berkaitan langsung dengan pembentukan parse tree yang kemudian dapat disederhanakan menjadi AST.
+
+\subsection{Syntax-Directed Translation}
+Pada pendekatan bottom-up, subtree anak dibentuk terlebih dahulu, kemudian hasilnya digabung pada node induk. Dengan cara ini, semantic action dapat dipandang sebagai fungsi yang mengubah subtree menjadi representasi AST yang lebih ringkas.
+
+\begin{breakablealgorithm}[Konversi ringkas parse tree ke AST]
+    \label{alg:parse-to-ast}
+    \begin{algorithmic}[1]
+        \Procedure{Assignment}{$id, exprNode$}
+        \State \Return \texttt{Assign(Var(id), exprNode)}
+        \EndProcedure
+        \Procedure{BinaryExpression}{$left, op, right$}
+        \State \Return \texttt{BinOp(op, left, right)}
+        \EndProcedure
+        \Procedure{Factor}{$value$}
+        \If{$value$ is NUMBER}
+        \State \Return \texttt{Number(value)}
+        \ElsIf{$value$ is IDENT}
+        \State \Return \texttt{Var(value)}
+        \EndIf
+        \EndProcedure
+    \end{algorithmic}
+\end{breakablealgorithm}
+
+\subsection{Semantic Action}
+Semantic action adalah aturan tambahan yang dilekatkan pada produksi grammar untuk membentuk node AST atau menghitung atribut semantik. Contoh umum penggunaan semantic action ditunjukkan pada tabel berikut:
+
+\begin{table}[H]
+    \centering
+    \caption{Contoh semantic action pada grammar}
+    \label{tab:semantic-action}
+    \begin{tabularx}{\textwidth}{L L}
+        \toprule
+        \textbf{Production Rule}                         & \textbf{Semantic Action}                       \\
+        \midrule
+        \texttt{<assignment-statement> -> ID := <expr>}  & \texttt{AssignNode(VarNode(ID), expr.node)}    \\
+        \texttt{<expression> -> <simple-expr> op <term>} & \texttt{BinOpNode(op, simple.node, term.node)} \\
+        \texttt{<expression> -> <simple-expr>}           & \texttt{expression.node = simple.node}         \\
+        \texttt{<factor> -> NUMBER}                      & \texttt{NumberNode(NUMBER.value)}              \\
+        \texttt{<factor> -> ID}                          & \texttt{VarNode(ID.lexeme)}                    \\
+        \texttt{<procedure-call> -> ID ( <params> )}     & \texttt{ProcCallNode(ID.lexeme, params.nodes)} \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
 \section{Predefined Identifier}
-Sebelum analisis program dimulai, symbol table diisi dengan predefined identifier. Identifier bawaan yang digunakan adalah \texttt{Integer}, \texttt{Real}, \texttt{Char}, \texttt{Boolean}, \texttt{String}, \texttt{True}, \texttt{False}, \texttt{writeln}, dan \texttt{readln}. Identifier \texttt{writeln} dan \texttt{readln} diperlakukan sebagai procedure bawaan dengan jumlah dan tipe argumen fleksibel \cite{wirth1996compiler,aho2007compilers}.
+Pada banyak compiler, symbol table diinisialisasi dengan identifier bawaan sebelum program pengguna dianalisis. Identifier ini biasanya mencakup tipe dasar, literal Boolean, serta prosedur atau fungsi I/O yang tersedia sejak awal \cite{wirth1996compiler,aho2007compilers}.
+
+Keberadaan predefined identifier membantu semantic analyzer mengenali simbol bawaan tanpa menunggu deklarasi dari program sumber.
+
+\section{Semantic Error Handling}
+Semantic error muncul ketika program lolos pemeriksaan sintaks tetapi melanggar aturan makna bahasa. Contoh yang umum adalah redeclaration pada scope yang sama, penggunaan identifier yang belum dideklarasikan, penugasan dengan tipe yang tidak kompatibel, dan penerapan operator pada operand yang tidak sesuai. Pesan error sebaiknya cukup informatif agar lokasi dan penyebab kesalahan mudah ditelusuri \cite{louden1997compiler}.
+
+\begin{itemize}
+    \item Redeclaration error: identifier dideklarasikan dua kali pada scope yang sama.
+    \item Undeclared identifier error: identifier dipakai tetapi tidak ditemukan pada scope mana pun.
+    \item Type mismatch error: tipe ekspresi tidak cocok dengan tipe target assignment.
+    \item Invalid operand error: operator dipakai pada tipe operand yang tidak sesuai.
+\end{itemize}

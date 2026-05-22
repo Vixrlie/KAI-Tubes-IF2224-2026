@@ -13,7 +13,6 @@
 \usepackage{float}
 \usepackage{tikz}
 \usetikzlibrary{automata,positioning,arrows,shapes.geometric}
-\bibliographystyle{plain}
 % ---------- Paket lain ----------
 \usepackage{tcolorbox}
 \usepackage{hyperref}
@@ -24,7 +23,26 @@
 \usepackage{booktabs} % gaya tabel lebih elegan
 \usepackage[table]{xcolor}
 \usepackage{tabularx}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
 \usepackage{listings}
+
+% Breakable algorithm environment (non-floating) so algorithmic content may
+% break across pages while keeping an algorithm counter for labels.
+\usepackage{etoolbox}
+% vertical space between surrounding text and algorithm rules
+\newlength{\algsep}
+\setlength{\algsep}{8pt}
+\newenvironment{breakablealgorithm}[1][]{
+    % increase algorithm counter and ensure captions use algorithm type
+    \refstepcounter{algorithm}%
+    \captionsetup{type=algorithm}%
+    % Draw top rule, print visible heading, and add safe LOA entry when title
+    % is provided. Space around the rules is controlled by \algsep.
+    \vspace{\algsep}\noindent\hrule\vspace{4pt}
+    \noindent\textbf{Algoritma \thealgorithm\ifstrempty{#1}{}{:\ #1}}\par\medskip
+    \ifstrempty{#1}{}{\addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}#1}}%
+}{\par\medskip\vspace{4pt}\noindent\hrule\vspace{\algsep}\par}
 
 % Konfigurasi styling untuk code listings
 \lstset{
@@ -157,6 +175,13 @@
 
 \tableofcontents
 \clearpage
+% Daftar algoritma (jika ada caption pada environment breakablealgorithm)
+\begingroup
+\let\oldnumberline\numberline
+\renewcommand{\numberline}[1]{#1\hspace{1em}}%
+\listof{algorithm}{Daftar Algoritma}
+\endgroup
+\clearpage
 
 \chapter{Pendahuluan}
 \input{sections/01-pendahuluan}
@@ -176,6 +201,6 @@
 \chapter{Lampiran}
 \input{sections/06-lampiran}
 
-\bibliography{dafpus}
+\input{bib}
 
 \end{document}

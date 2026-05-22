@@ -32,8 +32,7 @@ Setelah seluruh input dipindai, program menjalankan \texttt{handleEof()} untuk m
 
 Pseudocode garis besar algoritma program ditunjukkan pada Algoritma~\ref{alg:lexer-main-flow}.
 
-\begin{algorithm}[H]
-    \caption{Garis Besar Algoritma Lexer (\texttt{input.txt} $\rightarrow$ \texttt{output.txt})}
+\begin{breakablealgorithm}[Garis Besar Algoritma Lexer (\texttt{input.txt} $\rightarrow$ \texttt{output.txt})]
     \label{alg:lexer-main-flow}
     \begin{algorithmic}[1]
         \Require Argumen command-line: \texttt{argv[1]} = \texttt{input.txt}, \texttt{argv[2]} (opsional) = \texttt{output.txt}
@@ -72,7 +71,7 @@ Pseudocode garis besar algoritma program ditunjukkan pada Algoritma~\ref{alg:lex
         \State \Return exit code 0
         \EndIf
     \end{algorithmic}
-\end{algorithm}
+\end{breakablealgorithm}
 
 Flowchart pada Gambar~\ref{fig:flowchart-lexer-program} memperlihatkan alur eksekusi program secara visual dari penerimaan argumen hingga penentuan exit code.
 
