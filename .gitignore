@@ -103,8 +103,9 @@ output/
 
 # latexmk logs
 latexmk.log
-doc/laporan-milestone-2/spesifikasi/*.md
-doc/laporan-milestone-3/spesifikasi/*.md
+doc/laporan-milestone-2/spesifikasi
+doc/laporan-milestone-3/spesifikasi
+doc/laporan-milestone-4/spesifikasi
 
 # Ignore generated PDFs? Uncomment if you want to ignore them
 # *.pdf

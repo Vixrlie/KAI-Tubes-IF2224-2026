@@ -1,0 +1,34 @@
+\section{Latar Belakang}
+Compiler merupakan perangkat lunak yang menerjemahkan program dari bahasa tingkat tinggi menjadi representasi yang dapat diproses lebih lanjut oleh mesin. Tahap awal compiler tidak langsung menghasilkan kode mesin, melainkan membentuk representasi internal yang semakin kaya. Lexical analysis mengubah karakter menjadi token, syntax analysis memeriksa struktur token berdasarkan grammar, dan semantic analysis memeriksa makna program yang tidak dapat ditentukan hanya dari grammar.
+
+Pada Milestone 1, Arion Compiler telah memiliki lexer yang mampu menghasilkan token stream. Pada Milestone 2, token tersebut diproses oleh Recursive Descent Parser untuk menghasilkan parse tree. Parse tree menunjukkan bahwa program valid secara sintaksis, tetapi belum menjamin bahwa program bermakna benar. Program seperti assignment string ke integer, pemakaian identifier yang belum dideklarasikan, atau pemanggilan fungsi dengan parameter yang salah dapat saja memiliki bentuk sintaks yang valid, tetapi tetap salah secara semantik.
+
+Milestone 3 berfokus pada semantic analysis. Tahap ini mengubah parse tree menjadi Abstract Syntax Tree (AST), mengelola symbol table, melakukan type checking, mengatur scope, dan memberi anotasi pada AST sehingga setiap node memiliki informasi semantik seperti tipe data, lexical level, block index, dan referensi ke symbol table. Hasil akhirnya adalah decorated AST beserta tiga tabel simbol, yaitu \texttt{tab}, \texttt{btab}, dan \texttt{atab}.
+
+\section{Rumusan Masalah}
+Permasalahan utama pada Milestone 3 adalah bagaimana membangun semantic analyzer yang dapat memanfaatkan parse tree hasil Milestone 2 untuk menghasilkan representasi yang lebih ringkas dan bermakna. Permasalahan tersebut diuraikan menjadi beberapa pertanyaan berikut.
+
+\begin{enumerate}
+    \item Bagaimana mengonversi parse tree menjadi AST menggunakan prinsip Syntax-Directed Translation?
+    \item Bagaimana merancang struktur AST yang cukup ekspresif untuk merepresentasikan deklarasi, statement, ekspresi, procedure, function, array, record, dan control flow?
+    \item Bagaimana mengelola symbol table \texttt{tab}, \texttt{btab}, dan \texttt{atab} untuk menyimpan identifier, block, scope, dan informasi array?
+    \item Bagaimana melakukan lookup identifier, pengecekan redeklarasi, type checking, assignment compatibility, dan validasi control flow?
+    \item Bagaimana menampilkan output semantic analysis dalam bentuk symbol table dan decorated AST yang mudah diperiksa?
+\end{enumerate}
+
+\section{Tujuan}
+Tujuan pengerjaan Milestone 3 adalah membangun tahap semantic analysis pada Arion Compiler. Secara khusus, tujuan yang ingin dicapai adalah sebagai berikut.
+
+\begin{enumerate}
+    \item Membuat AST dari parse tree hasil parser.
+    \item Menghilangkan detail sintaksis yang tidak diperlukan pada tahap semantik, seperti keyword struktural dan tanda baca.
+    \item Mengimplementasikan symbol table \texttt{tab}, \texttt{btab}, dan \texttt{atab}.
+    \item Menginisialisasi predefined identifier seperti \texttt{Integer}, \texttt{Real}, \texttt{Char}, \texttt{Boolean}, \texttt{String}, \texttt{True}, \texttt{False}, \texttt{writeln}, dan \texttt{readln}.
+    \item Melakukan pengecekan deklarasi, scope, tipe ekspresi, assignment, parameter procedure/function, array access, record field access, serta kondisi pada statement kontrol.
+    \item Menghasilkan decorated AST dan symbol table sebagai output program.
+\end{enumerate}
+
+\section{Batasan Masalah}
+Implementasi Milestone 3 dibatasi pada frontend compiler Arion. Program tidak melakukan code generation atau eksekusi program Arion. Semantic analyzer bekerja pada AST yang dibangun dari parse tree hasil parser, sehingga validitas sintaks diasumsikan sudah diperiksa oleh tahap sebelumnya.
+
+Pengecekan semantik yang diimplementasikan berfokus pada deklarasi identifier, scope, type checking, assignment compatibility, procedure/function call, array, record, subrange, enumerated type, dan validasi kondisi control flow. Fitur runtime seperti nilai aktual variabel saat program berjalan tidak dievaluasi secara penuh. Program juga belum melakukan analisis data-flow lengkap untuk mendeteksi seluruh kemungkinan penggunaan variabel sebelum inisialisasi.

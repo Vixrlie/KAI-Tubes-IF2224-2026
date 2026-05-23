@@ -1,0 +1,125 @@
+\section{Gambaran Umum Program}
+Implementasi Milestone 3 melanjutkan pipeline Milestone 1 dan Milestone 2. Alur utama berada pada \texttt{src/main.cpp}. Program membaca file input, lalu menentukan bentuk input tersebut. Jika input adalah parse tree, program menggunakan \texttt{ParseTreeReader}. Jika input adalah token stream, program menggunakan \texttt{TokenStreamReader} lalu menjalankan parser. Jika input adalah source code Arion, program menjalankan lexer dan parser.
+
+Setelah parse tree tersedia, program menjalankan \texttt{ASTBuilder} untuk membentuk AST. AST tersebut kemudian dianalisis oleh \texttt{SemanticAnalyzer}. Jika tidak ada error, program mencetak \texttt{tab}, \texttt{btab}, \texttt{atab}, parse tree, dan decorated AST.
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[
+        scale=0.88,
+        transform shape,
+        node distance=8mm and 18mm,
+        every node/.style={draw, rounded corners, align=center, minimum width=3.4cm, minimum height=7mm, font=\small},
+        arrow/.style={-{Stealth[length=2.5mm]}, thick}
+        ]
+        \node (input) {Input file};
+        \node (lex) [below=of input] {Lexer / TokenStreamReader / ParseTreeReader};
+        \node (parser) [below=of lex] {Parser};
+        \node (parsetree) [below=of parser] {Parse Tree};
+        \node (astbuilder) [below=of parsetree] {ASTBuilder};
+        \node (ast) [below=of astbuilder] {AST};
+        \node (sem) [below=of ast] {SemanticAnalyzer};
+        \node (out) [below=of sem] {Symbol Table + Decorated AST};
+
+        \draw[arrow] (input) -- (lex);
+        \draw[arrow] (lex) -- (parser);
+        \draw[arrow] (parser) -- (parsetree);
+        \draw[arrow] (parsetree) -- (astbuilder);
+        \draw[arrow] (astbuilder) -- (ast);
+        \draw[arrow] (ast) -- (sem);
+        \draw[arrow] (sem) -- (out);
+    \end{tikzpicture}
+    \caption{Pipeline Program}
+    \label{fig:pipeline-program}
+\end{figure}
+
+\section{Struktur Direktori Program}
+Bagian Milestone 3 terutama berada pada direktori \texttt{src/semantic/}. Berkas utama yang digunakan adalah sebagai berikut.
+
+\begin{itemize}
+    \item \texttt{ast\_node.h} dan \texttt{ast\_node.cpp}: definisi hierarchy node AST dan struktur anotasi.
+    \item \texttt{ast\_builder.h} dan \texttt{ast\_builder.cpp}: konversi parse tree menjadi AST dengan Syntax-Directed Translation.
+    \item \texttt{ast\_formatter.h} dan \texttt{ast\_formatter.cpp}: pencetakan decorated AST.
+    \item \texttt{symbol\_table.h} dan \texttt{symbol\_table.cpp}: implementasi \texttt{tab}, \texttt{btab}, \texttt{atab}, scope stack, registrasi identifier, dan lookup.
+    \item \texttt{semantic\_analyzer.h} dan \texttt{semantic\_analyzer.cpp}: traversal AST, type checking, scope checking, dan anotasi node.
+    \item \texttt{parse\_tree\_reader.h} dan \texttt{parse\_tree\_reader.cpp}: pembacaan parse tree hasil Milestone 2 sebagai input Milestone 3.
+\end{itemize}
+
+\section{Perancangan AST}
+AST dirancang sebagai hierarchy class berbasis polymorphism. Semua node mewarisi \texttt{ASTNode}, yang memiliki field \texttt{annotation}. Node AST yang digunakan mencakup \texttt{ProgramNode}, \texttt{VarDeclNode}, \texttt{ConstDeclNode}, \texttt{TypeDeclNode}, \texttt{ProcedureDeclNode}, \texttt{FunctionDeclNode}, \texttt{AssignNode}, \texttt{BinOpNode}, \texttt{UnaryOpNode}, \texttt{VarRefNode}, \texttt{Array AccessNode}, \texttt{FieldAccessNode}, \texttt{ProcCallNode}, \texttt{FuncCallNode}, \texttt{IfNode}, \texttt{WhileNode}, \texttt{RepeatNode}, \texttt{ForNode}, dan \texttt{CaseNode}.
+
+Struktur anotasi pada node AST menyimpan \texttt{typeCode}, \texttt{typeName}, \texttt{tabIndex}, \texttt{blockIndex}, \texttt{level}, dan status inisialisasi. Informasi ini diisi oleh semantic analyzer setelah AST selesai dibangun.
+
+\section{Syntax-Directed Translation}
+Konversi parse tree ke AST dilakukan oleh \texttt{ASTBuilder}. Setiap fungsi \texttt{visit} pada builder menerima node parse tree tertentu dan mengembalikan node AST yang relevan. Detail sintaksis yang tidak diperlukan, seperti \texttt{beginsy}, \texttt{endsy}, \texttt{semicolon}, dan node grammar perantara, tidak dimasukkan ke AST.
+
+Tabel berikut merangkum sebagian semantic action yang digunakan.
+
+\begin{longtable}{|p{5.2cm}|p{8.7cm}|}
+    \caption{Contoh Semantic Action ASTBuilder} \label{tab:astbuilder-semantic-action}                                                                                                                                                    \\
+    \hline
+    \textbf{Produksi}               & \textbf{Semantic Action}                                                                                                                                                                            \\
+    \hline
+    \endfirsthead
+    \hline
+    \textbf{Produksi}               & \textbf{Semantic Action}                                                                                                                                                                            \\
+    \hline
+    \endhead
+    \texttt{<program>}              & Membentuk \texttt{ProgramNode}, mengisi nama program dari header, daftar deklarasi dari declaration part, dan body dari compound statement.                                                         \\
+    \hline
+    \texttt{<var-declaration>}      & Untuk setiap identifier pada identifier-list, membentuk satu \texttt{VarDeclNode} dengan type specification yang sama.                                                                              \\
+    \hline
+    \texttt{<assignment-statement>} & Membentuk \texttt{AssignNode(target, value)} dari node variable dan expression.                                                                                                                     \\
+    \hline
+    \texttt{<expression>}           & Jika terdapat relational operator, membentuk \texttt{BinOpNode}; jika tidak, meneruskan hasil simple-expression.                                                                                    \\
+    \hline
+    \texttt{<simple-expression>}    & Membentuk rantai \texttt{BinOpNode} untuk operator aditif dan \texttt{UnaryOpNode} untuk tanda minus di depan.                                                                                      \\
+    \hline
+    \texttt{<factor>}               & Literal menjadi node literal, identifier menjadi \texttt{VarRefNode}, procedure/function call dalam expression menjadi \texttt{FuncCallNode}, dan \texttt{not factor} menjadi \texttt{UnaryOpNode}. \\
+    \hline
+    \texttt{<array-type>}           & Membentuk \texttt{ArrayTypeNode} berisi index type dan element type.                                                                                                                                \\
+    \hline
+    \texttt{<record-type>}          & Membentuk \texttt{RecordTypeNode} yang menyimpan field sebagai daftar \texttt{VarDeclNode}.                                                                                                         \\
+    \hline
+\end{longtable}
+
+\section{Implementasi Symbol Table}
+Symbol table diimplementasikan pada class \texttt{Semantic::SymbolTable}. Constructor symbol table membuat base scope dan mengisi predefined identifier. Scope dikelola dengan stack yang menyimpan \texttt{scopeLastStack} dan \texttt{scopeBlockStack}. Ketika masuk scope baru, program menambah entri \texttt{btab}; ketika keluar scope, stack dipop.
+
+Registrasi identifier dilakukan oleh \texttt{registerIdentifier}. Fungsi ini mengecek redeklarasi pada scope aktif, membuat entri \texttt{tab}, mengisi \texttt{link} ke identifier sebelumnya dalam scope yang sama, memperbarui \texttt{last} pada \texttt{btab}, dan menghitung ukuran parameter atau variabel lokal. Lookup dilakukan dari scope terdalam ke scope terluar.
+
+\begin{tcolorbox}[title=Pseudocode Register Identifier,colback=gray!5,colframe=black!60,boxrule=0.5pt,arc=2mm]
+    \begin{verbatim}
+function registerIdentifier(name, obj, type, nrm, adr):
+    if name exists in current scope:
+        report redeclaration error
+    entry.identifier = name
+    entry.link = currentScopeLast
+    entry.obj = obj
+    entry.type = type
+    entry.lev = currentLevel
+    entry.adr = computed address
+    append entry to tab
+    current btab.last = new index
+\end{verbatim}
+\end{tcolorbox}
+
+\section{Implementasi Semantic Analyzer}
+Semantic analyzer melakukan traversal depth-first terhadap AST. Fungsi utama \texttt{analyze} menginisialisasi ulang symbol table, predefined procedure, struktur pendukung subrange, enum, record field, signature procedure/function, dan stack function aktif. Setelah itu \texttt{visitProgram} memproses deklarasi dan body program.
+
+Setiap kategori node memiliki fungsi visit. Deklarasi diproses oleh \texttt{visitConstDecl}, \texttt{visitTypeDecl}, \texttt{visitVarDecl}, \texttt{visitProcedureDecl}, dan \texttt{visitFunctionDecl}. Statement diproses oleh \texttt{visitAssign}, \texttt{visitIf}, \texttt{visitWhile}, \texttt{visitRepeat}, \texttt{visitFor}, \texttt{visitCase}, dan \texttt{visitProcCall}. Ekspresi diproses oleh \texttt{visitExpression}, \texttt{visitVariable}, \texttt{visitConstant}, dan \texttt{visitFuncCall}.
+
+\subsection{Scope dan Block}
+Scope global dibuat saat symbol table diinisialisasi. Program didaftarkan sebagai object class \texttt{PROGRAM}. Main compound block dianalisis dalam scope baru sehingga output \texttt{btab} memiliki block terpisah untuk body utama. Procedure, function, dan record juga membuat scope baru untuk parameter, variabel lokal, atau field.
+
+\subsection{Type Resolution}
+Tipe dasar diselesaikan melalui lookup predefined type. Tipe array menambahkan entri ke \texttt{atab}. Tipe record membuat block baru untuk field. Tipe subrange menyimpan base type dan batas bawah/atas. Tipe enumerated menyimpan daftar identifier dan mendaftarkan setiap enumerator sebagai konstanta.
+
+\subsection{Type Checking}
+Type checking dilakukan pada ekspresi dan statement. Operator aritmatika memerlukan tipe numerik. Operator Boolean memerlukan Boolean. Operator relasional memerlukan operand kompatibel dan menghasilkan Boolean. Assignment memerlukan target yang assignable dan value yang assignment-compatible terhadap target.
+
+\subsection{Procedure dan Function}
+Procedure dan function disimpan dalam \texttt{procSignatures}. Saat pemanggilan terjadi, analyzer mengecek jumlah argumen, tipe argumen, dan kebutuhan by-reference parameter. Function call pada expression menghasilkan tipe return function. Untuk function declaration, analyzer juga memeriksa apakah body function menjamin assignment ke nama function sebagai nilai return.
+
+\section{Format Output}
+Output program Milestone 3 terdiri dari lima bagian: \texttt{tab}, \texttt{btab}, \texttt{atab}, parse tree, dan decorated AST. Label object class mencakup \texttt{program}, \texttt{const}, \texttt{variable}, \texttt{type}, \texttt{procedure}, dan \texttt{function}. Decorated AST menampilkan anotasi seperti \texttt{tab\_index}, \texttt{type}, \texttt{lev}, dan \texttt{block}.
