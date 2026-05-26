@@ -7,6 +7,7 @@
 #include "lexer/token_stream_reader.h"
 #include "parser/parser.h"
 #include "parser/parse_tree_reader.h"
+#include "codegen/intermediate_code.h"
 #include "semantic/ast_builder.h"
 #include "semantic/ast_formatter.h"
 #include "semantic/semantic_analyzer.h"
@@ -82,6 +83,10 @@ int main(int argc, char *argv[])
             }
             return 1;
         }
+
+        CodeGen::IntermediateCodeGenerator generator;
+        CodeGen::IntermediateCodeGenerator::Result codegenResult =
+            generator.generate(ast.get(), analyzer.symbolTable());
 
         auto objectClassLabel = [](Semantic::ObjectClass obj) {
             switch (obj)
@@ -178,6 +183,20 @@ int main(int argc, char *argv[])
         outputBuffer << "=== Decorated AST ===" << std::endl;
         AST::ASTFormatter formatter;
         formatter.print(outputBuffer, ast.get());
+        outputBuffer << std::endl;
+
+        outputBuffer << "=== Intermediate Code ===" << std::endl;
+        CodeGen::IntermediateCodeGenerator::print(outputBuffer, codegenResult.instructions);
+
+        if (!codegenResult.success)
+        {
+            outputBuffer << std::endl;
+            outputBuffer << "=== Intermediate Code Errors ===" << std::endl;
+            for (const auto &message : codegenResult.errors)
+            {
+                outputBuffer << "- " << message << std::endl;
+            }
+        }
 
         const std::string output = outputBuffer.str();
         std::cout << output;
@@ -193,7 +212,7 @@ int main(int argc, char *argv[])
             outputFile << output;
         }
 
-        return 0;
+        return codegenResult.success ? 0 : 1;
     }
     catch (const ParserError &error)
     {
