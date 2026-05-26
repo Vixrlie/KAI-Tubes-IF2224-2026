@@ -678,9 +678,7 @@ namespace Semantic
 
         if (node->body)
         {
-            enterScope();
             visitCompound(node->body.get());
-            exitScope();
         }
     }
 
