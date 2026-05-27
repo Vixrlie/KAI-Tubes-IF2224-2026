@@ -8,6 +8,7 @@
 #include "parser/parser.h"
 #include "parser/parse_tree_reader.h"
 #include "codegen/intermediate_code.h"
+#include "interpreter/interpreter.h"
 #include "semantic/ast_builder.h"
 #include "semantic/ast_formatter.h"
 #include "semantic/semantic_analyzer.h"
@@ -195,6 +196,26 @@ int main(int argc, char *argv[])
             for (const auto &message : codegenResult.errors)
             {
                 outputBuffer << "- " << message << std::endl;
+            }
+        }
+
+        if (codegenResult.success)
+        {
+            Interpreter::Interpreter interpreter;
+            Interpreter::Interpreter::Result runResult = interpreter.run(codegenResult.instructions);
+
+            outputBuffer << std::endl;
+            outputBuffer << "=== Interpreter Output ===" << std::endl;
+            outputBuffer << runResult.output;
+
+            if (!runResult.success)
+            {
+                outputBuffer << std::endl;
+                outputBuffer << "=== Interpreter Errors ===" << std::endl;
+                for (const auto &message : runResult.errors)
+                {
+                    outputBuffer << "- " << message << std::endl;
+                }
             }
         }
 
