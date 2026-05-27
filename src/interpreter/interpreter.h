@@ -50,6 +50,11 @@ namespace Interpreter
                                 const std::vector<CodeGen::Instruction> &program,
                                 bool &advance);
 
+        bool executeOp(int typeClass, int opCode);
+        bool unaryOp(int typeClass, int opCode, RuntimeValue &result);
+        bool binaryOp(int typeClass, int opCode, RuntimeValue &result);
+
+        bool writeValue(const RuntimeValue &value, bool newline);
     };
 }
 
