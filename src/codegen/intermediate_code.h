@@ -71,6 +71,7 @@ namespace CodeGen
         std::unordered_map<std::string, const AST::ASTNode *> constantValues;
         std::unordered_map<std::string, int> procedureEntryIndex;
         std::unordered_map<std::string, std::vector<int>> pendingCallSites;
+        std::vector<std::unordered_map<int, int>> parameterOffsetStack;
 
         void addError(const std::string &message);
         void emit(OpCode op, int level, Operand operand);
@@ -91,6 +92,9 @@ namespace CodeGen
         void emitStore(const AST::ASTNode *target);
         void emitLiteralNode(const AST::ASTNode *node);
         void emitConstantLiteral(const Semantic::TabEntry &entry, const AST::VarRefNode *node);
+        void pushParameterScope(const AST::ASTNode *subprogramNode);
+        void popParameterScope();
+        bool lookupParameterRuntimeOffset(int tabIndex, int &offset) const;
 
         const Semantic::TabEntry *lookupEntry(int tabIndex) const;
         const Semantic::TabEntry *lookupVariableEntry(const AST::VarRefNode *node);

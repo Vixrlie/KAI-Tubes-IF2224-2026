@@ -257,7 +257,9 @@ namespace Interpreter
             int address = resolveAddress(inst.level, offset);
             if (address < 0 || address >= static_cast<int>(stack.size()))
             {
-                addError("Interpreter: LOD address out of bounds");
+                addError("Interpreter: LOD address out of bounds (addr=" + std::to_string(address) +
+                         ", bp=" + std::to_string(bp) +
+                         ", size=" + std::to_string(stack.size()) + ")");
                 return false;
             }
 
@@ -276,7 +278,9 @@ namespace Interpreter
             int address = resolveAddress(inst.level, offset);
             if (address < 0 || address >= static_cast<int>(stack.size()))
             {
-                addError("Interpreter: STO address out of bounds");
+                addError("Interpreter: STO address out of bounds (addr=" + std::to_string(address) +
+                         ", bp=" + std::to_string(bp) +
+                         ", size=" + std::to_string(stack.size()) + ")");
                 return false;
             }
 

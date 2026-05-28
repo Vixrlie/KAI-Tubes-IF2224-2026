@@ -90,10 +90,15 @@ namespace CodeGen
         collectProgramConstants(root);
         emit(OpCode::INT, 0, initialFrameSize(root));
 
+        const int mainJumpIndex = static_cast<int>(instructions.size());
+        emit(OpCode::JMP, 0, 0);
+
         for (const auto &decl : root->declarations)
         {
             visitDeclaration(decl.get());
         }
+
+        instructions[mainJumpIndex].operand = static_cast<int>(instructions.size());
 
         if (root->body)
         {
@@ -251,6 +256,13 @@ namespace CodeGen
                 {
                     // record for later backpatch
                     pendingCallSites[procCall->name].push_back(callIndex);
+                }
+
+                // Clean up the actual arguments after the call returns.
+                // The callee reads them as slots below its frame header, so the caller must pop them.
+                if (!procCall->args.empty())
+                {
+                    emit(OpCode::INT, 0, -static_cast<int>(procCall->args.size()));
                 }
 
                 if (errors.size() > errorBase)
@@ -424,7 +436,14 @@ namespace CodeGen
         }
 
         int levelDelta = lexicalLevelDelta(node->annotation, *entry);
-        emit(OpCode::LOD, levelDelta, runtimeAddress(*entry));
+        int runtimeOffset = runtimeAddress(*entry);
+        if (lookupParameterRuntimeOffset(node->annotation.tabIndex, runtimeOffset))
+        {
+            emit(OpCode::LOD, levelDelta, runtimeOffset);
+            return 0;
+        }
+
+        emit(OpCode::LOD, levelDelta, runtimeOffset);
         return 0;
     }
 
@@ -450,7 +469,14 @@ namespace CodeGen
         }
 
         int levelDelta = lexicalLevelDelta(var->annotation, *entry);
-        emit(OpCode::STO, levelDelta, runtimeAddress(*entry));
+        int runtimeOffset = runtimeAddress(*entry);
+        if (lookupParameterRuntimeOffset(var->annotation.tabIndex, runtimeOffset))
+        {
+            emit(OpCode::STO, levelDelta, runtimeOffset);
+            return;
+        }
+
+        emit(OpCode::STO, levelDelta, runtimeOffset);
     }
 
     void IntermediateCodeGenerator::emitLiteralNode(const AST::ASTNode *node)
@@ -516,6 +542,97 @@ namespace CodeGen
         }
     }
 
+    void IntermediateCodeGenerator::pushParameterScope(const AST::ASTNode *subprogramNode)
+    {
+        std::unordered_map<int, int> parameterOffsets;
+
+        const auto *procNode = dynamic_cast<const AST::ProcedureDeclNode *>(subprogramNode);
+        const auto *funcNode = dynamic_cast<const AST::FunctionDeclNode *>(subprogramNode);
+
+        const std::vector<std::unique_ptr<AST::ParamNode>> *params = nullptr;
+        int blockIndex = -1;
+        if (procNode)
+        {
+            params = &procNode->params;
+            blockIndex = procNode->annotation.blockIndex;
+        }
+        else if (funcNode)
+        {
+            params = &funcNode->params;
+            blockIndex = funcNode->annotation.blockIndex;
+        }
+
+        int totalParamSlots = 0;
+        if (symbols && blockIndex >= 0)
+        {
+            const auto &btab = symbols->btab();
+            if (blockIndex < static_cast<int>(btab.size()))
+            {
+                totalParamSlots = btab[blockIndex].psze;
+            }
+        }
+
+        if (params)
+        {
+            int firstParamTabIndex = -1;
+            if (symbols && blockIndex >= 0)
+            {
+                const auto &btab = symbols->btab();
+                if (blockIndex < static_cast<int>(btab.size()))
+                {
+                    const Semantic::BtabEntry &block = btab[blockIndex];
+                    firstParamTabIndex = block.lpar - static_cast<int>(params->size()) + 1;
+                    (void)block;
+                }
+            }
+
+            for (std::size_t i = 0; i < params->size(); ++i)
+            {
+                const auto &param = (*params)[i];
+                if (!param)
+                {
+                    continue;
+                }
+
+                int paramTabIndex = firstParamTabIndex >= 0 ? firstParamTabIndex + static_cast<int>(i)
+                                                            : param->annotation.tabIndex;
+                const Semantic::TabEntry *entry = lookupEntry(paramTabIndex);
+                if (!entry)
+                {
+                    continue;
+                }
+
+                // Parameters live below the callee frame header. Their runtime offsets are negative.
+                parameterOffsets[paramTabIndex] = entry->adr - totalParamSlots;
+            }
+        }
+
+        parameterOffsetStack.push_back(std::move(parameterOffsets));
+    }
+
+    void IntermediateCodeGenerator::popParameterScope()
+    {
+        if (!parameterOffsetStack.empty())
+        {
+            parameterOffsetStack.pop_back();
+        }
+    }
+
+    bool IntermediateCodeGenerator::lookupParameterRuntimeOffset(int tabIndex, int &offset) const
+    {
+        for (auto it = parameterOffsetStack.rbegin(); it != parameterOffsetStack.rend(); ++it)
+        {
+            const auto found = it->find(tabIndex);
+            if (found != it->end())
+            {
+                offset = found->second;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     void IntermediateCodeGenerator::visitProcedure(const AST::ProcedureDeclNode *node)
     {
         if (!node)
@@ -526,6 +643,9 @@ namespace CodeGen
         // Record entry point for the procedure
         int entryIndex = static_cast<int>(instructions.size());
         procedureEntryIndex[node->name] = entryIndex;
+
+        // Skip over nested declarations when execution falls through the declaration area.
+        emit(OpCode::JMP, 0, 0);
 
         // Backpatch any earlier call sites
         auto pendingIt = pendingCallSites.find(node->name);
@@ -540,6 +660,16 @@ namespace CodeGen
             }
             pendingCallSites.erase(pendingIt);
         }
+
+        pushParameterScope(node);
+
+        // Generate nested declarations before the executable prologue.
+        for (const auto &decl : node->localDecls)
+        {
+            visitDeclaration(decl.get());
+        }
+
+        instructions[entryIndex].operand = static_cast<int>(instructions.size());
 
         // Reserve frame for the procedure
         int frameSize = kFrameHeaderSize;
@@ -560,12 +690,6 @@ namespace CodeGen
 
         emit(OpCode::INT, 0, frameSize);
 
-        // Generate local declarations
-        for (const auto &decl : node->localDecls)
-        {
-            visitDeclaration(decl.get());
-        }
-
         // Generate body
         if (node->body)
         {
@@ -574,6 +698,7 @@ namespace CodeGen
 
         // Procedure return
         emit(OpCode::RET, 0, 0);
+        popParameterScope();
     }
 
     void IntermediateCodeGenerator::visitFunction(const AST::FunctionDeclNode *node)
@@ -587,6 +712,8 @@ namespace CodeGen
         int entryIndex = static_cast<int>(instructions.size());
         procedureEntryIndex[node->name] = entryIndex;
 
+        emit(OpCode::JMP, 0, 0);
+
         auto pendingIt = pendingCallSites.find(node->name);
         if (pendingIt != pendingCallSites.end())
         {
@@ -599,6 +726,15 @@ namespace CodeGen
             }
             pendingCallSites.erase(pendingIt);
         }
+
+        pushParameterScope(node);
+
+        for (const auto &decl : node->localDecls)
+        {
+            visitDeclaration(decl.get());
+        }
+
+        instructions[entryIndex].operand = static_cast<int>(instructions.size());
 
         int frameSize = kFrameHeaderSize;
         if (symbols)
@@ -618,11 +754,6 @@ namespace CodeGen
 
         emit(OpCode::INT, 0, frameSize);
 
-        for (const auto &decl : node->localDecls)
-        {
-            visitDeclaration(decl.get());
-        }
-
         if (node->body)
         {
             visitCompound(node->body.get());
@@ -630,6 +761,7 @@ namespace CodeGen
 
         // Function return (placeholder)
         emit(OpCode::RET, 0, 0);
+        popParameterScope();
     }
 
     const Semantic::TabEntry *IntermediateCodeGenerator::lookupEntry(int tabIndex) const
