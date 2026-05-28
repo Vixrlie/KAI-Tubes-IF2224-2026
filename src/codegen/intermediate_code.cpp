@@ -225,6 +225,24 @@ namespace CodeGen
             return;
         }
 
+        if (auto *repeatStmt = dynamic_cast<const AST::RepeatNode *>(node))
+        {
+            visitRepeat(repeatStmt);
+            return;
+        }
+
+        if (auto *forStmt = dynamic_cast<const AST::ForNode *>(node))
+        {
+            visitFor(forStmt);
+            return;
+        }
+
+        if (auto *caseStmt = dynamic_cast<const AST::CaseNode *>(node))
+        {
+            visitCase(caseStmt);
+            return;
+        }
+
         if (auto *procCall = dynamic_cast<const AST::ProcCallNode *>(node))
         {
             if (procCall->name == "writeln")
@@ -389,6 +407,241 @@ namespace CodeGen
         }
     }
 
+    void IntermediateCodeGenerator::visitRepeat(const AST::RepeatNode *node)
+    {
+        if (!node)
+        {
+            return;
+        }
+
+        const std::size_t instructionBase = instructions.size();
+        const std::size_t errorBase = errors.size();
+
+        int loopStart = static_cast<int>(instructions.size());
+
+        // Body statements
+        for (const auto &stmt : node->statements)
+        {
+            visitStatement(stmt.get());
+        }
+
+        // Evaluate condition; repeat until condition is true
+        if (node->condition)
+        {
+            visitExpression(node->condition.get());
+            // If condition is false, jump back to loop start
+            int jpcIndex = static_cast<int>(instructions.size());
+            emit(OpCode::JPC, 0, loopStart);
+            (void)jpcIndex; // placeholder kept for symmetry
+        }
+
+        if (errors.size() > errorBase)
+        {
+            instructions.resize(instructionBase);
+        }
+    }
+
+    void IntermediateCodeGenerator::visitFor(const AST::ForNode *node)
+    {
+        if (!node)
+        {
+            return;
+        }
+
+        const std::size_t instructionBase = instructions.size();
+        const std::size_t errorBase = errors.size();
+
+        // Initialize loop variable with start expression
+        int varTabIndex = -1;
+        if (symbols)
+        {
+            auto opt = symbols->lookup(node->varName);
+            if (opt)
+            {
+                varTabIndex = opt->index;
+            }
+        }
+
+        if (node->startExpr)
+        {
+            visitExpression(node->startExpr.get());
+            if (varTabIndex >= 0)
+            {
+                const Semantic::TabEntry *entry = lookupEntry(varTabIndex);
+                if (entry)
+                {
+                    int runtimeOffset = runtimeAddress(*entry);
+                    if (lookupParameterRuntimeOffset(varTabIndex, runtimeOffset))
+                    {
+                        emit(OpCode::STO, lexicalLevelDelta(node->annotation, *entry), runtimeOffset);
+                    }
+                    else
+                    {
+                        emit(OpCode::STO, lexicalLevelDelta(node->annotation, *entry), runtimeOffset);
+                    }
+                }
+                else
+                {
+                    addError("For-loop variable lookup failed: " + node->varName);
+                }
+            }
+            else
+            {
+                addError("For-loop variable not found in symbol table: " + node->varName);
+            }
+        }
+
+        int loopStart = static_cast<int>(instructions.size());
+
+        // Condition: compare loop var with end expression
+        // Load loop variable and end expression then compare
+        if (varTabIndex >= 0)
+        {
+            const Semantic::TabEntry *entry = lookupEntry(varTabIndex);
+            if (entry)
+            {
+                int runtimeOffset = runtimeAddress(*entry);
+                if (lookupParameterRuntimeOffset(varTabIndex, runtimeOffset))
+                {
+                    emit(OpCode::LOD, lexicalLevelDelta(node->annotation, *entry), runtimeOffset);
+                }
+                else
+                {
+                    emit(OpCode::LOD, lexicalLevelDelta(node->annotation, *entry), runtimeOffset);
+                }
+            }
+        }
+
+        if (node->endExpr)
+        {
+            visitExpression(node->endExpr.get());
+        }
+
+        // Emit comparison: if downTo then var >= end else var <= end
+        int cmpTypeClass = typeClassFromBasicType(Semantic::BasicType::INTEGER);
+        if (node->isDownTo)
+        {
+            emit(OpCode::OPR, cmpTypeClass, kOpGeq);
+        }
+        else
+        {
+            emit(OpCode::OPR, cmpTypeClass, kOpLeq);
+        }
+
+        // If comparison false, exit loop
+        int jpcIndex = static_cast<int>(instructions.size());
+        emit(OpCode::JPC, 0, 0);
+
+        // Body
+        if (node->body)
+        {
+            visitCompound(node->body.get());
+        }
+
+        // Increment or decrement loop variable
+        if (varTabIndex >= 0)
+        {
+            const Semantic::TabEntry *entry = lookupEntry(varTabIndex);
+            if (entry)
+            {
+                int runtimeOffset = runtimeAddress(*entry);
+                if (lookupParameterRuntimeOffset(varTabIndex, runtimeOffset))
+                {
+                    emit(OpCode::LOD, lexicalLevelDelta(node->annotation, *entry), runtimeOffset);
+                }
+                else
+                {
+                    emit(OpCode::LOD, lexicalLevelDelta(node->annotation, *entry), runtimeOffset);
+                }
+                emit(OpCode::LIT, 0, 1);
+                emit(OpCode::OPR, 0, node->isDownTo ? kOpSub : kOpAdd);
+                emit(OpCode::STO, lexicalLevelDelta(node->annotation, *entry), runtimeOffset);
+            }
+        }
+
+        // Jump back to start
+        emit(OpCode::JMP, 0, loopStart);
+
+        // Backpatch exit point
+        instructions[jpcIndex].operand = static_cast<int>(instructions.size());
+
+        if (errors.size() > errorBase)
+        {
+            instructions.resize(instructionBase);
+        }
+    }
+
+    void IntermediateCodeGenerator::visitCase(const AST::CaseNode *node)
+    {
+        if (!node)
+        {
+            return;
+        }
+
+        const std::size_t instructionBase = instructions.size();
+        const std::size_t errorBase = errors.size();
+
+        int endJump = -1;
+        std::vector<int> jumpToNextTest;
+
+        // For each branch, create tests for each label. If a label matches, fall through to body.
+        for (const auto &branch : node->branches)
+        {
+            int firstLabelTestIndex = -1;
+            for (const auto &label : branch->labels)
+            {
+                // Evaluate selector and label
+                if (node->selector)
+                {
+                    visitExpression(node->selector.get());
+                }
+                visitExpression(label.get());
+
+                // compare
+                emit(OpCode::OPR, typeClassForNode(label.get()), kOpEql);
+
+                // if false, jump to next test
+                int jpcIdx = static_cast<int>(instructions.size());
+                emit(OpCode::JPC, 0, 0);
+                jumpToNextTest.push_back(jpcIdx);
+            }
+
+            // If any label matched we fall through to the body
+            if (branch->body)
+            {
+                visitStatement(branch->body.get());
+            }
+
+            // After body, jump to end
+            int jmpToEnd = static_cast<int>(instructions.size());
+            emit(OpCode::JMP, 0, 0);
+            if (endJump < 0)
+            {
+                endJump = jmpToEnd;
+            }
+            // backpatch the JPCs for labels in this branch to point to next test (current pc)
+            for (int idx : jumpToNextTest)
+            {
+                if (idx >= 0 && idx < static_cast<int>(instructions.size()))
+                {
+                    instructions[idx].operand = static_cast<int>(instructions.size());
+                }
+            }
+            jumpToNextTest.clear();
+        }
+
+        // backpatch final endJump targets to point after case
+        if (endJump >= 0 && endJump < static_cast<int>(instructions.size()))
+        {
+            instructions[endJump].operand = static_cast<int>(instructions.size());
+        }
+
+        if (errors.size() > errorBase)
+        {
+            instructions.resize(instructionBase);
+        }
+    }
+
     void IntermediateCodeGenerator::visitAssign(const AST::AssignNode *node)
     {
         if (!node)
@@ -520,6 +773,19 @@ namespace CodeGen
         const Semantic::TabEntry *entry = lookupVariableEntry(node);
         if (!entry)
         {
+            // Fallback: try symbol table lookup by name if annotation is missing
+            if (symbols && node && !node->name.empty())
+            {
+                auto opt = symbols->lookup(node->name);
+                if (opt)
+                {
+                    entry = &opt->entry;
+                }
+            }
+        }
+
+        if (!entry)
+        {
             return -1;
         }
 
@@ -535,9 +801,10 @@ namespace CodeGen
             return -1;
         }
 
-        int levelDelta = lexicalLevelDelta(node->annotation, *entry);
+        int tabIndex = node ? node->annotation.tabIndex : -1;
+        int levelDelta = lexicalLevelDelta(node ? node->annotation : AST::Annotation(), *entry);
         int runtimeOffset = runtimeAddress(*entry);
-        if (lookupParameterRuntimeOffset(node->annotation.tabIndex, runtimeOffset))
+        if (tabIndex >= 0 && lookupParameterRuntimeOffset(tabIndex, runtimeOffset))
         {
             emit(OpCode::LOD, levelDelta, runtimeOffset);
             return 0;
@@ -559,6 +826,19 @@ namespace CodeGen
         const Semantic::TabEntry *entry = lookupVariableEntry(var);
         if (!entry)
         {
+            // Fallback: try symbol table lookup by name if annotation is missing
+            if (symbols && var && !var->name.empty())
+            {
+                auto opt = symbols->lookup(var->name);
+                if (opt)
+                {
+                    entry = &opt->entry;
+                }
+            }
+        }
+
+        if (!entry)
+        {
             return;
         }
 
@@ -568,9 +848,10 @@ namespace CodeGen
             return;
         }
 
-        int levelDelta = lexicalLevelDelta(var->annotation, *entry);
+        int tabIndex = var ? var->annotation.tabIndex : -1;
+        int levelDelta = lexicalLevelDelta(var ? var->annotation : AST::Annotation(), *entry);
         int runtimeOffset = runtimeAddress(*entry);
-        if (lookupParameterRuntimeOffset(var->annotation.tabIndex, runtimeOffset))
+        if (tabIndex >= 0 && lookupParameterRuntimeOffset(tabIndex, runtimeOffset))
         {
             emit(OpCode::STO, levelDelta, runtimeOffset);
             return;
@@ -893,7 +1174,7 @@ namespace CodeGen
             return entry;
         }
 
-        addError("Variable reference is missing symbol-table metadata: " + node->name);
+        // Do not emit an error here; allow caller to fallback to symbol table lookup by name.
         return nullptr;
     }
 

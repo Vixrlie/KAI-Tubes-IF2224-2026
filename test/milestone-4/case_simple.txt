@@ -1,0 +1,7 @@
+program CaseTest;
+begin
+  case 2 of
+    1: writeln(1);
+    2: writeln(2);
+  end;
+end.
