@@ -1,0 +1,10 @@
+program ProcTest;
+
+procedure Proc;
+begin
+  writeln(5);
+end;
+
+begin
+  Proc;
+end.

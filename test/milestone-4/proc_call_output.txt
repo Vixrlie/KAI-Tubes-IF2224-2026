@@ -1,0 +1,86 @@
+=== tab ===
+idx  id        obj       type  ref  nrm  lev  adr  link
+-------------------------------------------------------
+...  (reserved words 0-32)
+ 33   Integer       type     0    0    1    0    0     0
+ 34      Real       type     1    0    1    0    0    33
+ 35      Char       type     2    0    1    0    0    34
+ 36   Boolean       type     3    0    1    0    0    35
+ 37    String       type     4    0    1    0    0    36
+ 38      True      const     3    0    1    0    1    37
+ 39     False      const     3    0    1    0    0    38
+ 40   writeln  procedure    10    0    1    0    0    39
+ 41    readln  procedure    10    0    1    0    0    40
+ 42  ProcTest    program    10    0    1    0    0    41
+ 43      Proc  procedure    10    0    1    0    0    42
+
+=== btab ===
+idx  last  lpar  psze  vsze
+---------------------------
+  0    43     0     0     0
+  1     0     0     0     0
+
+=== atab ===
+(empty)
+
+=== Parse Tree ===
+<program>
+├── <program-header>
+│   ├── programsy
+│   ├── ident(ProcTest)
+│   └── semicolon
+├── <declaration-part>
+│   └── <subprogram-declaration>
+│       └── <procedure-declaration>
+│           ├── proceduresy
+│           ├── ident(Proc)
+│           ├── semicolon
+│           ├── <block>
+│           │   ├── <declaration-part>
+│           │   └── <compound-statement>
+│           │       ├── beginsy
+│           │       ├── <statement-list>
+│           │       │   ├── <statement>
+│           │       │   │   └── <procedure/function-call>
+│           │       │   │       ├── ident(writeln)
+│           │       │   │       ├── lparent
+│           │       │   │       ├── <parameter-list>
+│           │       │   │       │   └── <expression>
+│           │       │   │       │       └── <simple-expression>
+│           │       │   │       │           └── <term>
+│           │       │   │       │               └── <factor>
+│           │       │   │       │                   └── intcon(5)
+│           │       │   │       └── rparent
+│           │       │   └── semicolon
+│           │       └── endsy
+│           └── semicolon
+├── <compound-statement>
+│   ├── beginsy
+│   ├── <statement-list>
+│   │   ├── <statement>
+│   │   │   └── <procedure/function-call>
+│   │   │       └── ident(Proc)
+│   │   └── semicolon
+│   └── endsy
+└── period
+
+=== Decorated AST ===
+Program('ProcTest')  → type:Unknown, lev:0, block:0
+├── ProcedureDecl('Proc')  → type:Unknown, lev:1, block:1
+│   └── Block  → type:Unknown, lev:1, block:1
+│       └── ProcCall('writeln')  → type:Unknown, lev:1, block:1
+│           └── Num(5)  → type:Integer, lev:1, block:1
+└── Block  → type:Unknown, lev:0, block:0
+    └── ProcCall('Proc')  → type:Unknown, lev:0, block:0
+
+=== Intermediate Code ===
+0 INT 0 3
+1 INT 0 3
+2 LIT 0 5
+3 OPR 0 14
+4 RET 0 0
+5 CAL 0 1
+6 RET 0 0
+
+=== Interpreter Output ===
+5

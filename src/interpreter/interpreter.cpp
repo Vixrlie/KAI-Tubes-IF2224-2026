@@ -178,7 +178,8 @@ namespace Interpreter
 
         switch (inst.op)
         {
-        case CodeGen::OpCode::INT: {
+        case CodeGen::OpCode::INT:
+        {
             int size = 0;
             if (!getIntOperand(inst.operand, size))
             {
@@ -197,7 +198,9 @@ namespace Interpreter
                 return false;
             }
 
-            if (size >= kFrameHeaderSize)
+            // Only initialize frame header slots for the program's root frame (bp == 0).
+            // For callee frames, the CAL instruction sets the header (static/dynamic/return).
+            if (size >= kFrameHeaderSize && bp == 0)
             {
                 setStackValue(bp + 0, RuntimeValue{0});
                 setStackValue(bp + 1, RuntimeValue{0});
@@ -205,7 +208,8 @@ namespace Interpreter
             }
             return true;
         }
-        case CodeGen::OpCode::LIT: {
+        case CodeGen::OpCode::LIT:
+        {
             if (std::holds_alternative<std::monostate>(inst.operand))
             {
                 push(RuntimeValue{0});
@@ -241,7 +245,8 @@ namespace Interpreter
             addError("Interpreter: unsupported literal operand");
             return false;
         }
-        case CodeGen::OpCode::LOD: {
+        case CodeGen::OpCode::LOD:
+        {
             int offset = 0;
             if (!getIntOperand(inst.operand, offset))
             {
@@ -259,7 +264,8 @@ namespace Interpreter
             push(stack[static_cast<std::size_t>(address)]);
             return true;
         }
-        case CodeGen::OpCode::STO: {
+        case CodeGen::OpCode::STO:
+        {
             int offset = 0;
             if (!getIntOperand(inst.operand, offset))
             {
@@ -283,7 +289,8 @@ namespace Interpreter
             stack[static_cast<std::size_t>(address)] = value;
             return true;
         }
-        case CodeGen::OpCode::OPR: {
+        case CodeGen::OpCode::OPR:
+        {
             int opcode = 0;
             if (!getIntOperand(inst.operand, opcode))
             {
@@ -298,7 +305,8 @@ namespace Interpreter
 
             return true;
         }
-        case CodeGen::OpCode::JMP: {
+        case CodeGen::OpCode::JMP:
+        {
             int target = 0;
             if (!getIntOperand(inst.operand, target))
             {
@@ -316,7 +324,8 @@ namespace Interpreter
             advance = false;
             return true;
         }
-        case CodeGen::OpCode::JPC: {
+        case CodeGen::OpCode::JPC:
+        {
             int target = 0;
             if (!getIntOperand(inst.operand, target))
             {
@@ -350,7 +359,8 @@ namespace Interpreter
 
             return true;
         }
-        case CodeGen::OpCode::CAL: {
+        case CodeGen::OpCode::CAL:
+        {
             int target = 0;
             if (!getIntOperand(inst.operand, target))
             {
@@ -379,7 +389,8 @@ namespace Interpreter
             advance = false;
             return true;
         }
-        case CodeGen::OpCode::RET: {
+        case CodeGen::OpCode::RET:
+        {
             int returnAddress = 0;
             int dynamicLink = 0;
 
