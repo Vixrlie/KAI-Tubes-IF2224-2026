@@ -1,0 +1,3 @@
+=== Semantic Errors ===
+- Array index type is incompatible with array index domain
+- Array index type is incompatible with array index domain

@@ -1,0 +1,5 @@
+program ModByZero;
+
+begin
+  writeln(1 mod 0);
+end.
