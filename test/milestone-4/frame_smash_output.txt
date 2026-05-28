@@ -1,0 +1,4 @@
+=== Interpreter Output ===
+
+=== Interpreter Errors ===
+- Interpreter: write to protected frame header slot
