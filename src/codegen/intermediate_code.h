@@ -69,6 +69,8 @@ namespace CodeGen
         std::vector<Instruction> instructions;
         std::vector<std::string> errors;
         std::unordered_map<std::string, const AST::ASTNode *> constantValues;
+        std::unordered_map<std::string, int> procedureEntryIndex;
+        std::unordered_map<std::string, std::vector<int>> pendingCallSites;
 
         void addError(const std::string &message);
         void emit(OpCode op, int level, Operand operand);
@@ -77,6 +79,8 @@ namespace CodeGen
         int initialFrameSize(const AST::ProgramNode *root);
 
         void visitDeclaration(const AST::ASTNode *node);
+        void visitProcedure(const AST::ProcedureDeclNode *node);
+        void visitFunction(const AST::FunctionDeclNode *node);
         void visitStatement(const AST::ASTNode *node);
         void visitCompound(const AST::CompoundNode *node);
         void visitAssign(const AST::AssignNode *node);

@@ -37,7 +37,8 @@ namespace CodeGen
 
         std::string formatOperand(const Operand &operand)
         {
-            return std::visit([](const auto &value) -> std::string {
+            return std::visit([](const auto &value) -> std::string
+                              {
                 using T = std::decay_t<decltype(value)>;
                 if constexpr (std::is_same_v<T, std::monostate>)
                 {
@@ -67,8 +68,7 @@ namespace CodeGen
                 else
                 {
                     return value;
-                }
-            },
+                } },
                               operand);
         }
     } // namespace
@@ -174,16 +174,19 @@ namespace CodeGen
             return;
         }
 
-        if (dynamic_cast<const AST::ProcedureDeclNode *>(node))
+        if (auto *proc = dynamic_cast<const AST::ProcedureDeclNode *>(node))
         {
-            addError("Procedure code generation is not part of Bryan's scope yet");
+            visitProcedure(proc);
             return;
         }
 
-        if (dynamic_cast<const AST::FunctionDeclNode *>(node))
+        if (auto *func = dynamic_cast<const AST::FunctionDeclNode *>(node))
         {
-            addError("Function code generation is not part of Bryan's scope yet");
+            visitFunction(func);
+            return;
         }
+
+        // other declarations (const / var / type) are ignored by generator
     }
 
     void IntermediateCodeGenerator::visitStatement(const AST::ASTNode *node)
@@ -213,7 +216,47 @@ namespace CodeGen
             }
             else
             {
-                addError("Unsupported procedure call for intermediate code generation: " + procCall->name);
+                const std::size_t instructionBase = instructions.size();
+                const std::size_t errorBase = errors.size();
+
+                // Evaluate arguments (simple pass-by-value handling)
+                for (const auto &arg : procCall->args)
+                {
+                    visitExpression(arg.get());
+                }
+
+                // Determine lexical level delta if symbol metadata exists
+                int levelDelta = 0;
+                const Semantic::TabEntry *entry = nullptr;
+                if (procCall->annotation.tabIndex >= 0)
+                {
+                    entry = lookupEntry(procCall->annotation.tabIndex);
+                }
+                if (entry)
+                {
+                    levelDelta = lexicalLevelDelta(procCall->annotation, *entry);
+                }
+
+                // Emit CAL with placeholder operand (to be backpatched when procedure emitted)
+                int callIndex = static_cast<int>(instructions.size());
+                emit(OpCode::CAL, levelDelta, 0);
+
+                auto it = procedureEntryIndex.find(procCall->name);
+                if (it != procedureEntryIndex.end())
+                {
+                    // target known, backpatch immediately
+                    instructions[callIndex].operand = it->second;
+                }
+                else
+                {
+                    // record for later backpatch
+                    pendingCallSites[procCall->name].push_back(callIndex);
+                }
+
+                if (errors.size() > errorBase)
+                {
+                    instructions.resize(instructionBase);
+                }
             }
             return;
         }
@@ -471,6 +514,122 @@ namespace CodeGen
             addError("Constant value is not representable yet for code generation: " + node->name);
             return;
         }
+    }
+
+    void IntermediateCodeGenerator::visitProcedure(const AST::ProcedureDeclNode *node)
+    {
+        if (!node)
+        {
+            return;
+        }
+
+        // Record entry point for the procedure
+        int entryIndex = static_cast<int>(instructions.size());
+        procedureEntryIndex[node->name] = entryIndex;
+
+        // Backpatch any earlier call sites
+        auto pendingIt = pendingCallSites.find(node->name);
+        if (pendingIt != pendingCallSites.end())
+        {
+            for (int callIdx : pendingIt->second)
+            {
+                if (callIdx >= 0 && callIdx < static_cast<int>(instructions.size()))
+                {
+                    instructions[callIdx].operand = entryIndex;
+                }
+            }
+            pendingCallSites.erase(pendingIt);
+        }
+
+        // Reserve frame for the procedure
+        int frameSize = kFrameHeaderSize;
+        if (symbols)
+        {
+            int blockIndex = node->annotation.blockIndex;
+            const auto &btab = symbols->btab();
+            if (blockIndex >= 0 && blockIndex < static_cast<int>(btab.size()))
+            {
+                const Semantic::BtabEntry &block = btab[blockIndex];
+                frameSize = kFrameHeaderSize + block.psze + block.vsze;
+            }
+            else
+            {
+                addError("Invalid block index for procedure: " + node->name);
+            }
+        }
+
+        emit(OpCode::INT, 0, frameSize);
+
+        // Generate local declarations
+        for (const auto &decl : node->localDecls)
+        {
+            visitDeclaration(decl.get());
+        }
+
+        // Generate body
+        if (node->body)
+        {
+            visitCompound(node->body.get());
+        }
+
+        // Procedure return
+        emit(OpCode::RET, 0, 0);
+    }
+
+    void IntermediateCodeGenerator::visitFunction(const AST::FunctionDeclNode *node)
+    {
+        if (!node)
+        {
+            return;
+        }
+
+        // Treat function similarly to procedure for now (scaffold)
+        int entryIndex = static_cast<int>(instructions.size());
+        procedureEntryIndex[node->name] = entryIndex;
+
+        auto pendingIt = pendingCallSites.find(node->name);
+        if (pendingIt != pendingCallSites.end())
+        {
+            for (int callIdx : pendingIt->second)
+            {
+                if (callIdx >= 0 && callIdx < static_cast<int>(instructions.size()))
+                {
+                    instructions[callIdx].operand = entryIndex;
+                }
+            }
+            pendingCallSites.erase(pendingIt);
+        }
+
+        int frameSize = kFrameHeaderSize;
+        if (symbols)
+        {
+            int blockIndex = node->annotation.blockIndex;
+            const auto &btab = symbols->btab();
+            if (blockIndex >= 0 && blockIndex < static_cast<int>(btab.size()))
+            {
+                const Semantic::BtabEntry &block = btab[blockIndex];
+                frameSize = kFrameHeaderSize + block.psze + block.vsze;
+            }
+            else
+            {
+                addError("Invalid block index for function: " + node->name);
+            }
+        }
+
+        emit(OpCode::INT, 0, frameSize);
+
+        for (const auto &decl : node->localDecls)
+        {
+            visitDeclaration(decl.get());
+        }
+
+        if (node->body)
+        {
+            visitCompound(node->body.get());
+        }
+
+        // Function return (placeholder)
+        emit(OpCode::RET, 0, 0);
     }
 
     const Semantic::TabEntry *IntermediateCodeGenerator::lookupEntry(int tabIndex) const
