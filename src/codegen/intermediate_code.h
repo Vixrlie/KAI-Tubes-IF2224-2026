@@ -82,6 +82,8 @@ namespace CodeGen
         void visitDeclaration(const AST::ASTNode *node);
         void visitProcedure(const AST::ProcedureDeclNode *node);
         void visitFunction(const AST::FunctionDeclNode *node);
+        void visitIf(const AST::IfNode *node);
+        void visitWhile(const AST::WhileNode *node);
         void visitStatement(const AST::ASTNode *node);
         void visitCompound(const AST::CompoundNode *node);
         void visitAssign(const AST::AssignNode *node);

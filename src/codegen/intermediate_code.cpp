@@ -213,6 +213,18 @@ namespace CodeGen
             return;
         }
 
+        if (auto *ifStmt = dynamic_cast<const AST::IfNode *>(node))
+        {
+            visitIf(ifStmt);
+            return;
+        }
+
+        if (auto *whileStmt = dynamic_cast<const AST::WhileNode *>(node))
+        {
+            visitWhile(whileStmt);
+            return;
+        }
+
         if (auto *procCall = dynamic_cast<const AST::ProcCallNode *>(node))
         {
             if (procCall->name == "writeln")
@@ -286,6 +298,94 @@ namespace CodeGen
         for (const auto &statement : node->statements)
         {
             visitStatement(statement.get());
+        }
+    }
+
+    void IntermediateCodeGenerator::visitIf(const AST::IfNode *node)
+    {
+        if (!node)
+        {
+            return;
+        }
+
+        const std::size_t instructionBase = instructions.size();
+        const std::size_t errorBase = errors.size();
+
+        // Evaluate condition
+        visitExpression(node->condition.get());
+
+        // Jump to else (or end) if condition false
+        int jpcIndex = static_cast<int>(instructions.size());
+        emit(OpCode::JPC, 0, 0);
+
+        // Then branch
+        if (node->thenBranch)
+        {
+            visitStatement(node->thenBranch.get());
+        }
+
+        if (node->elseBranch)
+        {
+            // Jump over else branch after then
+            int jmpIndex = static_cast<int>(instructions.size());
+            emit(OpCode::JMP, 0, 0);
+
+            // Backpatch JPC to start of else
+            instructions[jpcIndex].operand = static_cast<int>(instructions.size());
+
+            // Else branch
+            visitStatement(node->elseBranch.get());
+
+            // Backpatch JMP to end
+            instructions[jmpIndex].operand = static_cast<int>(instructions.size());
+        }
+        else
+        {
+            // No else; backpatch JPC to point after then branch
+            instructions[jpcIndex].operand = static_cast<int>(instructions.size());
+        }
+
+        if (errors.size() > errorBase)
+        {
+            instructions.resize(instructionBase);
+        }
+    }
+
+    void IntermediateCodeGenerator::visitWhile(const AST::WhileNode *node)
+    {
+        if (!node)
+        {
+            return;
+        }
+
+        const std::size_t instructionBase = instructions.size();
+        const std::size_t errorBase = errors.size();
+
+        // Loop start
+        int loopStart = static_cast<int>(instructions.size());
+
+        // Evaluate condition
+        visitExpression(node->condition.get());
+
+        // If false, jump out of loop
+        int jpcIndex = static_cast<int>(instructions.size());
+        emit(OpCode::JPC, 0, 0);
+
+        // Body
+        if (node->body)
+        {
+            visitCompound(node->body.get());
+        }
+
+        // Jump back to loop start
+        emit(OpCode::JMP, 0, loopStart);
+
+        // Backpatch exit
+        instructions[jpcIndex].operand = static_cast<int>(instructions.size());
+
+        if (errors.size() > errorBase)
+        {
+            instructions.resize(instructionBase);
         }
     }
 
