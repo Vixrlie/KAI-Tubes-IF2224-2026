@@ -17,6 +17,8 @@ namespace CodeGen
         LIT,
         LOD,
         STO,
+        ALOD,
+        ASTO,
         CAL,
         INT,
         JMP,

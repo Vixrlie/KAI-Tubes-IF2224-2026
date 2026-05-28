@@ -417,6 +417,145 @@ namespace Interpreter
             stack[static_cast<std::size_t>(address)] = value;
             return true;
         }
+        case CodeGen::OpCode::ALOD:
+        {
+            const std::string *opStr = std::get_if<std::string>(&inst.operand);
+            if (!opStr)
+            {
+                addError("Interpreter: ALOD expects string operand");
+                return false;
+            }
+
+            // parse "base:low:high"
+            int base = 0, low = 0, high = 0;
+            {
+                std::string s = *opStr;
+                auto p1 = s.find(':');
+                auto p2 = s.find(':', p1 == std::string::npos ? 0 : p1 + 1);
+                if (p1 == std::string::npos || p2 == std::string::npos)
+                {
+                    addError("Interpreter: invalid ALOD operand encoding");
+                    return false;
+                }
+                try
+                {
+                    base = std::stoi(s.substr(0, p1));
+                    low = std::stoi(s.substr(p1 + 1, p2 - p1 - 1));
+                    high = std::stoi(s.substr(p2 + 1));
+                }
+                catch (...) {
+                    addError("Interpreter: invalid ALOD operand encoding");
+                    return false;
+                }
+            }
+
+            RuntimeValue idxVal;
+            if (!pop(idxVal))
+            {
+                return false;
+            }
+
+            int idx = 0;
+            if (!getIntValue(idxVal, idx))
+            {
+                addError("Interpreter: array index must be integer");
+                return false;
+            }
+
+            if (idx < low || idx > high)
+            {
+                addError("Interpreter: IndexOutOfBoundsException");
+                return false;
+            }
+
+            int address = base + (idx - low);
+            if (address < 0 || address >= static_cast<int>(stack.size()))
+            {
+                addError("Interpreter: ALOD address out of bounds (addr=" + std::to_string(address) +
+                         ", bp=" + std::to_string(bp) +
+                         ", size=" + std::to_string(stack.size()) + ")");
+                return false;
+            }
+
+            if (!push(stack[static_cast<std::size_t>(address)]))
+            {
+                return false;
+            }
+            return true;
+        }
+        case CodeGen::OpCode::ASTO:
+        {
+            const std::string *opStr = std::get_if<std::string>(&inst.operand);
+            if (!opStr)
+            {
+                addError("Interpreter: ASTO expects string operand");
+                return false;
+            }
+
+            int base = 0, low = 0, high = 0;
+            {
+                std::string s = *opStr;
+                auto p1 = s.find(':');
+                auto p2 = s.find(':', p1 == std::string::npos ? 0 : p1 + 1);
+                if (p1 == std::string::npos || p2 == std::string::npos)
+                {
+                    addError("Interpreter: invalid ASTO operand encoding");
+                    return false;
+                }
+                try
+                {
+                    base = std::stoi(s.substr(0, p1));
+                    low = std::stoi(s.substr(p1 + 1, p2 - p1 - 1));
+                    high = std::stoi(s.substr(p2 + 1));
+                }
+                catch (...) {
+                    addError("Interpreter: invalid ASTO operand encoding");
+                    return false;
+                }
+            }
+
+            RuntimeValue idxVal;
+            if (!pop(idxVal))
+            {
+                return false;
+            }
+            int idx = 0;
+            if (!getIntValue(idxVal, idx))
+            {
+                addError("Interpreter: array index must be integer");
+                return false;
+            }
+
+            RuntimeValue value;
+            if (!pop(value))
+            {
+                return false;
+            }
+
+            if (idx < low || idx > high)
+            {
+                addError("Interpreter: IndexOutOfBoundsException");
+                return false;
+            }
+
+            int address = base + (idx - low);
+            if (address < 0 || address >= static_cast<int>(stack.size()))
+            {
+                addError("Interpreter: ASTO address out of bounds (addr=" + std::to_string(address) +
+                         ", bp=" + std::to_string(bp) +
+                         ", size=" + std::to_string(stack.size()) + ")");
+                return false;
+            }
+
+            if (isProtectedFrameSlot(address))
+            {
+                addError("Interpreter: write to protected frame header slot");
+                return false;
+            }
+
+            stack[static_cast<std::size_t>(address)] = value;
+            return true;
+        }
         case CodeGen::OpCode::OPR:
         {
             int opcode = 0;

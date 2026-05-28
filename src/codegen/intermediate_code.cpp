@@ -18,6 +18,10 @@ namespace CodeGen
                 return "LOD";
             case OpCode::STO:
                 return "STO";
+            case OpCode::ALOD:
+                return "ALOD";
+            case OpCode::ASTO:
+                return "ASTO";
             case OpCode::CAL:
                 return "CAL";
             case OpCode::INT:
@@ -746,6 +750,69 @@ namespace CodeGen
             return;
         }
 
+        if (auto *arr = dynamic_cast<const AST::ArrayAccessNode *>(node))
+        {
+            // Support single-dimensional array access for runtime bounds checks.
+            if (!arr->base)
+            {
+                addError("Array access has no base expression");
+                return;
+            }
+
+            // Evaluate index expression(s) - currently only first index is supported.
+            if (arr->indices.empty() || !arr->indices[0])
+            {
+                addError("Array access missing index expression");
+                return;
+            }
+
+            visitExpression(arr->indices[0].get());
+
+            // Resolve base variable entry if possible
+            const Semantic::TabEntry *entry = nullptr;
+            if (auto *baseVar = dynamic_cast<const AST::VarRefNode *>(arr->base.get()))
+            {
+                entry = lookupVariableEntry(baseVar);
+                if (!entry && symbols && !baseVar->name.empty())
+                {
+                    auto opt = symbols->lookup(baseVar->name);
+                    if (opt)
+                    {
+                        entry = &opt->entry;
+                    }
+                }
+            }
+
+            if (!entry)
+            {
+                addError("Array base is not a known variable");
+                return;
+            }
+
+            int runtimeOffset = runtimeAddress(*entry);
+            int atabIndex = entry->type.ref;
+            if (!symbols)
+            {
+                addError("Missing symbol table for array access");
+                return;
+            }
+            const auto &atab = symbols->atab();
+            if (atabIndex < 0 || atabIndex >= static_cast<int>(atab.size()))
+            {
+                addError("Array type reference invalid for array access");
+                return;
+            }
+
+            const auto &ainfo = atab[atabIndex];
+            int low = ainfo.low;
+            int high = ainfo.high;
+
+            // Encode operand as "base:low:high"
+            std::string operand = std::to_string(runtimeOffset) + ":" + std::to_string(low) + ":" + std::to_string(high);
+            emit(OpCode::ALOD, 0, operand);
+            return;
+        }
+
         if (auto *unary = dynamic_cast<const AST::UnaryOpNode *>(node))
         {
             if (unary->op != "-")
@@ -839,6 +906,62 @@ namespace CodeGen
 
     void IntermediateCodeGenerator::emitStore(const AST::ASTNode *target)
     {
+        // Support both simple variable assignment and array element assignment
+        if (auto *arr = dynamic_cast<const AST::ArrayAccessNode *>(target))
+        {
+            // For stores, the value is evaluated first by visitAssign, so now evaluate index
+            if (arr->indices.empty() || !arr->indices[0])
+            {
+                addError("Array assignment missing index expression");
+                return;
+            }
+
+            visitExpression(arr->indices[0].get());
+
+            // Resolve base variable
+            const Semantic::TabEntry *entry = nullptr;
+            if (auto *baseVar = dynamic_cast<const AST::VarRefNode *>(arr->base.get()))
+            {
+                entry = lookupVariableEntry(baseVar);
+                if (!entry && symbols && !baseVar->name.empty())
+                {
+                    auto opt = symbols->lookup(baseVar->name);
+                    if (opt)
+                    {
+                        entry = &opt->entry;
+                    }
+                }
+            }
+
+            if (!entry)
+            {
+                addError("Array base is not a known variable");
+                return;
+            }
+
+            int runtimeOffset = runtimeAddress(*entry);
+            int atabIndex = entry->type.ref;
+            if (!symbols)
+            {
+                addError("Missing symbol table for array access");
+                return;
+            }
+            const auto &atab = symbols->atab();
+            if (atabIndex < 0 || atabIndex >= static_cast<int>(atab.size()))
+            {
+                addError("Array type reference invalid for array assignment");
+                return;
+            }
+
+            const auto &ainfo = atab[atabIndex];
+            int low = ainfo.low;
+            int high = ainfo.high;
+
+            std::string operand = std::to_string(runtimeOffset) + ":" + std::to_string(low) + ":" + std::to_string(high);
+            emit(OpCode::ASTO, 0, operand);
+            return;
+        }
+
         auto *var = dynamic_cast<const AST::VarRefNode *>(target);
         if (!var)
         {
