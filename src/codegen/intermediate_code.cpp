@@ -758,20 +758,48 @@ namespace CodeGen
                 return;
             }
 
-            // Evaluate index expression(s) - push all provided indices left-to-right
-            for (size_t i = 0; i < arr->indices.size(); ++i)
+            // Flatten nested array accesses (a[i][j] may be nested AST nodes)
+            const AST::ASTNode *baseExpr = arr->base.get();
+            std::vector<const AST::ArrayAccessNode *> stack;
+            const AST::ArrayAccessNode *curNode = arr;
+            // Walk down through bases collecting ArrayAccess nodes
+            while (curNode)
             {
-                if (!arr->indices[i])
+                stack.push_back(curNode);
+                if (auto *inner = dynamic_cast<const AST::ArrayAccessNode *>(curNode->base.get()))
                 {
-                    addError("Array access missing index expression");
-                    return;
+                    curNode = inner;
                 }
-                visitExpression(arr->indices[i].get());
+                else
+                {
+                    break;
+                }
             }
 
-            // Resolve base variable entry if possible
+            // baseExpr should be the non-array base (variable or expression)
+            if (!stack.empty())
+            {
+                baseExpr = stack.back()->base.get();
+            }
+
+            // Evaluate index expressions in left-to-right order
+            for (int i = static_cast<int>(stack.size()) - 1; i >= 0; --i)
+            {
+                const auto &indices = stack[static_cast<size_t>(i)]->indices;
+                for (size_t k = 0; k < indices.size(); ++k)
+                {
+                    if (!indices[k])
+                    {
+                        addError("Array access missing index expression");
+                        return;
+                    }
+                    visitExpression(indices[k].get());
+                }
+            }
+
+            // Resolve base variable entry if possible (use the non-array baseExpr)
             const Semantic::TabEntry *entry = nullptr;
-            if (auto *baseVar = dynamic_cast<const AST::VarRefNode *>(arr->base.get()))
+            if (auto *baseVar = dynamic_cast<const AST::VarRefNode *>(baseExpr))
             {
                 entry = lookupVariableEntry(baseVar);
                 if (!entry && symbols && !baseVar->name.empty())
@@ -806,15 +834,15 @@ namespace CodeGen
             // Collect full dimension metadata by traversing atab chain (supports multi-dim arrays)
             std::vector<int> lows;
             std::vector<int> highs;
-            int cur = atabIndex;
-            while (cur >= 0 && cur < static_cast<int>(atab.size()))
+            int atabCur = atabIndex;
+            while (atabCur >= 0 && atabCur < static_cast<int>(atab.size()))
             {
-                const auto &ainfo = atab[cur];
+                const auto &ainfo = atab[atabCur];
                 lows.push_back(ainfo.low);
                 highs.push_back(ainfo.high);
                 if (ainfo.etyp == static_cast<int>(Semantic::BasicType::ARRAY) && ainfo.eref >= 0 && ainfo.eref < static_cast<int>(atab.size()))
                 {
-                    cur = ainfo.eref;
+                    atabCur = ainfo.eref;
                 }
                 else
                 {
@@ -823,8 +851,15 @@ namespace CodeGen
             }
 
             // Encode operand as "base:dim:provided:low1:high1:..."
+            // Count provided indices across the flattened stack
+            int providedCount = 0;
+            for (const auto *n : stack)
+            {
+                providedCount += static_cast<int>(n->indices.size());
+            }
+
             std::ostringstream ss;
-            ss << runtimeOffset << ":" << static_cast<int>(lows.size()) << ":" << static_cast<int>(arr->indices.size());
+            ss << runtimeOffset << ":" << static_cast<int>(lows.size()) << ":" << providedCount;
             for (size_t i = 0; i < lows.size(); ++i)
             {
                 ss << ":" << lows[i] << ":" << highs[i];
@@ -930,27 +965,52 @@ namespace CodeGen
         if (auto *arr = dynamic_cast<const AST::ArrayAccessNode *>(target))
         {
             // For stores, the value is evaluated first by visitAssign, so now evaluate all indices
-            for (size_t i = 0; i < arr->indices.size(); ++i)
+            // Flatten nested array accesses to collect indices and resolve base
+            std::vector<const AST::ArrayAccessNode *> stack;
+            const AST::ArrayAccessNode *curNode = arr;
+            while (curNode)
             {
-                if (!arr->indices[i])
+                stack.push_back(curNode);
+                if (auto *inner = dynamic_cast<const AST::ArrayAccessNode *>(curNode->base.get()))
                 {
-                    addError("Array assignment missing index expression");
-                    return;
+                    curNode = inner;
                 }
-                visitExpression(arr->indices[i].get());
+                else
+                {
+                    break;
+                }
+            }
+
+            // Evaluate indices left-to-right
+            for (int i = static_cast<int>(stack.size()) - 1; i >= 0; --i)
+            {
+                const auto &indices = stack[static_cast<size_t>(i)]->indices;
+                for (size_t k = 0; k < indices.size(); ++k)
+                {
+                    if (!indices[k])
+                    {
+                        addError("Array assignment missing index expression");
+                        return;
+                    }
+                    visitExpression(indices[k].get());
+                }
             }
 
             // Resolve base variable
             const Semantic::TabEntry *entry = nullptr;
-            if (auto *baseVar = dynamic_cast<const AST::VarRefNode *>(arr->base.get()))
+            const AST::ASTNode *baseExpr = stack.empty() ? nullptr : stack.back()->base.get();
+            if (baseExpr)
             {
-                entry = lookupVariableEntry(baseVar);
-                if (!entry && symbols && !baseVar->name.empty())
+                if (auto *baseVar = dynamic_cast<const AST::VarRefNode *>(baseExpr))
                 {
-                    auto opt = symbols->lookup(baseVar->name);
-                    if (opt)
+                    entry = lookupVariableEntry(baseVar);
+                    if (!entry && symbols && !baseVar->name.empty())
                     {
-                        entry = &opt->entry;
+                        auto opt = symbols->lookup(baseVar->name);
+                        if (opt)
+                        {
+                            entry = &opt->entry;
+                        }
                     }
                 }
             }
@@ -978,15 +1038,15 @@ namespace CodeGen
             // Collect full dimension metadata by traversing atab chain
             std::vector<int> lows;
             std::vector<int> highs;
-            int cur = atabIndex;
-            while (cur >= 0 && cur < static_cast<int>(atab.size()))
+            int atabCur = atabIndex;
+            while (atabCur >= 0 && atabCur < static_cast<int>(atab.size()))
             {
-                const auto &ainfo = atab[cur];
+                const auto &ainfo = atab[atabCur];
                 lows.push_back(ainfo.low);
                 highs.push_back(ainfo.high);
                 if (ainfo.etyp == static_cast<int>(Semantic::BasicType::ARRAY) && ainfo.eref >= 0 && ainfo.eref < static_cast<int>(atab.size()))
                 {
-                    cur = ainfo.eref;
+                    atabCur = ainfo.eref;
                 }
                 else
                 {
@@ -994,8 +1054,14 @@ namespace CodeGen
                 }
             }
 
+            int providedCount = 0;
+            for (const auto *n : stack)
+            {
+                providedCount += static_cast<int>(n->indices.size());
+            }
+
             std::ostringstream ss;
-            ss << runtimeOffset << ":" << static_cast<int>(lows.size()) << ":" << static_cast<int>(arr->indices.size());
+            ss << runtimeOffset << ":" << static_cast<int>(lows.size()) << ":" << providedCount;
             for (size_t i = 0; i < lows.size(); ++i)
             {
                 ss << ":" << lows[i] << ":" << highs[i];

@@ -257,6 +257,21 @@ namespace Semantic
                 }
             }
 
+            // If element type is itself an array, incorporate its total size
+            if (elementType.info.kind == BasicType::ARRAY && elementType.info.ref >= 0)
+            {
+                const auto &atab = symbols.atab();
+                if (elementType.info.ref < static_cast<int>(atab.size()))
+                {
+                    int elemTotal = atab[elementType.info.ref].size;
+                    if (elemTotal > 0 && arrayInfo.size > 0)
+                    {
+                        arrayInfo.elsz = elemTotal;
+                        arrayInfo.size = arrayInfo.size * elemTotal;
+                    }
+                }
+            }
+
             int atabIndex = symbols.addArrayType(arrayInfo);
 
             TypeResult result;

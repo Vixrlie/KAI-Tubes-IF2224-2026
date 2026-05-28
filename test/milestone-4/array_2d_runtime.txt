@@ -1,0 +1,11 @@
+program ArrayTwoDRuntime;
+
+var i,j: integer;
+    a: array[1..2] of array[1..3] of integer;
+
+begin
+  i := 2;
+  j := 3;
+  a[i][j] := 42;
+  writeln(a[i][j]);
+end.
