@@ -752,21 +752,22 @@ namespace CodeGen
 
         if (auto *arr = dynamic_cast<const AST::ArrayAccessNode *>(node))
         {
-            // Support single-dimensional array access for runtime bounds checks.
             if (!arr->base)
             {
                 addError("Array access has no base expression");
                 return;
             }
 
-            // Evaluate index expression(s) - currently only first index is supported.
-            if (arr->indices.empty() || !arr->indices[0])
+            // Evaluate index expression(s) - push all provided indices left-to-right
+            for (size_t i = 0; i < arr->indices.size(); ++i)
             {
-                addError("Array access missing index expression");
-                return;
+                if (!arr->indices[i])
+                {
+                    addError("Array access missing index expression");
+                    return;
+                }
+                visitExpression(arr->indices[i].get());
             }
-
-            visitExpression(arr->indices[0].get());
 
             // Resolve base variable entry if possible
             const Semantic::TabEntry *entry = nullptr;
@@ -802,14 +803,33 @@ namespace CodeGen
                 addError("Array type reference invalid for array access");
                 return;
             }
+            // Collect full dimension metadata by traversing atab chain (supports multi-dim arrays)
+            std::vector<int> lows;
+            std::vector<int> highs;
+            int cur = atabIndex;
+            while (cur >= 0 && cur < static_cast<int>(atab.size()))
+            {
+                const auto &ainfo = atab[cur];
+                lows.push_back(ainfo.low);
+                highs.push_back(ainfo.high);
+                if (ainfo.etyp == static_cast<int>(Semantic::BasicType::ARRAY) && ainfo.eref >= 0 && ainfo.eref < static_cast<int>(atab.size()))
+                {
+                    cur = ainfo.eref;
+                }
+                else
+                {
+                    break;
+                }
+            }
 
-            const auto &ainfo = atab[atabIndex];
-            int low = ainfo.low;
-            int high = ainfo.high;
-
-            // Encode operand as "base:low:high"
-            std::string operand = std::to_string(runtimeOffset) + ":" + std::to_string(low) + ":" + std::to_string(high);
-            emit(OpCode::ALOD, 0, operand);
+            // Encode operand as "base:dim:provided:low1:high1:..."
+            std::ostringstream ss;
+            ss << runtimeOffset << ":" << static_cast<int>(lows.size()) << ":" << static_cast<int>(arr->indices.size());
+            for (size_t i = 0; i < lows.size(); ++i)
+            {
+                ss << ":" << lows[i] << ":" << highs[i];
+            }
+            emit(OpCode::ALOD, 0, ss.str());
             return;
         }
 
@@ -909,14 +929,16 @@ namespace CodeGen
         // Support both simple variable assignment and array element assignment
         if (auto *arr = dynamic_cast<const AST::ArrayAccessNode *>(target))
         {
-            // For stores, the value is evaluated first by visitAssign, so now evaluate index
-            if (arr->indices.empty() || !arr->indices[0])
+            // For stores, the value is evaluated first by visitAssign, so now evaluate all indices
+            for (size_t i = 0; i < arr->indices.size(); ++i)
             {
-                addError("Array assignment missing index expression");
-                return;
+                if (!arr->indices[i])
+                {
+                    addError("Array assignment missing index expression");
+                    return;
+                }
+                visitExpression(arr->indices[i].get());
             }
-
-            visitExpression(arr->indices[0].get());
 
             // Resolve base variable
             const Semantic::TabEntry *entry = nullptr;
@@ -953,12 +975,32 @@ namespace CodeGen
                 return;
             }
 
-            const auto &ainfo = atab[atabIndex];
-            int low = ainfo.low;
-            int high = ainfo.high;
+            // Collect full dimension metadata by traversing atab chain
+            std::vector<int> lows;
+            std::vector<int> highs;
+            int cur = atabIndex;
+            while (cur >= 0 && cur < static_cast<int>(atab.size()))
+            {
+                const auto &ainfo = atab[cur];
+                lows.push_back(ainfo.low);
+                highs.push_back(ainfo.high);
+                if (ainfo.etyp == static_cast<int>(Semantic::BasicType::ARRAY) && ainfo.eref >= 0 && ainfo.eref < static_cast<int>(atab.size()))
+                {
+                    cur = ainfo.eref;
+                }
+                else
+                {
+                    break;
+                }
+            }
 
-            std::string operand = std::to_string(runtimeOffset) + ":" + std::to_string(low) + ":" + std::to_string(high);
-            emit(OpCode::ASTO, 0, operand);
+            std::ostringstream ss;
+            ss << runtimeOffset << ":" << static_cast<int>(lows.size()) << ":" << static_cast<int>(arr->indices.size());
+            for (size_t i = 0; i < lows.size(); ++i)
+            {
+                ss << ":" << lows[i] << ":" << highs[i];
+            }
+            emit(OpCode::ASTO, 0, ss.str());
             return;
         }
 

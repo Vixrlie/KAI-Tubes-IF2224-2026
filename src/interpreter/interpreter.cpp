@@ -2,6 +2,7 @@
 
 #include <limits>
 #include <sstream>
+#include <algorithm>
 
 namespace Interpreter
 {
@@ -425,23 +426,58 @@ namespace Interpreter
                 addError("Interpreter: ALOD expects string operand");
                 return false;
             }
-
-            // parse "base:low:high"
-            int base = 0, low = 0, high = 0;
+            // parse "base:dim:provided:low1:high1:..."
+            std::vector<std::string> parts;
             {
                 std::string s = *opStr;
-                auto p1 = s.find(':');
-                auto p2 = s.find(':', p1 == std::string::npos ? 0 : p1 + 1);
-                if (p1 == std::string::npos || p2 == std::string::npos)
+                size_t start = 0;
+                while (true)
                 {
-                    addError("Interpreter: invalid ALOD operand encoding");
-                    return false;
+                    size_t pos = s.find(':', start);
+                    if (pos == std::string::npos)
+                    {
+                        parts.push_back(s.substr(start));
+                        break;
+                    }
+                    parts.push_back(s.substr(start, pos - start));
+                    start = pos + 1;
                 }
+            }
+
+            if (parts.size() < 3)
+            {
+                addError("Interpreter: invalid ALOD operand encoding");
+                return false;
+            }
+
+            int base = 0;
+            int dimCount = 0;
+            int provided = 0;
+            try
+            {
+                base = std::stoi(parts[0]);
+                dimCount = std::stoi(parts[1]);
+                provided = std::stoi(parts[2]);
+            }
+            catch (...) {
+                addError("Interpreter: invalid ALOD operand encoding");
+                return false;
+            }
+
+            if (parts.size() != static_cast<size_t>(3 + dimCount * 2))
+            {
+                addError("Interpreter: invalid ALOD operand encoding");
+                return false;
+            }
+
+            std::vector<int> lows(dimCount);
+            std::vector<int> highs(dimCount);
+            for (int i = 0; i < dimCount; ++i)
+            {
                 try
                 {
-                    base = std::stoi(s.substr(0, p1));
-                    low = std::stoi(s.substr(p1 + 1, p2 - p1 - 1));
-                    high = std::stoi(s.substr(p2 + 1));
+                    lows[i] = std::stoi(parts[3 + i * 2]);
+                    highs[i] = std::stoi(parts[3 + i * 2 + 1]);
                 }
                 catch (...) {
                     addError("Interpreter: invalid ALOD operand encoding");
@@ -449,26 +485,64 @@ namespace Interpreter
                 }
             }
 
-            RuntimeValue idxVal;
-            if (!pop(idxVal))
+            // Pop provided indices (they were pushed left-to-right; top is last index)
+            if (provided < 0 || provided > dimCount)
             {
+                addError("Interpreter: invalid ALOD provided index count");
                 return false;
             }
 
-            int idx = 0;
-            if (!getIntValue(idxVal, idx))
+            std::vector<int> indices;
+            for (int i = 0; i < provided; ++i)
             {
-                addError("Interpreter: array index must be integer");
-                return false;
+                RuntimeValue idxVal;
+                if (!pop(idxVal))
+                {
+                    return false;
+                }
+                int idx = 0;
+                if (!getIntValue(idxVal, idx))
+                {
+                    addError("Interpreter: array index must be integer");
+                    return false;
+                }
+                indices.push_back(idx);
             }
 
-            if (idx < low || idx > high)
+            // reverse to match dimension order (index0, index1, ...)
+            std::reverse(indices.begin(), indices.end());
+
+            // Bounds check for provided indices
+            for (int i = 0; i < static_cast<int>(indices.size()); ++i)
             {
-                addError("Interpreter: IndexOutOfBoundsException");
-                return false;
+                int idx = indices[i];
+                if (idx < lows[i] || idx > highs[i])
+                {
+                    addError("Interpreter: IndexOutOfBoundsException");
+                    return false;
+                }
             }
 
-            int address = base + (idx - low);
+            // Compute linearized address using full dimension sizes
+            long long offset = 0;
+            for (int i = 0; i < static_cast<int>(indices.size()); ++i)
+            {
+                long long stride = 1;
+                for (int j = i + 1; j < dimCount; ++j)
+                {
+                    stride *= static_cast<long long>(highs[j] - lows[j] + 1);
+                }
+                offset += static_cast<long long>(indices[i] - lows[i]) * stride;
+            }
+
+            long long addressLL = static_cast<long long>(base) + offset;
+            if (addressLL < 0 || addressLL > std::numeric_limits<int>::max())
+            {
+                addError("Interpreter: ALOD address out of bounds");
+                return false;
+            }
+            int address = static_cast<int>(addressLL);
+
             if (address < 0 || address >= static_cast<int>(stack.size()))
             {
                 addError("Interpreter: ALOD address out of bounds (addr=" + std::to_string(address) +
@@ -491,22 +565,58 @@ namespace Interpreter
                 addError("Interpreter: ASTO expects string operand");
                 return false;
             }
-
-            int base = 0, low = 0, high = 0;
+            // parse "base:dim:provided:low1:high1:..."
+            std::vector<std::string> parts;
             {
                 std::string s = *opStr;
-                auto p1 = s.find(':');
-                auto p2 = s.find(':', p1 == std::string::npos ? 0 : p1 + 1);
-                if (p1 == std::string::npos || p2 == std::string::npos)
+                size_t start = 0;
+                while (true)
                 {
-                    addError("Interpreter: invalid ASTO operand encoding");
-                    return false;
+                    size_t pos = s.find(':', start);
+                    if (pos == std::string::npos)
+                    {
+                        parts.push_back(s.substr(start));
+                        break;
+                    }
+                    parts.push_back(s.substr(start, pos - start));
+                    start = pos + 1;
                 }
+            }
+
+            if (parts.size() < 3)
+            {
+                addError("Interpreter: invalid ASTO operand encoding");
+                return false;
+            }
+
+            int base = 0;
+            int dimCount = 0;
+            int provided = 0;
+            try
+            {
+                base = std::stoi(parts[0]);
+                dimCount = std::stoi(parts[1]);
+                provided = std::stoi(parts[2]);
+            }
+            catch (...) {
+                addError("Interpreter: invalid ASTO operand encoding");
+                return false;
+            }
+
+            if (parts.size() != static_cast<size_t>(3 + dimCount * 2))
+            {
+                addError("Interpreter: invalid ASTO operand encoding");
+                return false;
+            }
+
+            std::vector<int> lows(dimCount);
+            std::vector<int> highs(dimCount);
+            for (int i = 0; i < dimCount; ++i)
+            {
                 try
                 {
-                    base = std::stoi(s.substr(0, p1));
-                    low = std::stoi(s.substr(p1 + 1, p2 - p1 - 1));
-                    high = std::stoi(s.substr(p2 + 1));
+                    lows[i] = std::stoi(parts[3 + i * 2]);
+                    highs[i] = std::stoi(parts[3 + i * 2 + 1]);
                 }
                 catch (...) {
                     addError("Interpreter: invalid ASTO operand encoding");
@@ -514,31 +624,70 @@ namespace Interpreter
                 }
             }
 
-            RuntimeValue idxVal;
-            if (!pop(idxVal))
+            if (provided < 0 || provided > dimCount)
             {
-                return false;
-            }
-            int idx = 0;
-            if (!getIntValue(idxVal, idx))
-            {
-                addError("Interpreter: array index must be integer");
+                addError("Interpreter: invalid ASTO provided index count");
                 return false;
             }
 
+            // Pop provided indices (top is last index)
+            std::vector<int> indices;
+            for (int i = 0; i < provided; ++i)
+            {
+                RuntimeValue idxVal;
+                if (!pop(idxVal))
+                {
+                    return false;
+                }
+                int idx = 0;
+                if (!getIntValue(idxVal, idx))
+                {
+                    addError("Interpreter: array index must be integer");
+                    return false;
+                }
+                indices.push_back(idx);
+            }
+
+            // Pop value to store
             RuntimeValue value;
             if (!pop(value))
             {
                 return false;
             }
 
-            if (idx < low || idx > high)
+            std::reverse(indices.begin(), indices.end());
+
+            // Bounds check for provided indices
+            for (int i = 0; i < static_cast<int>(indices.size()); ++i)
             {
-                addError("Interpreter: IndexOutOfBoundsException");
-                return false;
+                int idx = indices[i];
+                if (idx < lows[i] || idx > highs[i])
+                {
+                    addError("Interpreter: IndexOutOfBoundsException");
+                    return false;
+                }
             }
 
-            int address = base + (idx - low);
+            // Compute linearized address
+            long long offset = 0;
+            for (int i = 0; i < static_cast<int>(indices.size()); ++i)
+            {
+                long long stride = 1;
+                for (int j = i + 1; j < dimCount; ++j)
+                {
+                    stride *= static_cast<long long>(highs[j] - lows[j] + 1);
+                }
+                offset += static_cast<long long>(indices[i] - lows[i]) * stride;
+            }
+
+            long long addressLL = static_cast<long long>(base) + offset;
+            if (addressLL < 0 || addressLL > std::numeric_limits<int>::max())
+            {
+                addError("Interpreter: ASTO address out of bounds");
+                return false;
+            }
+            int address = static_cast<int>(addressLL);
+
             if (address < 0 || address >= static_cast<int>(stack.size()))
             {
                 addError("Interpreter: ASTO address out of bounds (addr=" + std::to_string(address) +

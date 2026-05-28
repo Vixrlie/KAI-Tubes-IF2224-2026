@@ -143,9 +143,9 @@ Program('ArrayOOBRuntime')  → type:Unknown, lev:0, block:0
 3 STO 0 3
 4 LIT 0 10
 5 LOD 0 3
-6 ASTO 0 4:1:3
+6 ASTO 0 4:1:1:1:3
 7 LOD 0 3
-8 ALOD 0 4:1:3
+8 ALOD 0 4:1:1:1:3
 9 OPR 0 14
 10 RET 0 0
 
