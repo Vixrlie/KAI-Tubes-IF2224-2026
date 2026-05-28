@@ -1,5 +1,6 @@
 #include "interpreter.h"
 
+#include <limits>
 #include <sstream>
 
 namespace Interpreter
@@ -19,6 +20,11 @@ namespace Interpreter
         if (program.empty())
         {
             addError("Interpreter: empty program");
+            return {false, output, errors};
+        }
+
+        if (!validateJumpTargets(program))
+        {
             return {false, output, errors};
         }
 
@@ -68,6 +74,12 @@ namespace Interpreter
 
     bool Interpreter::push(const RuntimeValue &value)
     {
+        if (static_cast<int>(stack.size()) >= kMaxStackSlots)
+        {
+            addError("Interpreter: stack overflow");
+            return false;
+        }
+
         stack.push_back(value);
         sp = static_cast<int>(stack.size());
         return true;
@@ -92,6 +104,12 @@ namespace Interpreter
         if (size < 0)
         {
             addError("Interpreter: invalid stack size request");
+            return false;
+        }
+
+        if (size > kMaxStackSlots)
+        {
+            addError("Interpreter: stack overflow");
             return false;
         }
 
@@ -123,6 +141,85 @@ namespace Interpreter
         }
 
         stack[static_cast<std::size_t>(index)] = value;
+        return true;
+    }
+
+    bool Interpreter::validateJumpTargets(const std::vector<CodeGen::Instruction> &program)
+    {
+        for (std::size_t index = 0; index < program.size(); ++index)
+        {
+            const CodeGen::Instruction &inst = program[index];
+            if (inst.op != CodeGen::OpCode::JMP && inst.op != CodeGen::OpCode::JPC && inst.op != CodeGen::OpCode::CAL)
+            {
+                continue;
+            }
+
+            int target = 0;
+            if (!getIntOperand(inst.operand, target))
+            {
+                addError("Interpreter: jump target expects integer operand at instruction " + std::to_string(index));
+                return false;
+            }
+
+            if (target < 0 || target >= static_cast<int>(program.size()))
+            {
+                addError("Interpreter: jump target out of range at instruction " + std::to_string(index));
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    bool Interpreter::isProtectedFrameSlot(int address) const
+    {
+        return address >= bp && address < bp + kFrameHeaderSize;
+    }
+
+    bool Interpreter::checkedNeg(int value, int &out) const
+    {
+        if (value == std::numeric_limits<int>::min())
+        {
+            return false;
+        }
+
+        out = -value;
+        return true;
+    }
+
+    bool Interpreter::checkedAdd(int lhs, int rhs, int &out) const
+    {
+        long long result = static_cast<long long>(lhs) + static_cast<long long>(rhs);
+        if (result < std::numeric_limits<int>::min() || result > std::numeric_limits<int>::max())
+        {
+            return false;
+        }
+
+        out = static_cast<int>(result);
+        return true;
+    }
+
+    bool Interpreter::checkedSub(int lhs, int rhs, int &out) const
+    {
+        long long result = static_cast<long long>(lhs) - static_cast<long long>(rhs);
+        if (result < std::numeric_limits<int>::min() || result > std::numeric_limits<int>::max())
+        {
+            return false;
+        }
+
+        out = static_cast<int>(result);
+        return true;
+    }
+
+    bool Interpreter::checkedMul(int lhs, int rhs, int &out) const
+    {
+        long long result = static_cast<long long>(lhs) * static_cast<long long>(rhs);
+        if (result < std::numeric_limits<int>::min() || result > std::numeric_limits<int>::max())
+        {
+            return false;
+        }
+
+        out = static_cast<int>(result);
         return true;
     }
 
@@ -212,33 +309,51 @@ namespace Interpreter
         {
             if (std::holds_alternative<std::monostate>(inst.operand))
             {
-                push(RuntimeValue{0});
+                if (!push(RuntimeValue{0}))
+                {
+                    return false;
+                }
                 return true;
             }
 
             if (const auto *ptr = std::get_if<int>(&inst.operand))
             {
-                push(RuntimeValue{*ptr});
+                if (!push(RuntimeValue{*ptr}))
+                {
+                    return false;
+                }
                 return true;
             }
             if (const auto *ptr = std::get_if<double>(&inst.operand))
             {
-                push(RuntimeValue{*ptr});
+                if (!push(RuntimeValue{*ptr}))
+                {
+                    return false;
+                }
                 return true;
             }
             if (const auto *ptr = std::get_if<char>(&inst.operand))
             {
-                push(RuntimeValue{*ptr});
+                if (!push(RuntimeValue{*ptr}))
+                {
+                    return false;
+                }
                 return true;
             }
             if (const auto *ptr = std::get_if<bool>(&inst.operand))
             {
-                push(RuntimeValue{*ptr});
+                if (!push(RuntimeValue{*ptr}))
+                {
+                    return false;
+                }
                 return true;
             }
             if (const auto *ptr = std::get_if<std::string>(&inst.operand))
             {
-                push(RuntimeValue{*ptr});
+                if (!push(RuntimeValue{*ptr}))
+                {
+                    return false;
+                }
                 return true;
             }
 
@@ -263,7 +378,10 @@ namespace Interpreter
                 return false;
             }
 
-            push(stack[static_cast<std::size_t>(address)]);
+            if (!push(stack[static_cast<std::size_t>(address)]))
+            {
+                return false;
+            }
             return true;
         }
         case CodeGen::OpCode::STO:
@@ -281,6 +399,12 @@ namespace Interpreter
                 addError("Interpreter: STO address out of bounds (addr=" + std::to_string(address) +
                          ", bp=" + std::to_string(bp) +
                          ", size=" + std::to_string(stack.size()) + ")");
+                return false;
+            }
+
+            if (isProtectedFrameSlot(address))
+            {
+                addError("Interpreter: write to protected frame header slot");
                 return false;
             }
 
@@ -369,6 +493,12 @@ namespace Interpreter
             if (!getIntOperand(inst.operand, target))
             {
                 addError("Interpreter: CAL expects integer operand");
+                return false;
+            }
+
+            if (sp + kFrameHeaderSize > kMaxStackSlots)
+            {
+                addError("Interpreter: stack overflow");
                 return false;
             }
 
@@ -488,7 +618,15 @@ namespace Interpreter
                 addError("Interpreter: unary NEG expects integer");
                 return false;
             }
-            result = -intValue;
+
+            int negated = 0;
+            if (!checkedNeg(intValue, negated))
+            {
+                addError("Interpreter: integer overflow");
+                return false;
+            }
+
+            result = negated;
             return true;
         }
 
@@ -530,18 +668,47 @@ namespace Interpreter
             switch (opCode)
             {
             case 2:
-                result = lhs + rhs;
+            {
+                int computed = 0;
+                if (!checkedAdd(lhs, rhs, computed))
+                {
+                    addError("Interpreter: integer overflow");
+                    return false;
+                }
+                result = computed;
                 return true;
+            }
             case 3:
-                result = lhs - rhs;
+            {
+                int computed = 0;
+                if (!checkedSub(lhs, rhs, computed))
+                {
+                    addError("Interpreter: integer overflow");
+                    return false;
+                }
+                result = computed;
                 return true;
+            }
             case 4:
-                result = lhs * rhs;
+            {
+                int computed = 0;
+                if (!checkedMul(lhs, rhs, computed))
+                {
+                    addError("Interpreter: integer overflow");
+                    return false;
+                }
+                result = computed;
                 return true;
+            }
             case 5:
                 if (rhs == 0)
                 {
                     addError("Interpreter: division by zero");
+                    return false;
+                }
+                if (lhs == std::numeric_limits<int>::min() && rhs == -1)
+                {
+                    addError("Interpreter: integer overflow");
                     return false;
                 }
                 result = lhs / rhs;
@@ -550,6 +717,11 @@ namespace Interpreter
                 if (rhs == 0)
                 {
                     addError("Interpreter: modulo by zero");
+                    return false;
+                }
+                if (lhs == std::numeric_limits<int>::min() && rhs == -1)
+                {
+                    addError("Interpreter: integer overflow");
                     return false;
                 }
                 result = lhs % rhs;
