@@ -1,6 +1,8 @@
 #include "interpreter.h"
 
+#include <limits>
 #include <sstream>
+#include <algorithm>
 
 namespace Interpreter
 {
@@ -19,6 +21,11 @@ namespace Interpreter
         if (program.empty())
         {
             addError("Interpreter: empty program");
+            return {false, output, errors};
+        }
+
+        if (!validateJumpTargets(program))
+        {
             return {false, output, errors};
         }
 
@@ -68,6 +75,12 @@ namespace Interpreter
 
     bool Interpreter::push(const RuntimeValue &value)
     {
+        if (static_cast<int>(stack.size()) >= kMaxStackSlots)
+        {
+            addError("Interpreter: stack overflow");
+            return false;
+        }
+
         stack.push_back(value);
         sp = static_cast<int>(stack.size());
         return true;
@@ -92,6 +105,12 @@ namespace Interpreter
         if (size < 0)
         {
             addError("Interpreter: invalid stack size request");
+            return false;
+        }
+
+        if (size > kMaxStackSlots)
+        {
+            addError("Interpreter: stack overflow");
             return false;
         }
 
@@ -123,6 +142,85 @@ namespace Interpreter
         }
 
         stack[static_cast<std::size_t>(index)] = value;
+        return true;
+    }
+
+    bool Interpreter::validateJumpTargets(const std::vector<CodeGen::Instruction> &program)
+    {
+        for (std::size_t index = 0; index < program.size(); ++index)
+        {
+            const CodeGen::Instruction &inst = program[index];
+            if (inst.op != CodeGen::OpCode::JMP && inst.op != CodeGen::OpCode::JPC && inst.op != CodeGen::OpCode::CAL)
+            {
+                continue;
+            }
+
+            int target = 0;
+            if (!getIntOperand(inst.operand, target))
+            {
+                addError("Interpreter: jump target expects integer operand at instruction " + std::to_string(index));
+                return false;
+            }
+
+            if (target < 0 || target >= static_cast<int>(program.size()))
+            {
+                addError("Interpreter: jump target out of range at instruction " + std::to_string(index));
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    bool Interpreter::isProtectedFrameSlot(int address) const
+    {
+        return address >= bp && address < bp + kFrameHeaderSize;
+    }
+
+    bool Interpreter::checkedNeg(int value, int &out) const
+    {
+        if (value == std::numeric_limits<int>::min())
+        {
+            return false;
+        }
+
+        out = -value;
+        return true;
+    }
+
+    bool Interpreter::checkedAdd(int lhs, int rhs, int &out) const
+    {
+        long long result = static_cast<long long>(lhs) + static_cast<long long>(rhs);
+        if (result < std::numeric_limits<int>::min() || result > std::numeric_limits<int>::max())
+        {
+            return false;
+        }
+
+        out = static_cast<int>(result);
+        return true;
+    }
+
+    bool Interpreter::checkedSub(int lhs, int rhs, int &out) const
+    {
+        long long result = static_cast<long long>(lhs) - static_cast<long long>(rhs);
+        if (result < std::numeric_limits<int>::min() || result > std::numeric_limits<int>::max())
+        {
+            return false;
+        }
+
+        out = static_cast<int>(result);
+        return true;
+    }
+
+    bool Interpreter::checkedMul(int lhs, int rhs, int &out) const
+    {
+        long long result = static_cast<long long>(lhs) * static_cast<long long>(rhs);
+        if (result < std::numeric_limits<int>::min() || result > std::numeric_limits<int>::max())
+        {
+            return false;
+        }
+
+        out = static_cast<int>(result);
         return true;
     }
 
@@ -178,7 +276,8 @@ namespace Interpreter
 
         switch (inst.op)
         {
-        case CodeGen::OpCode::INT: {
+        case CodeGen::OpCode::INT:
+        {
             int size = 0;
             if (!getIntOperand(inst.operand, size))
             {
@@ -197,7 +296,9 @@ namespace Interpreter
                 return false;
             }
 
-            if (size >= kFrameHeaderSize)
+            // Only initialize frame header slots for the program's root frame (bp == 0).
+            // For callee frames, the CAL instruction sets the header (static/dynamic/return).
+            if (size >= kFrameHeaderSize && bp == 0)
             {
                 setStackValue(bp + 0, RuntimeValue{0});
                 setStackValue(bp + 1, RuntimeValue{0});
@@ -205,43 +306,63 @@ namespace Interpreter
             }
             return true;
         }
-        case CodeGen::OpCode::LIT: {
+        case CodeGen::OpCode::LIT:
+        {
             if (std::holds_alternative<std::monostate>(inst.operand))
             {
-                push(RuntimeValue{0});
+                if (!push(RuntimeValue{0}))
+                {
+                    return false;
+                }
                 return true;
             }
 
             if (const auto *ptr = std::get_if<int>(&inst.operand))
             {
-                push(RuntimeValue{*ptr});
+                if (!push(RuntimeValue{*ptr}))
+                {
+                    return false;
+                }
                 return true;
             }
             if (const auto *ptr = std::get_if<double>(&inst.operand))
             {
-                push(RuntimeValue{*ptr});
+                if (!push(RuntimeValue{*ptr}))
+                {
+                    return false;
+                }
                 return true;
             }
             if (const auto *ptr = std::get_if<char>(&inst.operand))
             {
-                push(RuntimeValue{*ptr});
+                if (!push(RuntimeValue{*ptr}))
+                {
+                    return false;
+                }
                 return true;
             }
             if (const auto *ptr = std::get_if<bool>(&inst.operand))
             {
-                push(RuntimeValue{*ptr});
+                if (!push(RuntimeValue{*ptr}))
+                {
+                    return false;
+                }
                 return true;
             }
             if (const auto *ptr = std::get_if<std::string>(&inst.operand))
             {
-                push(RuntimeValue{*ptr});
+                if (!push(RuntimeValue{*ptr}))
+                {
+                    return false;
+                }
                 return true;
             }
 
             addError("Interpreter: unsupported literal operand");
             return false;
         }
-        case CodeGen::OpCode::LOD: {
+        case CodeGen::OpCode::LOD:
+        {
             int offset = 0;
             if (!getIntOperand(inst.operand, offset))
             {
@@ -252,14 +373,20 @@ namespace Interpreter
             int address = resolveAddress(inst.level, offset);
             if (address < 0 || address >= static_cast<int>(stack.size()))
             {
-                addError("Interpreter: LOD address out of bounds");
+                addError("Interpreter: LOD address out of bounds (addr=" + std::to_string(address) +
+                         ", bp=" + std::to_string(bp) +
+                         ", size=" + std::to_string(stack.size()) + ")");
                 return false;
             }
 
-            push(stack[static_cast<std::size_t>(address)]);
+            if (!push(stack[static_cast<std::size_t>(address)]))
+            {
+                return false;
+            }
             return true;
         }
-        case CodeGen::OpCode::STO: {
+        case CodeGen::OpCode::STO:
+        {
             int offset = 0;
             if (!getIntOperand(inst.operand, offset))
             {
@@ -270,7 +397,15 @@ namespace Interpreter
             int address = resolveAddress(inst.level, offset);
             if (address < 0 || address >= static_cast<int>(stack.size()))
             {
-                addError("Interpreter: STO address out of bounds");
+                addError("Interpreter: STO address out of bounds (addr=" + std::to_string(address) +
+                         ", bp=" + std::to_string(bp) +
+                         ", size=" + std::to_string(stack.size()) + ")");
+                return false;
+            }
+
+            if (isProtectedFrameSlot(address))
+            {
+                addError("Interpreter: write to protected frame header slot");
                 return false;
             }
 
@@ -283,7 +418,295 @@ namespace Interpreter
             stack[static_cast<std::size_t>(address)] = value;
             return true;
         }
-        case CodeGen::OpCode::OPR: {
+        case CodeGen::OpCode::ALOD:
+        {
+            const std::string *opStr = std::get_if<std::string>(&inst.operand);
+            if (!opStr)
+            {
+                addError("Interpreter: ALOD expects string operand");
+                return false;
+            }
+            // parse "base:dim:provided:low1:high1:..."
+            std::vector<std::string> parts;
+            {
+                std::string s = *opStr;
+                size_t start = 0;
+                while (true)
+                {
+                    size_t pos = s.find(':', start);
+                    if (pos == std::string::npos)
+                    {
+                        parts.push_back(s.substr(start));
+                        break;
+                    }
+                    parts.push_back(s.substr(start, pos - start));
+                    start = pos + 1;
+                }
+            }
+
+            if (parts.size() < 3)
+            {
+                addError("Interpreter: invalid ALOD operand encoding");
+                return false;
+            }
+
+            int base = 0;
+            int dimCount = 0;
+            int provided = 0;
+            try
+            {
+                base = std::stoi(parts[0]);
+                dimCount = std::stoi(parts[1]);
+                provided = std::stoi(parts[2]);
+            }
+            catch (...) {
+                addError("Interpreter: invalid ALOD operand encoding");
+                return false;
+            }
+
+            if (parts.size() != static_cast<size_t>(3 + dimCount * 2))
+            {
+                addError("Interpreter: invalid ALOD operand encoding");
+                return false;
+            }
+
+            std::vector<int> lows(dimCount);
+            std::vector<int> highs(dimCount);
+            for (int i = 0; i < dimCount; ++i)
+            {
+                try
+                {
+                    lows[i] = std::stoi(parts[3 + i * 2]);
+                    highs[i] = std::stoi(parts[3 + i * 2 + 1]);
+                }
+                catch (...) {
+                    addError("Interpreter: invalid ALOD operand encoding");
+                    return false;
+                }
+            }
+
+            // Pop provided indices (they were pushed left-to-right; top is last index)
+            if (provided < 0 || provided > dimCount)
+            {
+                addError("Interpreter: invalid ALOD provided index count");
+                return false;
+            }
+
+            std::vector<int> indices;
+            for (int i = 0; i < provided; ++i)
+            {
+                RuntimeValue idxVal;
+                if (!pop(idxVal))
+                {
+                    return false;
+                }
+                int idx = 0;
+                if (!getIntValue(idxVal, idx))
+                {
+                    addError("Interpreter: array index must be integer");
+                    return false;
+                }
+                indices.push_back(idx);
+            }
+
+            // reverse to match dimension order (index0, index1, ...)
+            std::reverse(indices.begin(), indices.end());
+
+            // Bounds check for provided indices
+            for (int i = 0; i < static_cast<int>(indices.size()); ++i)
+            {
+                int idx = indices[i];
+                if (idx < lows[i] || idx > highs[i])
+                {
+                    addError("Interpreter: IndexOutOfBoundsException");
+                    return false;
+                }
+            }
+
+            // Compute linearized address using full dimension sizes
+            long long offset = 0;
+            for (int i = 0; i < static_cast<int>(indices.size()); ++i)
+            {
+                long long stride = 1;
+                for (int j = i + 1; j < dimCount; ++j)
+                {
+                    stride *= static_cast<long long>(highs[j] - lows[j] + 1);
+                }
+                offset += static_cast<long long>(indices[i] - lows[i]) * stride;
+            }
+
+            long long addressLL = static_cast<long long>(base) + offset;
+            if (addressLL < 0 || addressLL > std::numeric_limits<int>::max())
+            {
+                addError("Interpreter: ALOD address out of bounds");
+                return false;
+            }
+            int address = static_cast<int>(addressLL);
+
+            if (address < 0 || address >= static_cast<int>(stack.size()))
+            {
+                addError("Interpreter: ALOD address out of bounds (addr=" + std::to_string(address) +
+                         ", bp=" + std::to_string(bp) +
+                         ", size=" + std::to_string(stack.size()) + ")");
+                return false;
+            }
+
+            if (!push(stack[static_cast<std::size_t>(address)]))
+            {
+                return false;
+            }
+            return true;
+        }
+        case CodeGen::OpCode::ASTO:
+        {
+            const std::string *opStr = std::get_if<std::string>(&inst.operand);
+            if (!opStr)
+            {
+                addError("Interpreter: ASTO expects string operand");
+                return false;
+            }
+            // parse "base:dim:provided:low1:high1:..."
+            std::vector<std::string> parts;
+            {
+                std::string s = *opStr;
+                size_t start = 0;
+                while (true)
+                {
+                    size_t pos = s.find(':', start);
+                    if (pos == std::string::npos)
+                    {
+                        parts.push_back(s.substr(start));
+                        break;
+                    }
+                    parts.push_back(s.substr(start, pos - start));
+                    start = pos + 1;
+                }
+            }
+
+            if (parts.size() < 3)
+            {
+                addError("Interpreter: invalid ASTO operand encoding");
+                return false;
+            }
+
+            int base = 0;
+            int dimCount = 0;
+            int provided = 0;
+            try
+            {
+                base = std::stoi(parts[0]);
+                dimCount = std::stoi(parts[1]);
+                provided = std::stoi(parts[2]);
+            }
+            catch (...) {
+                addError("Interpreter: invalid ASTO operand encoding");
+                return false;
+            }
+
+            if (parts.size() != static_cast<size_t>(3 + dimCount * 2))
+            {
+                addError("Interpreter: invalid ASTO operand encoding");
+                return false;
+            }
+
+            std::vector<int> lows(dimCount);
+            std::vector<int> highs(dimCount);
+            for (int i = 0; i < dimCount; ++i)
+            {
+                try
+                {
+                    lows[i] = std::stoi(parts[3 + i * 2]);
+                    highs[i] = std::stoi(parts[3 + i * 2 + 1]);
+                }
+                catch (...) {
+                    addError("Interpreter: invalid ASTO operand encoding");
+                    return false;
+                }
+            }
+
+            if (provided < 0 || provided > dimCount)
+            {
+                addError("Interpreter: invalid ASTO provided index count");
+                return false;
+            }
+
+            // Pop provided indices (top is last index)
+            std::vector<int> indices;
+            for (int i = 0; i < provided; ++i)
+            {
+                RuntimeValue idxVal;
+                if (!pop(idxVal))
+                {
+                    return false;
+                }
+                int idx = 0;
+                if (!getIntValue(idxVal, idx))
+                {
+                    addError("Interpreter: array index must be integer");
+                    return false;
+                }
+                indices.push_back(idx);
+            }
+
+            // Pop value to store
+            RuntimeValue value;
+            if (!pop(value))
+            {
+                return false;
+            }
+
+            std::reverse(indices.begin(), indices.end());
+
+            // Bounds check for provided indices
+            for (int i = 0; i < static_cast<int>(indices.size()); ++i)
+            {
+                int idx = indices[i];
+                if (idx < lows[i] || idx > highs[i])
+                {
+                    addError("Interpreter: IndexOutOfBoundsException");
+                    return false;
+                }
+            }
+
+            // Compute linearized address
+            long long offset = 0;
+            for (int i = 0; i < static_cast<int>(indices.size()); ++i)
+            {
+                long long stride = 1;
+                for (int j = i + 1; j < dimCount; ++j)
+                {
+                    stride *= static_cast<long long>(highs[j] - lows[j] + 1);
+                }
+                offset += static_cast<long long>(indices[i] - lows[i]) * stride;
+            }
+
+            long long addressLL = static_cast<long long>(base) + offset;
+            if (addressLL < 0 || addressLL > std::numeric_limits<int>::max())
+            {
+                addError("Interpreter: ASTO address out of bounds");
+                return false;
+            }
+            int address = static_cast<int>(addressLL);
+
+            if (address < 0 || address >= static_cast<int>(stack.size()))
+            {
+                addError("Interpreter: ASTO address out of bounds (addr=" + std::to_string(address) +
+                         ", bp=" + std::to_string(bp) +
+                         ", size=" + std::to_string(stack.size()) + ")");
+                return false;
+            }
+
+            if (isProtectedFrameSlot(address))
+            {
+                addError("Interpreter: write to protected frame header slot");
+                return false;
+            }
+
+            stack[static_cast<std::size_t>(address)] = value;
+            return true;
+        }
+        case CodeGen::OpCode::OPR:
+        {
             int opcode = 0;
             if (!getIntOperand(inst.operand, opcode))
             {
@@ -298,7 +721,8 @@ namespace Interpreter
 
             return true;
         }
-        case CodeGen::OpCode::JMP: {
+        case CodeGen::OpCode::JMP:
+        {
             int target = 0;
             if (!getIntOperand(inst.operand, target))
             {
@@ -316,7 +740,8 @@ namespace Interpreter
             advance = false;
             return true;
         }
-        case CodeGen::OpCode::JPC: {
+        case CodeGen::OpCode::JPC:
+        {
             int target = 0;
             if (!getIntOperand(inst.operand, target))
             {
@@ -350,11 +775,18 @@ namespace Interpreter
 
             return true;
         }
-        case CodeGen::OpCode::CAL: {
+        case CodeGen::OpCode::CAL:
+        {
             int target = 0;
             if (!getIntOperand(inst.operand, target))
             {
                 addError("Interpreter: CAL expects integer operand");
+                return false;
+            }
+
+            if (sp + kFrameHeaderSize > kMaxStackSlots)
+            {
+                addError("Interpreter: stack overflow");
                 return false;
             }
 
@@ -379,7 +811,8 @@ namespace Interpreter
             advance = false;
             return true;
         }
-        case CodeGen::OpCode::RET: {
+        case CodeGen::OpCode::RET:
+        {
             int returnAddress = 0;
             int dynamicLink = 0;
 
@@ -473,7 +906,15 @@ namespace Interpreter
                 addError("Interpreter: unary NEG expects integer");
                 return false;
             }
-            result = -intValue;
+
+            int negated = 0;
+            if (!checkedNeg(intValue, negated))
+            {
+                addError("Interpreter: integer overflow");
+                return false;
+            }
+
+            result = negated;
             return true;
         }
 
@@ -515,18 +956,47 @@ namespace Interpreter
             switch (opCode)
             {
             case 2:
-                result = lhs + rhs;
+            {
+                int computed = 0;
+                if (!checkedAdd(lhs, rhs, computed))
+                {
+                    addError("Interpreter: integer overflow");
+                    return false;
+                }
+                result = computed;
                 return true;
+            }
             case 3:
-                result = lhs - rhs;
+            {
+                int computed = 0;
+                if (!checkedSub(lhs, rhs, computed))
+                {
+                    addError("Interpreter: integer overflow");
+                    return false;
+                }
+                result = computed;
                 return true;
+            }
             case 4:
-                result = lhs * rhs;
+            {
+                int computed = 0;
+                if (!checkedMul(lhs, rhs, computed))
+                {
+                    addError("Interpreter: integer overflow");
+                    return false;
+                }
+                result = computed;
                 return true;
+            }
             case 5:
                 if (rhs == 0)
                 {
                     addError("Interpreter: division by zero");
+                    return false;
+                }
+                if (lhs == std::numeric_limits<int>::min() && rhs == -1)
+                {
+                    addError("Interpreter: integer overflow");
                     return false;
                 }
                 result = lhs / rhs;
@@ -535,6 +1005,11 @@ namespace Interpreter
                 if (rhs == 0)
                 {
                     addError("Interpreter: modulo by zero");
+                    return false;
+                }
+                if (lhs == std::numeric_limits<int>::min() && rhs == -1)
+                {
+                    addError("Interpreter: integer overflow");
                     return false;
                 }
                 result = lhs % rhs;

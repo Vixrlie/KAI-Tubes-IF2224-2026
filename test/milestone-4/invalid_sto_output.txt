@@ -1,0 +1,4 @@
+=== Interpreter Output ===
+
+=== Interpreter Errors ===
+- Interpreter: STO address out of bounds (addr=9999, bp=0, size=4)

@@ -1,0 +1,86 @@
+=== tab ===
+idx  id        obj       type  ref  nrm  lev  adr  link
+-------------------------------------------------------
+...  (reserved words 0-32)
+ 33   Integer       type     0    0    1    0    0     0
+ 34      Real       type     1    0    1    0    0    33
+ 35      Char       type     2    0    1    0    0    34
+ 36   Boolean       type     3    0    1    0    0    35
+ 37    String       type     4    0    1    0    0    36
+ 38      True      const     3    0    1    0    1    37
+ 39     False      const     3    0    1    0    0    38
+ 40   writeln  procedure    10    0    1    0    0    39
+ 41    readln  procedure    10    0    1    0    0    40
+ 42    IfTest    program    10    0    1    0    0    41
+
+=== btab ===
+idx  last  lpar  psze  vsze
+---------------------------
+  0    42     0     0     0
+
+=== atab ===
+(empty)
+
+=== Parse Tree ===
+<program>
+├── <program-header>
+│   ├── programsy
+│   ├── ident(IfTest)
+│   └── semicolon
+├── <declaration-part>
+├── <compound-statement>
+│   ├── beginsy
+│   ├── <statement-list>
+│   │   ├── <statement>
+│   │   │   └── <if-statement>
+│   │   │       ├── ifsy
+│   │   │       ├── <expression>
+│   │   │       │   ├── <simple-expression>
+│   │   │       │   │   └── <term>
+│   │   │       │   │       └── <factor>
+│   │   │       │   │           └── intcon(1)
+│   │   │       │   ├── <relational-operator>
+│   │   │       │   │   └── eql
+│   │   │       │   └── <simple-expression>
+│   │   │       │       └── <term>
+│   │   │       │           └── <factor>
+│   │   │       │               └── intcon(1)
+│   │   │       ├── thensy
+│   │   │       └── <statement>
+│   │   │           └── <procedure/function-call>
+│   │   │               ├── ident(writeln)
+│   │   │               ├── lparent
+│   │   │               ├── <parameter-list>
+│   │   │               │   └── <expression>
+│   │   │               │       └── <simple-expression>
+│   │   │               │           └── <term>
+│   │   │               │               └── <factor>
+│   │   │               │                   └── intcon(42)
+│   │   │               └── rparent
+│   │   └── semicolon
+│   └── endsy
+└── period
+
+=== Decorated AST ===
+Program('IfTest')  → type:Unknown, lev:0, block:0
+└── Block  → type:Unknown, lev:0, block:0
+    └── If  → type:Unknown, lev:0, block:0
+        ├── BinOp('=')  → type:Boolean, lev:0, block:0
+        │   ├── Num(1)  → type:Integer, lev:0, block:0
+        │   └── Num(1)  → type:Integer, lev:0, block:0
+        └── ProcCall('writeln')  → type:Unknown, lev:0, block:0
+            └── Num(42)  → type:Integer, lev:0, block:0
+
+=== Intermediate Code ===
+0 INT 0 3
+1 JMP 0 2
+2 LIT 0 1
+3 LIT 0 1
+4 OPR 0 7
+5 JPC 0 8
+6 LIT 0 42
+7 OPR 0 14
+8 RET 0 0
+
+=== Interpreter Output ===
+42

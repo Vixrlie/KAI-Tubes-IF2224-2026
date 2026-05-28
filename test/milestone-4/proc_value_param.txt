@@ -1,0 +1,10 @@
+program ParamTest;
+
+procedure Show(x: integer);
+begin
+  writeln(x);
+end;
+
+begin
+  Show(7);
+end.

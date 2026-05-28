@@ -1,0 +1,7 @@
+program RepeatTest;
+begin
+  repeat
+    writeln(1);
+    writeln(2);
+  until 1 == 1;
+end.

@@ -1,0 +1,10 @@
+program StackOverflow;
+
+procedure recur;
+begin
+  recur;
+end;
+
+begin
+  recur;
+end.

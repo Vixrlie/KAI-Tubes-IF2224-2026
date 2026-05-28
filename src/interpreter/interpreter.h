@@ -23,6 +23,7 @@ namespace Interpreter
 
     private:
         static constexpr int kFrameHeaderSize = 3;
+        static constexpr int kMaxStackSlots = 10000;
 
         std::vector<RuntimeValue> stack;
         int sp = 0;
@@ -41,6 +42,12 @@ namespace Interpreter
         bool ensureStackSize(int size);
         bool getIntFromStack(int index, int &out) const;
         bool setStackValue(int index, const RuntimeValue &value);
+        bool validateJumpTargets(const std::vector<CodeGen::Instruction> &program);
+        bool isProtectedFrameSlot(int address) const;
+        bool checkedNeg(int value, int &out) const;
+        bool checkedAdd(int lhs, int rhs, int &out) const;
+        bool checkedSub(int lhs, int rhs, int &out) const;
+        bool checkedMul(int lhs, int rhs, int &out) const;
 
         int resolveBase(int levelDelta, int currentBp);
         int resolveAddress(int levelDelta, int offset);

@@ -17,6 +17,8 @@ namespace CodeGen
         LIT,
         LOD,
         STO,
+        ALOD,
+        ASTO,
         CAL,
         INT,
         JMP,
@@ -69,6 +71,9 @@ namespace CodeGen
         std::vector<Instruction> instructions;
         std::vector<std::string> errors;
         std::unordered_map<std::string, const AST::ASTNode *> constantValues;
+        std::unordered_map<std::string, int> procedureEntryIndex;
+        std::unordered_map<std::string, std::vector<int>> pendingCallSites;
+        std::vector<std::unordered_map<int, int>> parameterOffsetStack;
 
         void addError(const std::string &message);
         void emit(OpCode op, int level, Operand operand);
@@ -77,6 +82,13 @@ namespace CodeGen
         int initialFrameSize(const AST::ProgramNode *root);
 
         void visitDeclaration(const AST::ASTNode *node);
+        void visitProcedure(const AST::ProcedureDeclNode *node);
+        void visitFunction(const AST::FunctionDeclNode *node);
+        void visitIf(const AST::IfNode *node);
+        void visitWhile(const AST::WhileNode *node);
+        void visitRepeat(const AST::RepeatNode *node);
+        void visitFor(const AST::ForNode *node);
+        void visitCase(const AST::CaseNode *node);
         void visitStatement(const AST::ASTNode *node);
         void visitCompound(const AST::CompoundNode *node);
         void visitAssign(const AST::AssignNode *node);
@@ -87,6 +99,9 @@ namespace CodeGen
         void emitStore(const AST::ASTNode *target);
         void emitLiteralNode(const AST::ASTNode *node);
         void emitConstantLiteral(const Semantic::TabEntry &entry, const AST::VarRefNode *node);
+        void pushParameterScope(const AST::ASTNode *subprogramNode);
+        void popParameterScope();
+        bool lookupParameterRuntimeOffset(int tabIndex, int &offset) const;
 
         const Semantic::TabEntry *lookupEntry(int tabIndex) const;
         const Semantic::TabEntry *lookupVariableEntry(const AST::VarRefNode *node);
