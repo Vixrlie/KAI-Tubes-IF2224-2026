@@ -451,6 +451,23 @@ namespace CodeGen
         const std::size_t instructionBase = instructions.size();
         const std::size_t errorBase = errors.size();
 
+        int frameSize = kFrameHeaderSize;
+        if (symbols)
+        {
+            int blockIndex = node->annotation.blockIndex;
+            const auto &btab = symbols->btab();
+            if (blockIndex >= 0 && blockIndex < static_cast<int>(btab.size()))
+            {
+                const Semantic::BtabEntry &block = btab[blockIndex];
+                frameSize = kFrameHeaderSize + block.psze + block.vsze;
+            }
+        }
+
+        const int tempEndOffset = frameSize;
+
+        // Reserve one temporary slot for the upper bound so it is evaluated once.
+        emit(OpCode::INT, 0, 1);
+
         // Initialize loop variable with start expression
         int varTabIndex = -1;
         if (symbols)
@@ -491,6 +508,13 @@ namespace CodeGen
             }
         }
 
+        // Evaluate the upper bound once and store it in the temporary slot.
+        if (node->endExpr)
+        {
+            visitExpression(node->endExpr.get());
+            emit(OpCode::STO, 0, tempEndOffset);
+        }
+
         int loopStart = static_cast<int>(instructions.size());
 
         // Condition: compare loop var with end expression
@@ -512,10 +536,7 @@ namespace CodeGen
             }
         }
 
-        if (node->endExpr)
-        {
-            visitExpression(node->endExpr.get());
-        }
+        emit(OpCode::LOD, 0, tempEndOffset);
 
         // Emit comparison: if downTo then var >= end else var <= end
         int cmpTypeClass = typeClassFromBasicType(Semantic::BasicType::INTEGER);
@@ -562,6 +583,9 @@ namespace CodeGen
         // Jump back to start
         emit(OpCode::JMP, 0, loopStart);
 
+        // Release the temporary upper-bound slot.
+        emit(OpCode::INT, 0, -1);
+
         // Backpatch exit point
         instructions[jpcIndex].operand = static_cast<int>(instructions.size());
 
@@ -587,7 +611,6 @@ namespace CodeGen
         // For each branch, create tests for each label. If a label matches, fall through to body.
         for (const auto &branch : node->branches)
         {
-            int firstLabelTestIndex = -1;
             for (const auto &label : branch->labels)
             {
                 // Evaluate selector and label
