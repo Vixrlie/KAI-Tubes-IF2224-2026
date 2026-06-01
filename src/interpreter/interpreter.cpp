@@ -102,12 +102,6 @@ namespace Interpreter
 
     bool Interpreter::ensureStackSize(int size)
     {
-        if (size < 0)
-        {
-            addError("Interpreter: invalid stack size request");
-            return false;
-        }
-
         if (size > kMaxStackSlots)
         {
             addError("Interpreter: stack overflow");
@@ -288,6 +282,19 @@ namespace Interpreter
             if (stack.empty())
             {
                 bp = 0;
+            }
+
+            if (size < 0)
+            {
+                int newSize = static_cast<int>(stack.size()) + size;
+                if (newSize < bp + kFrameHeaderSize)
+                {
+                    addError("Interpreter: cannot shrink stack below frame header");
+                    return false;
+                }
+                stack.resize(static_cast<std::size_t>(newSize));
+                sp = newSize;
+                return true;
             }
 
             int requiredSize = bp + size;
