@@ -1,5 +1,5 @@
 \section{Strategi Pengujian}
-Pengujian dilakukan dengan membangun program menggunakan \texttt{make -B}, menjalankan \texttt{arion\_parser} pada input Milestone 4, lalu membandingkan output aktual dengan hasil eksekusi yang diharapkan. Command yang digunakan adalah sebagai berikut.
+Pengujian dilakukan dengan membangun program menggunakan \texttt{make -B}, menjalankan \texttt{arion\_parser} pada input Milestone 4, lalu membandingkan output aktual dengan hasil eksekusi yang diharapkan. Perlu dicatat bahwa \texttt{arion\_parser} menjalankan seluruh pipeline compiler secara berurutan, mulai dari lexical analysis, syntax analysis, semantic analysis, intermediate code generation, hingga eksekusi oleh interpreter. Akibatnya, setiap test case yang dijalankan secara otomatis memvalidasi kebenaran Milestone 1, Milestone 2, Milestone 3, dan Milestone 4 sekaligus. Command yang digunakan adalah sebagai berikut.
 
 \begin{tcolorbox}[title=Command Pengujian,colback=gray!5,colframe=black!60,boxrule=0.5pt,arc=2mm]
   \begin{verbatim}
@@ -39,6 +39,9 @@ Seluruh test case yang digunakan berhasil menghasilkan output intermediate code 
   \hline
 \end{longtable}
 
+\section{Pengujian Lintas Milestone}
+Karena \texttt{arion\_parser} menjalankan pipeline secara utuh, setiap test case pada Milestone 4 sekaligus menjadi bukti kebenaran milestone-milestone sebelumnya. Bagian Token Stream dalam output membuktikan Milestone 1 telah berhasil mengenali seluruh token secara tepat, mulai dari keyword, identifier, operator, hingga delimiter. Bagian Parse Tree membuktikan Milestone 2 telah berhasil membangun struktur hierarki program sesuai grammar Arion. Bagian \texttt{tab}, \texttt{btab}, \texttt{atab}, dan Decorated AST membuktikan Milestone 3 telah berhasil melakukan analisis semantik, termasuk pengecekan tipe, scope, dan deklarasi. Bagian Intermediate Code dan Interpreter Output membuktikan Milestone 4 telah berhasil meratakan decorated AST menjadi instruksi sekuensial dan mengeksekusinya dengan benar.
+
 \section{Detail Pengujian}
 
 \subsection{Kasus 1: Operasi Dasar}
@@ -72,7 +75,7 @@ Seluruh test case yang digunakan berhasil menghasilkan output intermediate code 
 39
 \end{lstlisting}
 
-Kasus ini menunjukkan bahwa operasi dasar assignment, load, store, dan ekspresi aritmatika berhasil diterjemahkan ke intermediate code. Ekspresi \texttt{(a + b) * (a - b) div 2} dievaluasi menjadi 39, sesuai dengan hasil perhitungan manual.
+Kasus ini menunjukkan bahwa operasi dasar assignment, load, store, dan ekspresi aritmatika berhasil diterjemahkan ke intermediate code. Ekspresi \texttt{(a + b) * (a - b) div 2} dievaluasi menjadi 39, sesuai dengan hasil perhitungan manual. Bagian Token Stream pada output membuktikan lexer Milestone 1 mampu mengenali token-token aritmatika. Bagian Parse Tree membuktikan parser Milestone 2 membangun hierarki ekspresi dengan benar. Bagian \texttt{tab} dan Decorated AST membuktikan semantic analyzer Milestone 3 mengenali tipe integer untuk seluruh variabel. Bagian Intermediate Code dan Interpreter Output membuktikan Milestone 4 berhasil menghasilkan dan mengeksekusi instruksi sekuensial.
 
 \begin{figure}[H]
   \centering
@@ -115,7 +118,7 @@ Kasus ini menunjukkan bahwa operasi dasar assignment, load, store, dan ekspresi 
 1
 \end{lstlisting}
 
-Kasus ini menguji nested \texttt{if-then-else}. Kondisi \texttt{x > 0} dan \texttt{y > 5} keduanya benar, sehingga interpreter mencetak 1. Instruksi \texttt{JMP} dan \texttt{JPC} berhasil melompati blok yang tidak perlu dieksekusi.
+Kasus ini menguji nested \texttt{if-then-else}. Kondisi \texttt{x > 0} dan \texttt{y > 5} keduanya benar, sehingga interpreter mencetak 1. Instruksi \texttt{JMP} dan \texttt{JPC} berhasil melompati blok yang tidak perlu dieksekusi. Bagian Token Stream membuktikan Milestone 1 mengenali token \texttt{if}, \texttt{then}, \texttt{else}. Bagian Parse Tree membuktikan Milestone 2 membangun struktur bersarang dengan benar. Bagian Decorated AST membuktikan Milestone 3 menganotasi tipe Boolean pada kondisi. Bagian Intermediate Code dan Interpreter Output membuktikan Milestone 4 berhasil melakukan translasi control flow bersarang ke instruksi lompatan.
 
 \begin{figure}[H]
   \centering
@@ -157,7 +160,7 @@ Kasus ini menguji nested \texttt{if-then-else}. Kondisi \texttt{x > 0} dan \text
 15
 \end{lstlisting}
 
-Kasus ini memvalidasi bahwa \texttt{while} loop berhasil diterjemahkan ke intermediate code dengan label dan jump. Loop menghitung jumlah \texttt{1 + 2 + 3 + 4 + 5 = 15}. Instruksi \texttt{JPC} keluar dari loop ketika \texttt{i > 5}, dan \texttt{JMP} kembali ke evaluasi kondisi.
+Kasus ini memvalidasi bahwa \texttt{while} loop berhasil diterjemahkan ke intermediate code dengan label dan jump. Loop menghitung jumlah \texttt{1 + 2 + 3 + 4 + 5 = 15}. Instruksi \texttt{JPC} keluar dari loop ketika \texttt{i > 5}, dan \texttt{JMP} kembali ke evaluasi kondisi. Bagian Token Stream membuktikan Milestone 1 mengenali token \texttt{while} dan \texttt{do}. Bagian Parse Tree membuktikan Milestone 2 membangun node \texttt{WhileStmt} dengan benar. Bagian Decorated AST membuktikan Milestone 3 memastikan kondisi loop bertipe Boolean. Bagian Intermediate Code dan Interpreter Output membuktikan Milestone 4 berhasil melakukan translasi perulangan while dengan backpatching yang benar.
 
 \begin{figure}[H]
   \centering
@@ -200,7 +203,7 @@ Kasus ini memvalidasi bahwa \texttt{while} loop berhasil diterjemahkan ke interm
 120
 \end{lstlisting}
 
-Kasus ini menunjukkan bahwa \texttt{for-to} loop berhasil menghitung faktorial 5 yaitu 120. Variabel loop \texttt{i} diinisialisasi dengan 1, diincrement setiap iterasi, dan loop berhenti ketika \texttt{i > 5}. Tidak ada penggunaan slot sementara untuk batas akhir, sehingga batas dievaluasi setiap iterasi.
+Kasus ini menunjukkan bahwa \texttt{for-to} loop berhasil menghitung faktorial 5 yaitu 120. Variabel loop \texttt{i} diinisialisasi dengan 1, diincrement setiap iterasi, dan loop berhenti ketika \texttt{i > 5}. Bagian Token Stream membuktikan Milestone 1 mengenali token \texttt{for}, \texttt{to}, dan \texttt{do}. Bagian Parse Tree membuktikan Milestone 2 membangun node \texttt{ForStmt} dengan benar. Bagian Decorated AST membuktikan Milestone 3 memastikan tipe variabel loop dan batas sesuai. Bagian Intermediate Code dan Interpreter Output membuktikan Milestone 4 berhasil melakukan translasi for loop dengan inisialisasi, evaluasi batas, body, dan increment.
 
 \begin{figure}[H]
   \centering
@@ -246,7 +249,7 @@ Kasus ini menunjukkan bahwa \texttt{for-to} loop berhasil menghitung faktorial 5
 20
 \end{lstlisting}
 
-Kasus ini menguji \texttt{case} statement dengan tiga branch. Nilai \texttt{grade = 2} cocok dengan branch kedua, sehingga interpreter mencetak 20. Semua \texttt{JMP} ke akhir case di-backpatch dengan benar, memastikan eksekusi tidak jatuh ke branch berikutnya.
+Kasus ini menguji \texttt{case} statement dengan tiga branch. Nilai \texttt{grade = 2} cocok dengan branch kedua, sehingga interpreter mencetak 20. Semua \texttt{JMP} ke akhir case di-backpatch dengan benar, memastikan eksekusi tidak jatuh ke branch berikutnya. Bagian Token Stream membuktikan Milestone 1 mengenali token \texttt{case}, \texttt{of}, dan \texttt{end}. Bagian Parse Tree membuktikan Milestone 2 membangun node \texttt{CaseStmt} dengan benar. Bagian Decorated AST membuktikan Milestone 3 memastikan selector dan label bertipe kompatibel. Bagian Intermediate Code dan Interpreter Output membuktikan Milestone 4 berhasil melakukan translasi case statement dengan backpatching seluruh branch exit.
 
 \begin{figure}[H]
   \centering
@@ -281,7 +284,13 @@ Kasus ini menguji \texttt{case} statement dengan tiga branch. Nilai \texttt{grad
 42
 \end{lstlisting}
 
-Kasus ini menunjukkan bahwa array dua dimensi dapat diakses melalui instruksi \texttt{ASTO} dan \texttt{ALOD}. Operand \texttt{5:2:2:1:2:1:3} menyimpan metadata array: base offset 5, 2 dimensi, 2 indeks disediakan, batas rendah dan tinggi untuk setiap dimensi (1..2 dan 1..3). Interpreter berhasil menyimpan nilai 42 dan membacanya kembali.
+Kasus ini menunjukkan bahwa array dua dimensi dapat diakses melalui instruksi \texttt{ASTO} dan \texttt{ALOD}. Operand \texttt{5:2:2:1:2:1:3} menyimpan metadata array: base offset 5, 2 dimensi, 2 indeks disediakan, batas rendah dan tinggi untuk setiap dimensi (1..2 dan 1..3). Interpreter berhasil menyimpan nilai 42 dan membacanya kembali. Bagian Token Stream membuktikan Milestone 1 mengenali token array \texttt{array}, \texttt{of}, dan indeks. Bagian Parse Tree membuktikan Milestone 2 membangun deklarasi array dua dimensi dengan benar. Bagian \texttt{atab} dan Decorated AST membuktikan Milestone 3 menyimpan metadata array termasuk batas indeks. Bagian Intermediate Code dan Interpreter Output membuktikan Milestone 4 berhasil menghasilkan instruksi \texttt{ASTO} dan \texttt{ALOD} serta mengeksekusi akses array dua dimensi.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\linewidth]{04-eksperimen/tc6.png}
+  \caption{Bukti input dan output pengujian Kasus 6.}
+\end{figure}
 
 \subsection{Kasus 7: Runtime Error Division by Zero}
 \textbf{Input}\par
@@ -304,7 +313,7 @@ Kasus ini menunjukkan bahwa array dua dimensi dapat diakses melalui instruksi \t
 - Interpreter: division by zero
 \end{lstlisting}
 
-Kasus ini menguji kemampuan interpreter mendeteksi runtime error. Saat mengeksekusi operasi pembagian \texttt{10 div 0}, interpreter menghentikan eksekusi dan melaporkan error informatif tanpa menyebabkan crash.
+Kasus ini menguji kemampuan interpreter mendeteksi runtime error. Saat mengeksekusi operasi pembagian \texttt{10 div 0}, interpreter menghentikan eksekusi dan melaporkan error informatif tanpa menyebabkan crash. Bagian Token Stream membuktikan Milestone 1 mengenali token pembagian. Bagian Parse Tree membuktikan Milestone 2 membangun ekspresi pembagian dengan benar. Bagian Decorated AST membuktikan Milestone 3 memastikan kedua operand bertipe integer. Bagian Intermediate Code membuktikan Milestone 4 menghasilkan instruksi \texttt{OPR 0 5} untuk pembagian, dan bagian Interpreter Errors membuktikan interpreter Milestone 4 berhasil mendeteksi dan melaporkan division by zero secara aman.
 
 \section{Pengujian Error Runtime}
 Selain kasus valid, program juga diuji secara manual terhadap input yang mengandung kesalahan runtime. Contoh kesalahan yang berhasil dideteksi adalah stack overflow pada infinite recursion, array index out of bounds, invalid jump targets, dan integer overflow.

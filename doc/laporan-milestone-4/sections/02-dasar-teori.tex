@@ -95,13 +95,7 @@ Instruksi \texttt{OPR} memiliki sub-operasi yang lebih spesifik. Sub-operasi yan
 Interpreter pada Arion Compiler bertindak sebagai virtual machine (VM) yang mengeksekusi intermediate code. VM ini tidak memiliki bentuk fisik, tetapi memiliki logika memori dan siklus kerja yang sama persis dengan CPU sungguhan.
 
 \subsection{Siklus Fetch-Decode-Execute}
-Sama seperti CPU sungguhan, interpreter membaca instruksi satu per satu menggunakan penunjuk khusus yang disebut Instruction Pointer (IP) atau Program Counter (PC). Interpreter beroperasi dalam siklus eksekusi yang terdiri dari tiga tahap utama \cite{cooper2011engineering}.
-
-\begin{enumerate}
-    \item \textbf{Fetch:} Membaca baris instruksi TAC yang saat ini ditunjuk oleh IP.
-    \item \textbf{Decode:} Membedah baris tersebut untuk mengetahui perintahnya dan operand-nya.
-    \item \textbf{Execute:} Melakukan aksi nyata, seperti menghitung nilai operasi matematika atau menyimpan nilai ke memori.
-\end{enumerate}
+Sama seperti CPU sungguhan, interpreter membaca instruksi satu per satu menggunakan penunjuk khusus yang disebut Instruction Pointer (IP) atau Program Counter (PC). Interpreter beroperasi dalam siklus eksekusi yang terdiri dari tiga tahap utama \cite{cooper2011engineering}. Tahap pertama adalah \textbf{Fetch}, yaitu membaca baris instruksi TAC yang saat ini ditunjuk oleh IP. Tahap kedua adalah \textbf{Decode}, yaitu membedah baris tersebut untuk mengetahui perintahnya dan operand-nya. Tahap ketiga adalah \textbf{Execute}, yaitu melakukan aksi nyata, seperti menghitung nilai operasi matematika atau menyimpan nilai ke memori.
 
 Setelah tahap execute selesai, IP akan bergerak maju ke baris instruksi berikutnya, kecuali jika instruksi tersebut adalah \texttt{JMP} atau \texttt{JPC}, di mana IP akan melompat ke nomor baris yang dituju.
 
@@ -131,15 +125,7 @@ Setiap kali program memasuki blok kode baru atau memanggil fungsi, interpreter a
     \label{fig:stack-frame}
 \end{figure}
 
-Setiap stack frame memiliki tiga slot header yang selalu diisi.
-
-\begin{itemize}
-    \item \textbf{Static Link (slot 0):} Menunjuk ke base pointer frame induk secara statis (berdasarkan lexical level).
-    \item \textbf{Dynamic Link (slot 1):} Menunjuk ke base pointer frame pemanggil (runtime caller).
-    \item \textbf{Return Address (slot 2):} Menyimpan alamat instruksi yang harus dieksekusi setelah fungsi selesai.
-\end{itemize}
-
-Slot-slot setelah header digunakan untuk variabel lokal dan operand sementara selama eksekusi.
+Setiap stack frame memiliki tiga slot header yang selalu diisi. \textbf{Static Link} pada slot 0 menunjuk ke base pointer frame induk secara statis berdasarkan lexical level. \textbf{Dynamic Link} pada slot 1 menunjuk ke base pointer frame pemanggil pada runtime. \textbf{Return Address} pada slot 2 menyimpan alamat instruksi yang harus dieksekusi setelah fungsi selesai. Slot-slot setelah header digunakan untuk variabel lokal dan operand sementara selama eksekusi.
 
 
 \section{Translasi Control Flow}
@@ -175,7 +161,7 @@ L_END:
 \end{tcolorbox}
 
 \subsection{Translasi FOR Loop}
-For loop memerlukan inisialisasi variabel loop, evaluasi kondisi batas, eksekusi body, dan increment/decrement variabel loop sebelum kembali ke evaluasi kondisi.
+For loop memerlukan inisialisasi variabel loop, evaluasi kondisi batas, eksekusi body, dan increment atau decrement variabel loop sebelum kembali ke evaluasi kondisi.
 
 \begin{tcolorbox}[title=Contoh TAC untuk FOR,colback=gray!5,colframe=black!60,boxrule=0.5pt,arc=2mm]
 \begin{verbatim}
@@ -203,12 +189,7 @@ Case statement memerlukan evaluasi selector untuk setiap label. Jika salah satu 
 Interpreter yang tangguh tidak hanya tahu cara menjalankan kode yang benar, tetapi juga tahu bagaimana bertahan hidup ketika diberikan kode yang salah atau berbahaya. Bahasa tingkat tinggi yang berjalan di atas VM harus memiliki mekanisme perlindungan internal.
 
 \subsection{Kerentanan pada Stack}
-\begin{itemize}
-    \item \textbf{Stack Overflow:} Terjadi ketika program terus-menerus menambahkan stack frame baru hingga melampaui batas memori. Kasus paling umum adalah infinite recursion. Interpreter harus mampu menghitung kedalaman stack dan melempar error jika melebihi batas maksimal.
-    \item \textbf{Stack Underflow:} Kebalikan dari overflow. Terjadi ketika interpreter diinstruksikan untuk pop data dari stack yang sudah sepenuhnya kosong.
-    \item \textbf{Stack Smashing:} Bentuk klasik dari buffer overflow. Data yang ditulis melebihi ukuran variabel lokal dapat menimpa return address, menyebabkan fungsi melompat ke memori yang salah.
-    \item \textbf{Stack Corruption:} Terjadi ketika struktur stack kehilangan keseimbangan. Jumlah operasi push dan pop harus selalu simetris.
-\end{itemize}
+\textbf{Stack Overflow} terjadi ketika program terus-menerus menambahkan stack frame baru hingga melampaui batas memori. Kasus paling umum adalah infinite recursion. Interpreter harus mampu menghitung kedalaman stack dan melempar error jika melebihi batas maksimal. \textbf{Stack Underflow} adalah kebalikan dari overflow, yaitu terjadi ketika interpreter diinstruksikan untuk pop data dari stack yang sudah sepenuhnya kosong. \textbf{Stack Smashing} merupakan bentuk klasik dari buffer overflow, di mana data yang ditulis melebihi ukuran variabel lokal dapat menimpa return address sehingga menyebabkan fungsi melompat ke memori yang salah. \textbf{Stack Corruption} terjadi ketika struktur stack kehilangan keseimbangan, misalnya jumlah operasi push dan pop tidak simetris.
 
 \subsection{Kerentanan Memori dan Akses}
 \textbf{Out-of-Bounds Variable Access} adalah kerentanan umum yang terjadi ketika program mencoba mengakses indeks array di luar batas yang didefinisikan. Interpreter wajib memvalidasi setiap akses indeks dan melempar \texttt{IndexOutOfBoundsException} jika indeks tidak valid.
@@ -217,4 +198,4 @@ Interpreter yang tangguh tidak hanya tahu cara menjalankan kode yang benar, teta
 \textbf{Invalid Jump Targets} terjadi jika intermediate code generator melakukan kesalahan dan menyuruh interpreter melompat ke label yang tidak pernah ada dalam daftar instruksi. Interpreter yang tangguh harus memverifikasi semua target jump sebelum atau saat dieksekusi.
 
 \subsection{Kerentanan Aritmatika}
-\textbf{Numerical Overflow/Underflow} terjadi ketika nilai melampaui kapasitas tipe data. Misalnya, signed integer 32-bit hanya dapat menampung nilai maksimal sekitar 2,14 miliar. Jika nilai ini ditambah 1, terjadi wrap-around menjadi bilangan negatif. Interpreter harus mendeteksi operasi yang akan melampaui batas dan menghentikan program dengan \texttt{OverflowError} atau \texttt{UnderflowError}.
+\textbf{Numerical Overflow atau Underflow} terjadi ketika nilai melampaui kapasitas tipe data. Misalnya, signed integer 32-bit hanya dapat menampung nilai maksimal sekitar 2,14 miliar. Jika nilai ini ditambah 1, terjadi wrap-around menjadi bilangan negatif. Interpreter harus mendeteksi operasi yang akan melampaui batas dan menghentikan program dengan \texttt{OverflowError} atau \texttt{UnderflowError}.

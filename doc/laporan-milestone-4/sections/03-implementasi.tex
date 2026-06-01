@@ -38,13 +38,7 @@ Setelah parse tree tersedia, program menjalankan \texttt{ASTBuilder} untuk membe
 \end{figure}
 
 \section{Struktur Direktori Program}
-Bagian Milestone 4 terutama berada pada direktori \texttt{src/codegen/} dan \texttt{src/interpreter/}. Berkas utama yang digunakan adalah sebagai berikut.
-
-\begin{itemize}
-    \item \texttt{intermediate\_code.h} dan \texttt{intermediate\_code.cpp}: definisi instruction set, intermediate code generator, dan konversi decorated AST menjadi daftar instruksi.
-    \item \texttt{interpreter.h} dan \texttt{interpreter.cpp}: implementasi virtual machine dengan siklus fetch-decode-execute, stack management, dan eksekusi instruksi.
-    \item \texttt{runtime\_value.h} dan \texttt{runtime\_value.cpp}: representasi nilai runtime menggunakan \texttt{std::variant} untuk mendukung \texttt{int}, \texttt{double}, \texttt{char}, \texttt{bool}, dan \texttt{std::string}.
-\end{itemize}
+Bagian Milestone 4 terutama berada pada direktori \texttt{src/codegen/} dan \texttt{src/interpreter/}. Berkas utama yang digunakan adalah \texttt{intermediate\_code.h} dan \texttt{intermediate\_code.cpp} yang berisi definisi instruction set, intermediate code generator, dan konversi decorated AST menjadi daftar instruksi. Berkas \texttt{interpreter.h} dan \texttt{interpreter.cpp} mengimplementasikan virtual machine dengan siklus fetch-decode-execute, stack management, dan eksekusi instruksi. Berkas \texttt{runtime\_value.h} dan \texttt{runtime\_value.cpp} menyediakan representasi nilai runtime menggunakan \texttt{std::variant} untuk mendukung \texttt{int}, \texttt{double}, \texttt{char}, \texttt{bool}, dan \texttt{std::string}.
 
 \section{Implementasi Intermediate Code Generator}
 Intermediate code generator diimplementasikan pada class \texttt{CodeGen::IntermediateCodeGenerator}. Fungsi utama \texttt{generate} menerima \texttt{ProgramNode} dari decorated AST dan \texttt{SymbolTable} hasil semantic analysis, kemudian menghasilkan \texttt{Result} yang berisi daftar instruksi dan error (jika ada).
@@ -55,16 +49,7 @@ Generator bekerja secara top-down, mengunjungi setiap node AST dan mengeluarkan 
 Fungsi \texttt{initialFrameSize} menghitung ukuran frame awal berdasarkan informasi \texttt{btab} dari program. Frame size meliputi \texttt{kFrameHeaderSize} (3 slot untuk static link, dynamic link, dan return address) ditambah jumlah parameter \texttt{(psze)} dan variabel lokal \texttt{(vsze)}. Instruksi \texttt{INT} pertama yang dihasilkan adalah \texttt{INT 0 frameSize}.
 
 \subsection{Translasi Statement}
-Setiap jenis statement memiliki fungsi \texttt{visit} sendiri.
-
-\begin{itemize}
-    \item \textbf{Assignment:} Generator mengevaluasi ekspresi value terlebih dahulu, lalu memanggil \texttt{emitStore} untuk target. Target dapat berupa variabel sederhana atau array access.
-    \item \textbf{If:} Kondisi dievaluasi, diikuti \texttt{JPC} ke label else/end. Blok then diterjemahkan, lalu \texttt{JMP} ke end. Jika ada else, blok else diterjemahkan, lalu label end dipasang.
-    \item \textbf{While:} Label loop start dipasang, kondisi dievaluasi, \texttt{JPC} ke end, body diterjemahkan, \texttt{JMP} kembali ke start, lalu label end dipasang.
-    \item \textbf{Repeat:} Label loop start dipasang, body diterjemahkan, kondisi dievaluasi, \texttt{JPC} kembali ke start.
-    \item \textbf{For:} Variabel loop diinisialisasi dengan start expression. Label loop start dipasang, variabel loop dan end expression dievaluasi, dibandingkan dengan \texttt{LEQ} atau \texttt{GEQ}, \texttt{JPC} ke end, body diterjemahkan, variabel loop diincrement/decrement, \texttt{JMP} kembali ke start, lalu label end dipasang.
-    \item \textbf{Case:} Untuk setiap branch, selector dan label dievaluasi, dibandingkan dengan \texttt{EQL}, \texttt{JPC} ke label berikutnya jika tidak cocok. Jika cocok, eksekusi jatuh ke body branch. Setelah body, \texttt{JMP} ke end case. Semua \texttt{JMP} ke end di-backpatch setelah seluruh branch diproses.
-\end{itemize}
+Setiap jenis statement memiliki fungsi \texttt{visit} sendiri. Untuk \textbf{Assignment}, generator mengevaluasi ekspresi value terlebih dahulu, lalu memanggil \texttt{emitStore} untuk target. Target dapat berupa variabel sederhana atau array access. Untuk \textbf{If}, kondisi dievaluasi, diikuti \texttt{JPC} ke label else atau end. Blok then diterjemahkan, lalu \texttt{JMP} ke end. Jika ada else, blok else diterjemahkan, lalu label end dipasang. Untuk \textbf{While}, label loop start dipasang, kondisi dievaluasi, \texttt{JPC} ke end, body diterjemahkan, \texttt{JMP} kembali ke start, lalu label end dipasang. Untuk \textbf{Repeat}, label loop start dipasang, body diterjemahkan, kondisi dievaluasi, \texttt{JPC} kembali ke start. Untuk \textbf{For}, variabel loop diinisialisasi dengan start expression. Label loop start dipasang, variabel loop dan end expression dievaluasi, dibandingkan dengan \texttt{LEQ} atau \texttt{GEQ}, \texttt{JPC} ke end, body diterjemahkan, variabel loop diincrement atau decrement, \texttt{JMP} kembali ke start, lalu label end dipasang. Untuk \textbf{Case}, pada setiap branch selector dan label dievaluasi, dibandingkan dengan \texttt{EQL}, \texttt{JPC} ke label berikutnya jika tidak cocok. Jika cocok, eksekusi jatuh ke body branch. Setelah body, \texttt{JMP} ke end case. Semua \texttt{JMP} ke end di-backpatch setelah seluruh branch diproses.
 
 \subsection{Translasi Ekspresi}
 Ekspresi diterjemahkan secara rekursif. Literal integer, real, char, string, dan Boolean menghasilkan \texttt{LIT}. Variabel menghasilkan \texttt{LOD}. Array access dengan satu atau dua dimensi menghasilkan \texttt{ALOD} dengan operand yang menyimpan metadata dimensi. Operator biner menghasilkan evaluasi kedua operand diikuti \texttt{OPR}. Unary minus menghasilkan evaluasi operand diikuti \texttt{OPR NEG}.
@@ -111,15 +96,7 @@ Untuk instruksi \texttt{INT} dengan nilai negatif, interpreter menyusutkan stack
 Instruksi \texttt{CAL} membuat frame baru dengan menyimpan static link, dynamic link, dan return address. Static link dihitung berdasarkan lexical level delta. Dynamic link adalah \texttt{bp} saat ini. Return address adalah \texttt{ip + 1}. Instruksi \texttt{RET} memulihkan \texttt{ip} dari return address, \texttt{bp} dari dynamic link, dan menghapus frame saat ini.
 
 \subsection{Validasi Keamanan}
-Interpreter memvalidasi target jump sebelum eksekusi dimulai untuk memastikan semua \texttt{JMP}, \texttt{JPC}, dan \texttt{CAL} menunjuk ke alamat yang valid. Selama eksekusi, interpreter juga memvalidasi:
-
-\begin{itemize}
-    \item Akses stack tidak out-of-bounds untuk \texttt{LOD} dan \texttt{STO}.
-    \item Penulisan ke slot frame header dilindungi (\texttt{isProtectedFrameSlot}).
-    \item Operasi aritmatika tidak menyebabkan overflow/underflow menggunakan \texttt{checkedAdd}, \texttt{checkedSub}, \texttt{checkedMul}, dan \texttt{checkedNeg}.
-    \item Pembagian dan modulo tidak membagi dengan nol.
-    \item Kedalaman stack tidak melebihi batas maksimum untuk mencegah stack overflow.
-\end{itemize}
+Interpreter memvalidasi target jump sebelum eksekusi dimulai untuk memastikan semua \texttt{JMP}, \texttt{JPC}, dan \texttt{CAL} menunjuk ke alamat yang valid. Selama eksekusi, interpreter juga memvalidasi akses stack agar tidak out-of-bounds untuk \texttt{LOD} dan \texttt{STO}, melindungi penulisan ke slot frame header melalui \texttt{isProtectedFrameSlot}, memeriksa operasi aritmatika agar tidak menyebabkan overflow atau underflow menggunakan \texttt{checkedAdd}, \texttt{checkedSub}, \texttt{checkedMul}, dan \texttt{checkedNeg}, menjamin pembagian dan modulo tidak membagi dengan nol, serta memastikan kedalaman stack tidak melebihi batas maksimum untuk mencegah stack overflow.
 
 \section{Format Output}
 Output program Milestone 4 terdiri dari tujuh bagian: \texttt{tab}, \texttt{btab}, \texttt{atab}, parse tree, decorated AST, intermediate code, dan interpreter output (atau interpreter errors jika terjadi runtime error). Intermediate code ditampilkan dalam format baris demi baris dengan nomor instruksi, opcode, level, dan operand. Interpreter output menampilkan hasil eksekusi program, termasuk nilai yang ditulis oleh \texttt{writeln}.
