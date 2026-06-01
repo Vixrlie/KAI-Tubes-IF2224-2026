@@ -455,23 +455,6 @@ namespace CodeGen
         const std::size_t instructionBase = instructions.size();
         const std::size_t errorBase = errors.size();
 
-        int frameSize = kFrameHeaderSize;
-        if (symbols)
-        {
-            int blockIndex = node->annotation.blockIndex;
-            const auto &btab = symbols->btab();
-            if (blockIndex >= 0 && blockIndex < static_cast<int>(btab.size()))
-            {
-                const Semantic::BtabEntry &block = btab[blockIndex];
-                frameSize = kFrameHeaderSize + block.psze + block.vsze;
-            }
-        }
-
-        const int tempEndOffset = frameSize;
-
-        // Reserve one temporary slot for the upper bound so it is evaluated once.
-        emit(OpCode::INT, 0, 1);
-
         // Initialize loop variable with start expression
         int varTabIndex = -1;
         if (symbols)
@@ -512,17 +495,9 @@ namespace CodeGen
             }
         }
 
-        // Evaluate the upper bound once and store it in the temporary slot.
-        if (node->endExpr)
-        {
-            visitExpression(node->endExpr.get());
-            emit(OpCode::STO, 0, tempEndOffset);
-        }
-
         int loopStart = static_cast<int>(instructions.size());
 
         // Condition: compare loop var with end expression
-        // Load loop variable and end expression then compare
         if (varTabIndex >= 0)
         {
             const Semantic::TabEntry *entry = lookupEntry(varTabIndex);
@@ -540,7 +515,10 @@ namespace CodeGen
             }
         }
 
-        emit(OpCode::LOD, 0, tempEndOffset);
+        if (node->endExpr)
+        {
+            visitExpression(node->endExpr.get());
+        }
 
         // Emit comparison: if downTo then var >= end else var <= end
         int cmpTypeClass = typeClassFromBasicType(Semantic::BasicType::INTEGER);
@@ -587,9 +565,6 @@ namespace CodeGen
         // Jump back to start
         emit(OpCode::JMP, 0, loopStart);
 
-        // Release the temporary upper-bound slot.
-        emit(OpCode::INT, 0, -1);
-
         // Backpatch exit point
         instructions[jpcIndex].operand = static_cast<int>(instructions.size());
 
@@ -609,7 +584,7 @@ namespace CodeGen
         const std::size_t instructionBase = instructions.size();
         const std::size_t errorBase = errors.size();
 
-        int endJump = -1;
+        std::vector<int> endJumps;
         std::vector<int> jumpToNextTest;
 
         // For each branch, create tests for each label. If a label matches, fall through to body.
@@ -642,10 +617,8 @@ namespace CodeGen
             // After body, jump to end
             int jmpToEnd = static_cast<int>(instructions.size());
             emit(OpCode::JMP, 0, 0);
-            if (endJump < 0)
-            {
-                endJump = jmpToEnd;
-            }
+            endJumps.push_back(jmpToEnd);
+
             // backpatch the JPCs for labels in this branch to point to next test (current pc)
             for (int idx : jumpToNextTest)
             {
@@ -657,10 +630,13 @@ namespace CodeGen
             jumpToNextTest.clear();
         }
 
-        // backpatch final endJump targets to point after case
-        if (endJump >= 0 && endJump < static_cast<int>(instructions.size()))
+        // backpatch all endJump targets to point after case
+        for (int idx : endJumps)
         {
-            instructions[endJump].operand = static_cast<int>(instructions.size());
+            if (idx >= 0 && idx < static_cast<int>(instructions.size()))
+            {
+                instructions[idx].operand = static_cast<int>(instructions.size());
+            }
         }
 
         if (errors.size() > errorBase)
