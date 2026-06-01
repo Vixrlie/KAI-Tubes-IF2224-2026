@@ -1,0 +1,15 @@
+program IfElse;
+var x, y: integer;
+begin
+  x := 5;
+  y := 10;
+  if x > 0 then
+  begin
+    if y > 5 then
+      writeln(1)
+    else
+      writeln(2);
+  end
+  else
+    writeln(3);
+end.

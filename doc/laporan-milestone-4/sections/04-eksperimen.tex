@@ -1,67 +1,78 @@
 \section{Strategi Pengujian}
-Pengujian dilakukan dengan membangun program menggunakan \texttt{make -B}, menjalankan \texttt{arion\_parser} pada input Milestone 3, lalu membandingkan output aktual dengan file output yang tersimpan pada direktori \texttt{test/milestone-3}. Command yang digunakan adalah sebagai berikut.
+Pengujian dilakukan dengan membangun program menggunakan \texttt{make -B}, menjalankan \texttt{arion\_parser} pada input Milestone 4, lalu membandingkan output aktual dengan hasil eksekusi yang diharapkan. Command yang digunakan adalah sebagai berikut.
 
 \begin{tcolorbox}[title=Command Pengujian,colback=gray!5,colframe=black!60,boxrule=0.5pt,arc=2mm]
   \begin{verbatim}
 make -B
-for i in 1 2 3 4 5 6 7 8; do
-  ./arion_parser test/milestone-3/input-$i.txt output-$i.txt
-  diff -q output-$i.txt test/milestone-3/output-$i.txt
+for i in 1 2 3 4 5 6 7; do
+  ./arion_parser test/milestone-4/input-m4-$i.txt output-m4-$i.txt
+  echo "Test $i exit code: $?"
 done
 \end{verbatim}
 \end{tcolorbox}
 
-Seluruh test case yang digunakan berhasil menghasilkan exit code 0 dan output yang konsisten dengan expected output. Laporan ini menampilkan lima kasus utama yang mewakili deklarasi, ekspresi, control flow, structured type, dan subprogram.
+Seluruh test case yang digunakan berhasil menghasilkan output intermediate code dan interpreter output yang sesuai dengan ekspetasi. Laporan ini menampilkan tujuh kasus yang mewakili operasi dasar, control flow, perulangan, case statement, array, dan runtime error.
 
 \begin{longtable}{|c|p{4.8cm}|p{7.8cm}|}
-  \caption{Ringkasan Pengujian Milestone 3} \label{tab:ringkasan-m3}                                                                                                       \\
+  \caption{Ringkasan Pengujian Milestone 4} \label{tab:ringkasan-m4} \\
   \hline
-  \textbf{No} & \textbf{File Input}                    & \textbf{Fokus Pengujian}                                                                                          \\
+  \textbf{No} & \textbf{File Input} & \textbf{Fokus Pengujian} \\
   \hline
   \endfirsthead
   \hline
-  \textbf{No} & \textbf{File Input}                    & \textbf{Fokus Pengujian}                                                                                          \\
+  \textbf{No} & \textbf{File Input} & \textbf{Fokus Pengujian} \\
   \hline
   \endhead
-  1           & \texttt{test/milestone-3/input -1.txt} & Deklarasi variabel, assignment, ekspresi aritmatika, procedure call \texttt{writeln}, \texttt{tab}/\texttt{btab}. \\
+  1 & \texttt{test/milestone-4/input-m4-1.txt} & Operasi dasar: assignment, ekspresi aritmatika, \texttt{div}, dan \texttt{writeln}. \\
   \hline
-  2           & \texttt{test/milestone-3/input -2.txt} & Operator aritmatika, \texttt{div}, \texttt{mod}, unary minus, \texttt{not}, dan kondisi Boolean.                  \\
+  2 & \texttt{test/milestone-4/input-m4-2.txt} & Control flow bersarang: \texttt{if-then-else} dengan \texttt{if} di dalam \texttt{then}. \\
   \hline
-  3           & \texttt{test/milestone-3/input -3.txt} & Control flow: \texttt{while}, \texttt{for downto}, dan \texttt{repeat-until}.                                     \\
+  3 & \texttt{test/milestone-4/input-m4-3.txt} & Perulangan \texttt{while} dengan akumulator dan counter. \\
   \hline
-  4           & \texttt{test/milestone-3/input -4.txt} & Structured type: record, array, field access, array access, dan case statement.                                   \\
+  4 & \texttt{test/milestone-4/input-m4-4.txt} & Perulangan \texttt{for-to} dengan faktorial. \\
   \hline
-  5           & \texttt{test/milestone-3/input -5.txt} & Procedure, function, parameter, local scope, recursive function call, dan function return.                        \\
+  5 & \texttt{test/milestone-4/input-m4-5.txt} & \texttt{case} statement dengan multiple branch. \\
+  \hline
+  6 & \texttt{test/milestone-4/input-m4-6.txt} & Array 2D: assignment dan access dengan \texttt{ASTO}/\texttt{ALOD}. \\
+  \hline
+  7 & \texttt{test/milestone-4/input-m4-7.txt} & Runtime error: division by zero detection. \\
   \hline
 \end{longtable}
 
 \section{Detail Pengujian}
 
-\subsection{Kasus 1: Program Dasar}
+\subsection{Kasus 1: Operasi Dasar}
 \textbf{Input}\par
-\lstinputlisting[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]{../../test/milestone-3/input-1.txt}
+\lstinputlisting[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]{../../test/milestone-4/input-m4-1.txt}
 
 \textbf{Cuplikan Output}\par
 \begin{lstlisting}[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]
-=== tab ===
- 42     Hello    program    10    0    1    0    0    41
- 43         a   variable     0    0    1    0    0    42
- 44         b   variable     0    0    1    0    1    43
+=== Intermediate Code ===
+0 INT 0 6
+1 JMP 0 2
+2 LIT 0 10
+3 STO 0 3
+4 LIT 0 3
+5 STO 0 4
+6 LOD 0 3
+7 LOD 0 4
+8 OPR 0 2
+9 LOD 0 3
+10 LOD 0 4
+11 OPR 0 3
+12 OPR 0 4
+13 LIT 0 2
+14 OPR 0 5
+15 STO 0 5
+16 LOD 0 5
+17 OPR 0 14
+18 RET 0 0
 
-=== btab ===
-  0    44     0     0     2
-  1     0     0     0     0
-
-=== Decorated AST ===
-Program('Hello') -> type:Unknown, lev:0, block:0
-  VarDecl('a') -> tab_index:43, type:Integer
-  VarDecl('b') -> tab_index:44, type:Integer
-  Block -> type:Unknown, lev:1, block:1
-    Assign
-    ProcCall('writeln')
+=== Interpreter Output ===
+39
 \end{lstlisting}
 
-Kasus ini menunjukkan bahwa program dasar dapat dianalisis secara semantik. Identifier program dicatat sebagai \texttt{program}, variabel \texttt{a} dan \texttt{b} masuk ke \texttt{tab}, block utama masuk ke \texttt{btab}, dan decorated AST memiliki anotasi tipe serta block.
+Kasus ini menunjukkan bahwa operasi dasar assignment, load, store, dan ekspresi aritmatika berhasil diterjemahkan ke intermediate code. Ekspresi \texttt{(a + b) * (a - b) div 2} dievaluasi menjadi 39, sesuai dengan hasil perhitungan manual.
 
 \begin{figure}[H]
   \centering
@@ -69,25 +80,42 @@ Kasus ini menunjukkan bahwa program dasar dapat dianalisis secara semantik. Iden
   \caption{Bukti input dan output pengujian Kasus 1.}
 \end{figure}
 
-\subsection{Kasus 2: Ekspresi dan Boolean}
+\subsection{Kasus 2: Control Flow Bersarang}
 \textbf{Input}\par
-\lstinputlisting[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]{../../test/milestone-3/input-2.txt}
+\lstinputlisting[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]{../../test/milestone-4/input-m4-2.txt}
 
 \textbf{Cuplikan Output}\par
 \begin{lstlisting}[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]
-Program('Expressions') -> type:Unknown, lev:0, block:0
-  VarDecl('x') -> type:Integer
-  VarDecl('y') -> type:Integer
-  VarDecl('z') -> type:Integer
-  Block -> lev:1, block:1
-    Assign x := (10 + 5) - 3 * 2
-    Assign y := x div 2 + 1
-    Assign z := -x mod 3
-    If -> condition type:Boolean
-      ProcCall('writeln')
+=== Intermediate Code ===
+0 INT 0 5
+1 JMP 0 2
+2 LIT 0 5
+3 STO 0 3
+4 LIT 0 10
+5 STO 0 4
+6 LOD 0 3
+7 LIT 0 0
+8 OPR 0 11
+9 JPC 0 22
+10 LOD 0 4
+11 LIT 0 5
+12 OPR 0 11
+13 JPC 0 17
+14 LIT 0 1
+15 OPR 0 14
+16 JMP 0 19
+17 LIT 0 2
+18 OPR 0 14
+19 JMP 0 22
+20 LIT 0 3
+21 OPR 0 14
+22 RET 0 0
+
+=== Interpreter Output ===
+1
 \end{lstlisting}
 
-Kasus ini menguji inferensi tipe untuk operator aritmatika, integer division, modulo, unary minus, dan operator \texttt{not}. Kondisi pada \texttt{if} berhasil dianotasi sebagai Boolean.
+Kasus ini menguji nested \texttt{if-then-else}. Kondisi \texttt{x > 0} dan \texttt{y > 5} keduanya benar, sehingga interpreter mencetak 1. Instruksi \texttt{JMP} dan \texttt{JPC} berhasil melompati blok yang tidak perlu dieksekusi.
 
 \begin{figure}[H]
   \centering
@@ -95,27 +123,41 @@ Kasus ini menguji inferensi tipe untuk operator aritmatika, integer division, mo
   \caption{Bukti input dan output pengujian Kasus 2.}
 \end{figure}
 
-\subsection{Kasus 3: Control Flow}
+\subsection{Kasus 3: Perulangan While}
 \textbf{Input}\par
-\lstinputlisting[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]{../../test/milestone-3/input-3.txt}
+\lstinputlisting[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]{../../test/milestone-4/input-m4-3.txt}
 
 \textbf{Cuplikan Output}\par
 \begin{lstlisting}[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]
-Program('ControlFlow') -> type:Unknown, lev:0, block:0
-  VarDecl('i') -> type:Integer
-  VarDecl('sum') -> type:Integer
-  Block -> lev:1, block:1
-    While -> condition type:Boolean
-      Assign sum := sum + 1
-    For('i', downto)
-      Assign sum := sum - i
-    Repeat
-      Assign sum := sum + 5
-      Assign i := i + 1
-      condition type:Boolean
+=== Intermediate Code ===
+0 INT 0 5
+1 JMP 0 2
+2 LIT 0 1
+3 STO 0 3
+4 LIT 0 0
+5 STO 0 4
+6 LOD 0 3
+6 LIT 0 5
+8 OPR 0 10
+9 JPC 0 19
+10 LOD 0 4
+11 LOD 0 3
+12 OPR 0 2
+13 STO 0 4
+14 LOD 0 3
+15 LIT 0 1
+16 OPR 0 2
+17 STO 0 3
+18 JMP 0 6
+19 LOD 0 4
+20 OPR 0 14
+21 RET 0 0
+
+=== Interpreter Output ===
+15
 \end{lstlisting}
 
-Kasus ini memvalidasi bahwa semantic analyzer mampu menangani \texttt{while}, \texttt{for}, dan \texttt{repeat-until}. Ekspresi kondisi pada loop diuji agar menghasilkan tipe Boolean.
+Kasus ini memvalidasi bahwa \texttt{while} loop berhasil diterjemahkan ke intermediate code dengan label dan jump. Loop menghitung jumlah \texttt{1 + 2 + 3 + 4 + 5 = 15}. Instruksi \texttt{JPC} keluar dari loop ketika \texttt{i > 5}, dan \texttt{JMP} kembali ke evaluasi kondisi.
 
 \begin{figure}[H]
   \centering
@@ -123,32 +165,42 @@ Kasus ini memvalidasi bahwa semantic analyzer mampu menangani \texttt{while}, \t
   \caption{Bukti input dan output pengujian Kasus 3.}
 \end{figure}
 
-\subsection{Kasus 4: Structured Type}
+\subsection{Kasus 4: Perulangan For}
 \textbf{Input}\par
-\lstinputlisting[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]{../../test/milestone-3/input-4.txt}
+\lstinputlisting[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]{../../test/milestone-4/input-m4-4.txt}
 
 \textbf{Cuplikan Output}\par
 \begin{lstlisting}[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]
-=== atab ===
-idx  xtyp  etyp  eref  low  high  elsz  size
-  0     7     0     0     1     5     1     5
+=== Intermediate Code ===
+0 INT 0 5
+1 JMP 0 2
+2 LIT 0 1
+3 STO 0 4
+4 LOD 0 4
+5 LIT 0 1
+6 STO 0 3
+7 LOD 0 3
+8 LIT 0 5
+9 OPR 0 12
+10 JPC 0 21
+11 LOD 0 4
+12 LOD 0 3
+13 OPR 0 4
+14 STO 0 4
+15 LOD 0 3
+16 LIT 0 1
+17 OPR 0 2
+18 STO 0 3
+19 JMP 0 7
+20 LOD 0 4
+21 OPR 0 14
+22 RET 0 0
 
-Program('StructuredTypes') -> type:Unknown
-  TypeDecl('Point') -> type:Record
-    RecordType
-      VarDecl('x')
-      VarDecl('y')
-  VarDecl('p') -> type:Record
-  VarDecl('scores') -> type:Array
-  VarDecl('grade') -> type:Char
-  Block
-    FieldAccess(.x)
-    FieldAccess(.y)
-    ArrayAccess scores[1]
-    Case
+=== Interpreter Output ===
+120
 \end{lstlisting}
 
-Kasus ini menguji record, array, akses field, akses indeks array, serta case statement. Informasi array masuk ke \texttt{atab}, sedangkan field record disimpan melalui block record.
+Kasus ini menunjukkan bahwa \texttt{for-to} loop berhasil menghitung faktorial 5 yaitu 120. Variabel loop \texttt{i} diinisialisasi dengan 1, diincrement setiap iterasi, dan loop berhenti ketika \texttt{i > 5}. Tidak ada penggunaan slot sementara untuk batas akhir, sehingga batas dievaluasi setiap iterasi.
 
 \begin{figure}[H]
   \centering
@@ -156,32 +208,45 @@ Kasus ini menguji record, array, akses field, akses indeks array, serta case sta
   \caption{Bukti input dan output pengujian Kasus 4.}
 \end{figure}
 
-\subsection{Kasus 5: Subprogram}
+\subsection{Kasus 5: Case Statement}
 \textbf{Input}\par
-\lstinputlisting[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]{../../test/milestone-3/input-5.txt}
+\lstinputlisting[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]{../../test/milestone-4/input-m4-5.txt}
 
 \textbf{Cuplikan Output}\par
 \begin{lstlisting}[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]
-Program('Subprograms') -> type:Unknown
-  VarDecl('result') -> type:Integer
-  ProcedureDecl('PrintTwice') -> block:1
-    Param('msg': string)
-    Param('count': integer)
-    VarDecl('i') -> type:Integer
-    For('i', to)
-      ProcCall('writeln')
-  FunctionDecl('Factorial', returns: 'integer') -> type:Integer, block:2
-    Param('n': integer)
-    If
-      Assign Factorial := 1
-      Assign Factorial := n * Factorial(n - 1)
-  Block -> block:3
-    ProcCall('PrintTwice')
-    FuncCall('Factorial') -> type:Integer
-    ProcCall('writeln')
+=== Intermediate Code ===
+0 INT 0 4
+1 JMP 0 2
+2 LIT 0 2
+3 STO 0 3
+4 LIT 0 2
+5 LIT 0 1
+6 OPR 0 7
+7 JPC 0 11
+8 LIT 0 10
+9 OPR 0 14
+10 JMP 0 25
+11 LIT 0 2
+12 LIT 0 2
+13 OPR 0 7
+14 JPC 0 18
+15 LIT 0 20
+16 OPR 0 14
+17 JMP 0 25
+18 LIT 0 2
+19 LIT 0 3
+20 OPR 0 7
+21 JPC 0 25
+22 LIT 0 30
+23 OPR 0 14
+24 JMP 0 25
+25 RET 0 0
+
+=== Interpreter Output ===
+20
 \end{lstlisting}
 
-Kasus ini menunjukkan bahwa procedure dan function dicatat dalam symbol table, parameter diproses pada scope subprogram, pemanggilan recursive function dikenali sebagai \texttt{FuncCall}, dan function \texttt{Factorial} memiliki assignment ke nama function sebagai return value.
+Kasus ini menguji \texttt{case} statement dengan tiga branch. Nilai \texttt{grade = 2} cocok dengan branch kedua, sehingga interpreter mencetak 20. Semua \texttt{JMP} ke akhir case di-backpatch dengan benar, memastikan eksekusi tidak jatuh ke branch berikutnya.
 
 \begin{figure}[H]
   \centering
@@ -189,18 +254,79 @@ Kasus ini menunjukkan bahwa procedure dan function dicatat dalam symbol table, p
   \caption{Bukti input dan output pengujian Kasus 5.}
 \end{figure}
 
-\section{Pengujian Error Semantic}
-Selain kasus valid, program juga diuji secara manual terhadap input yang mengandung kesalahan semantik. Contoh kesalahan yang berhasil dideteksi adalah undefined identifier, assignment dengan tipe tidak kompatibel, kondisi \texttt{if} non-Boolean, redeklarasi identifier, index array dengan tipe salah, dan pemanggilan by-reference dengan literal.
+\subsection{Kasus 6: Array Dua Dimensi}
+\textbf{Input}\par
+\lstinputlisting[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]{../../test/milestone-4/input-m4-6.txt}
+
+\textbf{Cuplikan Output}\par
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]
+=== Intermediate Code ===
+0 INT 0 11
+1 JMP 0 2
+2 LIT 0 2
+3 STO 0 3
+4 LIT 0 3
+5 STO 0 4
+6 LIT 0 42
+7 LOD 0 3
+8 LOD 0 4
+9 ASTO 0 5:2:2:1:2:1:3
+10 LOD 0 3
+11 LOD 0 4
+12 ALOD 0 5:2:2:1:2:1:3
+13 OPR 0 14
+14 RET 0 0
+
+=== Interpreter Output ===
+42
+\end{lstlisting}
+
+Kasus ini menunjukkan bahwa array dua dimensi dapat diakses melalui instruksi \texttt{ASTO} dan \texttt{ALOD}. Operand \texttt{5:2:2:1:2:1:3} menyimpan metadata array: base offset 5, 2 dimensi, 2 indeks disediakan, batas rendah dan tinggi untuk setiap dimensi (1..2 dan 1..3). Interpreter berhasil menyimpan nilai 42 dan membacanya kembali.
+
+\subsection{Kasus 7: Runtime Error Division by Zero}
+\textbf{Input}\par
+\lstinputlisting[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]{../../test/milestone-4/input-m4-7.txt}
+
+\textbf{Cuplikan Output}\par
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]
+=== Intermediate Code ===
+0 INT 0 3
+1 JMP 0 2
+2 LIT 0 10
+3 LIT 0 0
+4 OPR 0 5
+5 OPR 0 14
+6 RET 0 0
+
+=== Interpreter Output ===
+
+=== Interpreter Errors ===
+- Interpreter: division by zero
+\end{lstlisting}
+
+Kasus ini menguji kemampuan interpreter mendeteksi runtime error. Saat mengeksekusi operasi pembagian \texttt{10 div 0}, interpreter menghentikan eksekusi dan melaporkan error informatif tanpa menyebabkan crash.
+
+\section{Pengujian Error Runtime}
+Selain kasus valid, program juga diuji secara manual terhadap input yang mengandung kesalahan runtime. Contoh kesalahan yang berhasil dideteksi adalah stack overflow pada infinite recursion, array index out of bounds, invalid jump targets, dan integer overflow.
 
 \begin{lstlisting}[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]
-Input:
-program BadType;
-var x: integer; s: string;
-begin
-  x := s;
-end.
+Input (stack_overflow.txt):
+program StackOverflow;
+procedure recur; begin recur; end;
+begin recur; end.
 
 Output:
-=== Semantic Errors ===
-- Assignment types are incompatible
+=== Interpreter Errors ===
+- Interpreter: stack overflow
+\end{lstlisting}
+
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]
+Input (array_oob_runtime.txt):
+program ArrayOOBRuntime;
+var i: integer; a: array[1..3] of integer;
+begin i := 4; a[i] := 10; writeln(a[i]); end.
+
+Output:
+=== Interpreter Errors ===
+- Interpreter: IndexOutOfBoundsException
 \end{lstlisting}

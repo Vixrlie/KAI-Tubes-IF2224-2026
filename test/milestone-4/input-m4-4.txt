@@ -1,0 +1,10 @@
+program ForLoop;
+var i, fact: integer;
+begin
+  fact := 1;
+  for i := 1 to 5 do
+  begin
+    fact := fact * i;
+  end;
+  writeln(fact);
+end.

@@ -12,9 +12,9 @@
         \toprule
         \textbf{No} & \textbf{Nama Lengkap} & \textbf{NIM} & \textbf{Deskripsi Pekerjaan} & \textbf{Kontribusi} \\
         \midrule
-        1 & Jonathan Kris Wicaksono & 13524023 & AST: merancang node hierarchy AST, Syntax-Directed Translation untuk konversi parse tree ke AST, dan AST formatter untuk output Decorated AST. & 25\% \\
-        2 & Vincent Rionarlie & 13524031 & Semantic Analyzer: implementasi visit functions untuk setiap node, type checking dan compatibility rules, inferensi tipe, anotasi node AST, dan control flow validation. & 25\% \\
-        3 & Muhammad Aufar Rizqi Kusuma & 13524061 & Symbol Table: implementasi \texttt{tab}, \texttt{btab}, \texttt{atab}, manajemen scope push/pop, registrasi dan lookup identifier, serta inisialisasi predefined identifier. & 25\% \\
+        1 & Jonathan Kris Wicaksono & 13524023 & Intermediate Code Generator: merancang instruction set, konversi decorated AST ke TAC, translasi control flow, backpatching, dan integrasi pipeline. & 25\% \\
+        2 & Vincent Rionarlie & 13524031 & Interpreter: implementasi stack machine, siklus fetch-decode-execute, frame management, dan eksekusi seluruh instruction set. & 25\% \\
+        3 & Muhammad Aufar Rizqi Kusuma & 13524061 & Runtime Security: implementasi deteksi stack overflow, out-of-bounds access, invalid jump targets, numerical overflow, dan stack smashing protection. & 25\% \\
         4 & Bryan Pratama Putra Hendra & 13524067 & Laporan dan README: penulisan laporan lengkap dan README, penyusunan bagian teori, serta quality assurance. & 25\% \\
         \bottomrule
     \end{tabularx}
@@ -23,6 +23,6 @@
 \section{Cara Menjalankan Program}
 \begin{lstlisting}[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]
 make -B
-make run INPUT=test/milestone-3/input-1.txt
-make run-output INPUT=test/milestone-3/input-1.txt OUTPUT=output-m3.txt
+make run INPUT=test/milestone-4/input-m4-1.txt
+make run-output INPUT=test/milestone-4/input-m4-1.txt OUTPUT=output-m4.txt
 \end{lstlisting}

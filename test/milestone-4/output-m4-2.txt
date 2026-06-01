@@ -1,0 +1,198 @@
+=== tab ===
+idx  id        obj       type  ref  nrm  lev  adr  link
+-------------------------------------------------------
+...  (reserved words 0-32)
+ 33   Integer       type     0    0    1    0    0     0
+ 34      Real       type     1    0    1    0    0    33
+ 35      Char       type     2    0    1    0    0    34
+ 36   Boolean       type     3    0    1    0    0    35
+ 37    String       type     4    0    1    0    0    36
+ 38      True      const     3    0    1    0    1    37
+ 39     False      const     3    0    1    0    0    38
+ 40   writeln  procedure    10    0    1    0    0    39
+ 41    readln  procedure    10    0    1    0    0    40
+ 42    IfElse    program    10    0    1    0    0    41
+ 43         x   variable     0    0    1    0    0    42
+ 44         y   variable     0    0    1    0    1    43
+
+=== btab ===
+idx  last  lpar  psze  vsze
+---------------------------
+  0    44     0     0     2
+
+=== atab ===
+(empty)
+
+=== Parse Tree ===
+<program>
+├── <program-header>
+│   ├── programsy
+│   ├── ident(IfElse)
+│   └── semicolon
+├── <declaration-part>
+│   └── <var-declaration>
+│       ├── varsy
+│       ├── <identifier-list>
+│       │   ├── ident(x)
+│       │   ├── comma
+│       │   └── ident(y)
+│       ├── colon
+│       ├── <type>
+│       │   └── ident(integer)
+│       └── semicolon
+├── <compound-statement>
+│   ├── beginsy
+│   ├── <statement-list>
+│   │   ├── <statement>
+│   │   │   └── <assignment-statement>
+│   │   │       ├── <variable>
+│   │   │       │   └── ident(x)
+│   │   │       ├── becomes
+│   │   │       └── <expression>
+│   │   │           └── <simple-expression>
+│   │   │               └── <term>
+│   │   │                   └── <factor>
+│   │   │                       └── intcon(5)
+│   │   ├── semicolon
+│   │   ├── <statement>
+│   │   │   └── <assignment-statement>
+│   │   │       ├── <variable>
+│   │   │       │   └── ident(y)
+│   │   │       ├── becomes
+│   │   │       └── <expression>
+│   │   │           └── <simple-expression>
+│   │   │               └── <term>
+│   │   │                   └── <factor>
+│   │   │                       └── intcon(10)
+│   │   ├── semicolon
+│   │   ├── <statement>
+│   │   │   └── <if-statement>
+│   │   │       ├── ifsy
+│   │   │       ├── <expression>
+│   │   │       │   ├── <simple-expression>
+│   │   │       │   │   └── <term>
+│   │   │       │   │       └── <factor>
+│   │   │       │   │           └── ident(x)
+│   │   │       │   ├── <relational-operator>
+│   │   │       │   │   └── gtr
+│   │   │       │   └── <simple-expression>
+│   │   │       │       └── <term>
+│   │   │       │           └── <factor>
+│   │   │       │               └── intcon(0)
+│   │   │       ├── thensy
+│   │   │       ├── <statement>
+│   │   │       │   └── <compound-statement>
+│   │   │       │       ├── beginsy
+│   │   │       │       ├── <statement-list>
+│   │   │       │       │   ├── <statement>
+│   │   │       │       │   │   └── <if-statement>
+│   │   │       │       │   │       ├── ifsy
+│   │   │       │       │   │       ├── <expression>
+│   │   │       │       │   │       │   ├── <simple-expression>
+│   │   │       │       │   │       │   │   └── <term>
+│   │   │       │       │   │       │   │       └── <factor>
+│   │   │       │       │   │       │   │           └── ident(y)
+│   │   │       │       │   │       │   ├── <relational-operator>
+│   │   │       │       │   │       │   │   └── gtr
+│   │   │       │       │   │       │   └── <simple-expression>
+│   │   │       │       │   │       │       └── <term>
+│   │   │       │       │   │       │           └── <factor>
+│   │   │       │       │   │       │               └── intcon(5)
+│   │   │       │       │   │       ├── thensy
+│   │   │       │       │   │       ├── <statement>
+│   │   │       │       │   │       │   └── <procedure/function-call>
+│   │   │       │       │   │       │       ├── ident(writeln)
+│   │   │       │       │   │       │       ├── lparent
+│   │   │       │       │   │       │       ├── <parameter-list>
+│   │   │       │       │   │       │       │   └── <expression>
+│   │   │       │       │   │       │       │       └── <simple-expression>
+│   │   │       │       │   │       │       │           └── <term>
+│   │   │       │       │   │       │       │               └── <factor>
+│   │   │       │       │   │       │       │                   └── intcon(1)
+│   │   │       │       │   │       │       └── rparent
+│   │   │       │       │   │       ├── elsesy
+│   │   │       │       │   │       └── <statement>
+│   │   │       │       │   │           └── <procedure/function-call>
+│   │   │       │       │   │               ├── ident(writeln)
+│   │   │       │       │   │               ├── lparent
+│   │   │       │       │   │               ├── <parameter-list>
+│   │   │       │       │   │               │   └── <expression>
+│   │   │       │       │   │               │       └── <simple-expression>
+│   │   │       │       │   │               │           └── <term>
+│   │   │       │       │   │               │               └── <factor>
+│   │   │       │       │   │               │                   └── intcon(2)
+│   │   │       │       │   │               └── rparent
+│   │   │       │       │   └── semicolon
+│   │   │       │       └── endsy
+│   │   │       ├── elsesy
+│   │   │       └── <statement>
+│   │   │           └── <procedure/function-call>
+│   │   │               ├── ident(writeln)
+│   │   │               ├── lparent
+│   │   │               ├── <parameter-list>
+│   │   │               │   └── <expression>
+│   │   │               │       └── <simple-expression>
+│   │   │               │           └── <term>
+│   │   │               │               └── <factor>
+│   │   │               │                   └── intcon(3)
+│   │   │               └── rparent
+│   │   └── semicolon
+│   └── endsy
+└── period
+
+=== Decorated AST ===
+Program('IfElse')  → type:Unknown, lev:0, block:0
+├── VarDecl('x')  → tab_index:43, type:Integer, lev:0, block:0
+│   └── Type('integer')
+├── VarDecl('y')  → tab_index:44, type:Integer, lev:0, block:0
+│   └── Type('integer')
+└── Block  → type:Unknown, lev:0, block:0
+    ├── Assign  → type:Unknown, lev:0, block:0
+    │   ├── Var('x')  → tab_index:43, type:Integer, lev:0, block:0
+    │   └── Num(5)  → type:Integer, lev:0, block:0
+    ├── Assign  → type:Unknown, lev:0, block:0
+    │   ├── Var('y')  → tab_index:44, type:Integer, lev:0, block:0
+    │   └── Num(10)  → type:Integer, lev:0, block:0
+    └── If  → type:Unknown, lev:0, block:0
+        ├── BinOp('>')  → type:Boolean, lev:0, block:0
+        │   ├── Var('x')  → tab_index:43, type:Integer, lev:0, block:0
+        │   └── Num(0)  → type:Integer, lev:0, block:0
+        ├── Block  → type:Unknown, lev:0, block:0
+        │   └── If  → type:Unknown, lev:0, block:0
+        │       ├── BinOp('>')  → type:Boolean, lev:0, block:0
+        │       │   ├── Var('y')  → tab_index:44, type:Integer, lev:0, block:0
+        │       │   └── Num(5)  → type:Integer, lev:0, block:0
+        │       ├── ProcCall('writeln')  → type:Unknown, lev:0, block:0
+        │       │   └── Num(1)  → type:Integer, lev:0, block:0
+        │       └── ProcCall('writeln')  → type:Unknown, lev:0, block:0
+        │           └── Num(2)  → type:Integer, lev:0, block:0
+        └── ProcCall('writeln')  → type:Unknown, lev:0, block:0
+            └── Num(3)  → type:Integer, lev:0, block:0
+
+=== Intermediate Code ===
+0 INT 0 5
+1 JMP 0 2
+2 LIT 0 5
+3 STO 0 3
+4 LIT 0 10
+5 STO 0 4
+6 LOD 0 3
+7 LIT 0 0
+8 OPR 0 11
+9 JPC 0 20
+10 LOD 0 4
+11 LIT 0 5
+12 OPR 0 11
+13 JPC 0 17
+14 LIT 0 1
+15 OPR 0 14
+16 JMP 0 19
+17 LIT 0 2
+18 OPR 0 14
+19 JMP 0 22
+20 LIT 0 3
+21 OPR 0 14
+22 RET 0 0
+
+=== Interpreter Output ===
+1

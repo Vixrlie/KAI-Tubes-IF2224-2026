@@ -1,0 +1,10 @@
+program CaseStmt;
+var grade: integer;
+begin
+  grade := 2;
+  case grade of
+    1: writeln(10);
+    2: writeln(20);
+    3: writeln(30);
+  end;
+end.
