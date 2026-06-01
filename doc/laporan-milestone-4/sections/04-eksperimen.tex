@@ -286,12 +286,6 @@ Kasus ini menguji \texttt{case} statement dengan tiga branch. Nilai \texttt{grad
 
 Kasus ini menunjukkan bahwa array dua dimensi dapat diakses melalui instruksi \texttt{ASTO} dan \texttt{ALOD}. Operand \texttt{5:2:2:1:2:1:3} menyimpan metadata array: base offset 5, 2 dimensi, 2 indeks disediakan, batas rendah dan tinggi untuk setiap dimensi (1..2 dan 1..3). Interpreter berhasil menyimpan nilai 42 dan membacanya kembali. Bagian Token Stream membuktikan Milestone 1 mengenali token array \texttt{array}, \texttt{of}, dan indeks. Bagian Parse Tree membuktikan Milestone 2 membangun deklarasi array dua dimensi dengan benar. Bagian \texttt{atab} dan Decorated AST membuktikan Milestone 3 menyimpan metadata array termasuk batas indeks. Bagian Intermediate Code dan Interpreter Output membuktikan Milestone 4 berhasil menghasilkan instruksi \texttt{ASTO} dan \texttt{ALOD} serta mengeksekusi akses array dua dimensi.
 
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.95\linewidth]{04-eksperimen/tc6.png}
-  \caption{Bukti input dan output pengujian Kasus 6.}
-\end{figure}
-
 \subsection{Kasus 7: Runtime Error Division by Zero}
 \textbf{Input}\par
 \lstinputlisting[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]{../../test/milestone-4/input-m4-7.txt}
