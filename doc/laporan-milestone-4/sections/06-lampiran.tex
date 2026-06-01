@@ -12,10 +12,10 @@
         \toprule
         \textbf{No} & \textbf{Nama Lengkap} & \textbf{NIM} & \textbf{Deskripsi Pekerjaan} & \textbf{Kontribusi} \\
         \midrule
-        1 & Jonathan Kris Wicaksono & 13524023 & Intermediate Code Generator: merancang instruction set, konversi decorated AST ke TAC, translasi control flow, backpatching, dan integrasi pipeline. & 25\% \\
-        2 & Vincent Rionarlie & 13524031 & Interpreter: implementasi stack machine, siklus fetch-decode-execute, frame management, dan eksekusi seluruh instruction set. & 25\% \\
-        3 & Muhammad Aufar Rizqi Kusuma & 13524061 & Runtime Security: implementasi deteksi stack overflow, out-of-bounds access, invalid jump targets, numerical overflow, dan stack smashing protection. & 25\% \\
-        4 & Bryan Pratama Putra Hendra & 13524067 & Laporan dan README: penulisan laporan lengkap dan README, penyusunan bagian teori, serta quality assurance. & 25\% \\
+        1 & Bryan Pratama Putra Hendra & 13524067 & Revisi dan Intermediate Code Generator. Bertanggung jawab untuk mengeksekusi revisi milestone sebelumnya, sekaligus merancang sistem yang meratakan (flattening) struktur Decorated AST menjadi barisan instruksi Three-Address Code (TAC), termasuk memetakan klasifikasi tipe dan menghasilkan instruksi dasar memori seperti LIT, LOD, STO, dan INT. & 25\% \\
+        2 & Vincent Rionarlie & 13524031 & Interpreter dan Memori Eksekusi. Bertugas membangun arsitektur Interpreter yang beroperasi layaknya Virtual Machine pembaca instruksi TAC, dengan fokus pada pengelolaan memori menggunakan struktur Stack (LIFO), mengatur pembuatan Stack Frame (Static Link, Dynamic Link, Return Address), dan menjalankan siklus Fetch-Decode-Execute. & 25\% \\
+        3 & Muhammad Aufar Rizqi Kusuma & 13524061 & Control Flow, Operasi, dan Keamanan Mesin. Memegang peran untuk mengonversi alur kontrol program (IF-ELSE, WHILE) menjadi instruksi lompatan (JMP, JPC), mengeksekusi operasi bawaan Arion (OPR untuk aritmatika, perbandingan, dan WRTLN), serta membangun sistem proteksi untuk mencegah crash akibat kerentanan seperti Stack Overflow maupun Numerical Overflow. & 25\% \\
+        4 & Jonathan Kris Wicaksono & 13524023 & Pengujian, Laporan, dan Rilis Proyek. Bertanggung jawab menyusun minimal 5 pengujian komprehensif dengan kasus unik beserta bukti tangkapan layarnya, menulis draf laporan PDF secara lengkap (dari landasan teori hingga kesimpulan), serta mengelola peluncuran versi final di repositori GitHub menggunakan format tag rilis yang tepat beserta README. & 25\% \\
         \bottomrule
     \end{tabularx}
 \end{center}
