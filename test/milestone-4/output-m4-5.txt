@@ -1,0 +1,168 @@
+=== tab ===
+idx  id        obj       type  ref  nrm  lev  adr  link
+-------------------------------------------------------
+...  (reserved words 0-32)
+ 33   Integer       type     0    0    1    0    0     0
+ 34      Real       type     1    0    1    0    0    33
+ 35      Char       type     2    0    1    0    0    34
+ 36   Boolean       type     3    0    1    0    0    35
+ 37    String       type     4    0    1    0    0    36
+ 38      True      const     3    0    1    0    1    37
+ 39     False      const     3    0    1    0    0    38
+ 40   writeln  procedure    10    0    1    0    0    39
+ 41    readln  procedure    10    0    1    0    0    40
+ 42  CaseStmt    program    10    0    1    0    0    41
+ 43     grade   variable     0    0    1    0    0    42
+
+=== btab ===
+idx  last  lpar  psze  vsze
+---------------------------
+  0    43     0     0     1
+
+=== atab ===
+(empty)
+
+=== Parse Tree ===
+<program>
+├── <program-header>
+│   ├── programsy
+│   ├── ident(CaseStmt)
+│   └── semicolon
+├── <declaration-part>
+│   └── <var-declaration>
+│       ├── varsy
+│       ├── <identifier-list>
+│       │   └── ident(grade)
+│       ├── colon
+│       ├── <type>
+│       │   └── ident(integer)
+│       └── semicolon
+├── <compound-statement>
+│   ├── beginsy
+│   ├── <statement-list>
+│   │   ├── <statement>
+│   │   │   └── <assignment-statement>
+│   │   │       ├── <variable>
+│   │   │       │   └── ident(grade)
+│   │   │       ├── becomes
+│   │   │       └── <expression>
+│   │   │           └── <simple-expression>
+│   │   │               └── <term>
+│   │   │                   └── <factor>
+│   │   │                       └── intcon(2)
+│   │   ├── semicolon
+│   │   ├── <statement>
+│   │   │   └── <case-statement>
+│   │   │       ├── casesy
+│   │   │       ├── <expression>
+│   │   │       │   └── <simple-expression>
+│   │   │       │       └── <term>
+│   │   │       │           └── <factor>
+│   │   │       │               └── ident(grade)
+│   │   │       ├── ofsy
+│   │   │       ├── <case-block>
+│   │   │       │   ├── <constant>
+│   │   │       │   │   └── intcon(1)
+│   │   │       │   ├── colon
+│   │   │       │   ├── <statement>
+│   │   │       │   │   └── <procedure/function-call>
+│   │   │       │   │       ├── ident(writeln)
+│   │   │       │   │       ├── lparent
+│   │   │       │   │       ├── <parameter-list>
+│   │   │       │   │       │   └── <expression>
+│   │   │       │   │       │       └── <simple-expression>
+│   │   │       │   │       │           └── <term>
+│   │   │       │   │       │               └── <factor>
+│   │   │       │   │       │                   └── intcon(10)
+│   │   │       │   │       └── rparent
+│   │   │       │   ├── semicolon
+│   │   │       │   └── <case-block>
+│   │   │       │       ├── <constant>
+│   │   │       │       │   └── intcon(2)
+│   │   │       │       ├── colon
+│   │   │       │       ├── <statement>
+│   │   │       │       │   └── <procedure/function-call>
+│   │   │       │       │       ├── ident(writeln)
+│   │   │       │       │       ├── lparent
+│   │   │       │       │       ├── <parameter-list>
+│   │   │       │       │       │   └── <expression>
+│   │   │       │       │       │       └── <simple-expression>
+│   │   │       │       │       │           └── <term>
+│   │   │       │       │       │               └── <factor>
+│   │   │       │       │       │                   └── intcon(20)
+│   │   │       │       │       └── rparent
+│   │   │       │       ├── semicolon
+│   │   │       │       └── <case-block>
+│   │   │       │           ├── <constant>
+│   │   │       │           │   └── intcon(3)
+│   │   │       │           ├── colon
+│   │   │       │           ├── <statement>
+│   │   │       │           │   └── <procedure/function-call>
+│   │   │       │           │       ├── ident(writeln)
+│   │   │       │           │       ├── lparent
+│   │   │       │           │       ├── <parameter-list>
+│   │   │       │           │       │   └── <expression>
+│   │   │       │           │       │       └── <simple-expression>
+│   │   │       │           │       │           └── <term>
+│   │   │       │           │       │               └── <factor>
+│   │   │       │           │       │                   └── intcon(30)
+│   │   │       │           │       └── rparent
+│   │   │       │           └── semicolon
+│   │   │       └── endsy
+│   │   └── semicolon
+│   └── endsy
+└── period
+
+=== Decorated AST ===
+Program('CaseStmt')  → type:Unknown, lev:0, block:0
+├── VarDecl('grade')  → tab_index:43, type:Integer, lev:0, block:0
+│   └── Type('integer')
+└── Block  → type:Unknown, lev:0, block:0
+    ├── Assign  → type:Unknown, lev:0, block:0
+    │   ├── Var('grade')  → tab_index:43, type:Integer, lev:0, block:0
+    │   └── Num(2)  → type:Integer, lev:0, block:0
+    └── Case  → type:Unknown, lev:0, block:0
+        ├── Var('grade')  → tab_index:43, type:Integer, lev:0, block:0
+        ├── CaseBranch  → type:Unknown, lev:0, block:0
+        │   ├── Num(1)  → type:Integer, lev:0, block:0
+        │   └── ProcCall('writeln')  → type:Unknown, lev:0, block:0
+        │       └── Num(10)  → type:Integer, lev:0, block:0
+        ├── CaseBranch  → type:Unknown, lev:0, block:0
+        │   ├── Num(2)  → type:Integer, lev:0, block:0
+        │   └── ProcCall('writeln')  → type:Unknown, lev:0, block:0
+        │       └── Num(20)  → type:Integer, lev:0, block:0
+        └── CaseBranch  → type:Unknown, lev:0, block:0
+            ├── Num(3)  → type:Integer, lev:0, block:0
+            └── ProcCall('writeln')  → type:Unknown, lev:0, block:0
+                └── Num(30)  → type:Integer, lev:0, block:0
+
+=== Intermediate Code ===
+0 INT 0 4
+1 JMP 0 2
+2 LIT 0 2
+3 STO 0 3
+4 LOD 0 3
+5 LIT 0 1
+6 OPR 0 7
+7 JPC 0 11
+8 LIT 0 10
+9 OPR 0 14
+10 JMP 0 25
+11 LOD 0 3
+12 LIT 0 2
+13 OPR 0 7
+14 JPC 0 18
+15 LIT 0 20
+16 OPR 0 14
+17 JMP 0 25
+18 LOD 0 3
+19 LIT 0 3
+20 OPR 0 7
+21 JPC 0 25
+22 LIT 0 30
+23 OPR 0 14
+24 JMP 0 25
+25 RET 0 0
+
+=== Interpreter Output ===
+20
