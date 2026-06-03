@@ -1,8 +1,5 @@
 \section{Tautan GitHub}
-\begin{itemize}
-    \item Repository: \href{https://github.com/Vixrlie/KAI-Tubes-IF2224-2026}{https://github.com/Vixrlie/KAI-Tubes-IF2224-2026}
-    \item Halaman release: \href{https://github.com/Vixrlie/KAI-Tubes-IF2224-2026/releases}{https://github.com/Vixrlie/KAI-Tubes-IF2224-2026/releases}
-\end{itemize}
+Repository proyek dapat diakses melalui tautan \href{https://github.com/Vixrlie/KAI-Tubes-IF2224-2026}{https://github.com/Vixrlie/KAI-Tubes-IF2224-2026}. Halaman release yang berisi versi final dan catatan rilis tersedia di \href{https://github.com/Vixrlie/KAI-Tubes-IF2224-2026/releases}{https://github.com/Vixrlie/KAI-Tubes-IF2224-2026/releases}.
 
 \section{Tabel Kontribusi}
 \begin{center}
@@ -12,10 +9,10 @@
         \toprule
         \textbf{No} & \textbf{Nama Lengkap} & \textbf{NIM} & \textbf{Deskripsi Pekerjaan} & \textbf{Kontribusi} \\
         \midrule
-        1 & Jonathan Kris Wicaksono & 13524023 & AST: merancang node hierarchy AST, Syntax-Directed Translation untuk konversi parse tree ke AST, dan AST formatter untuk output Decorated AST. & 25\% \\
-        2 & Vincent Rionarlie & 13524031 & Semantic Analyzer: implementasi visit functions untuk setiap node, type checking dan compatibility rules, inferensi tipe, anotasi node AST, dan control flow validation. & 25\% \\
-        3 & Muhammad Aufar Rizqi Kusuma & 13524061 & Symbol Table: implementasi \texttt{tab}, \texttt{btab}, \texttt{atab}, manajemen scope push/pop, registrasi dan lookup identifier, serta inisialisasi predefined identifier. & 25\% \\
-        4 & Bryan Pratama Putra Hendra & 13524067 & Laporan dan README: penulisan laporan lengkap dan README, penyusunan bagian teori, serta quality assurance. & 25\% \\
+        1 & Bryan Pratama Putra Hendra & 13524067 & Revisi milestone sebelumnya dan Intermediate Code Generator (flattening Decorated AST ke TAC, instruksi dasar LIT/LOD/STO/INT). & 25\% \\
+        2 & Vincent Rionarlie & 13524031 & Interpreter dan memori eksekusi (VM stack machine, stack frame dengan SL/DL/RA, siklus Fetch-Decode-Execute). & 25\% \\
+        3 & Muhammad Aufar Rizqi Kusuma & 13524061 & Control flow, operasi, dan keamanan mesin (translasi IF/WHILE ke JMP/JPC, operasi OPR, proteksi stack overflow dan numerical overflow). & 25\% \\
+        4 & Jonathan Kris Wicaksono & 13524023 & Pengujian, laporan, dan rilis (penyusunan test case, penulisan laporan PDF, manajemen release GitHub beserta README). & 25\% \\
         \bottomrule
     \end{tabularx}
 \end{center}
@@ -23,6 +20,6 @@
 \section{Cara Menjalankan Program}
 \begin{lstlisting}[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]
 make -B
-make run INPUT=test/milestone-3/input-1.txt
-make run-output INPUT=test/milestone-3/input-1.txt OUTPUT=output-m3.txt
+make run INPUT=test/milestone-4/input-m4-1.txt
+make run-output INPUT=test/milestone-4/input-m4-1.txt OUTPUT=output-m4.txt
 \end{lstlisting}

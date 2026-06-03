@@ -1,0 +1,13 @@
+program MutualRecursion;
+procedure A(n: integer);
+begin
+  if n > 0 then B(n - 1);
+end;
+procedure B(n: integer);
+begin
+  if n > 0 then A(n - 1);
+  writeln(n);
+end;
+begin
+  A(3);
+end.

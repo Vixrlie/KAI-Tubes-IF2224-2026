@@ -1,0 +1,191 @@
+=== tab ===
+idx  id        obj       type  ref  nrm  lev  adr  link
+-------------------------------------------------------
+...  (reserved words 0-32)
+ 33   Integer       type     0    0    1    0    0     0
+ 34      Real       type     1    0    1    0    0    33
+ 35      Char       type     2    0    1    0    0    34
+ 36   Boolean       type     3    0    1    0    0    35
+ 37    String       type     4    0    1    0    0    36
+ 38      True      const     3    0    1    0    1    37
+ 39     False      const     3    0    1    0    0    38
+ 40   writeln  procedure    10    0    1    0    0    39
+ 41    readln  procedure    10    0    1    0    0    40
+ 42  WhileLoop    program    10    0    1    0    0    41
+ 43         i   variable     0    0    1    0    0    42
+ 44       sum   variable     0    0    1    0    1    43
+
+=== btab ===
+idx  last  lpar  psze  vsze
+---------------------------
+  0    44     0     0     2
+
+=== atab ===
+(empty)
+
+=== Parse Tree ===
+<program>
+├── <program-header>
+│   ├── programsy
+│   ├── ident(WhileLoop)
+│   └── semicolon
+├── <declaration-part>
+│   └── <var-declaration>
+│       ├── varsy
+│       ├── <identifier-list>
+│       │   ├── ident(i)
+│       │   ├── comma
+│       │   └── ident(sum)
+│       ├── colon
+│       ├── <type>
+│       │   └── ident(integer)
+│       └── semicolon
+├── <compound-statement>
+│   ├── beginsy
+│   ├── <statement-list>
+│   │   ├── <statement>
+│   │   │   └── <assignment-statement>
+│   │   │       ├── <variable>
+│   │   │       │   └── ident(i)
+│   │   │       ├── becomes
+│   │   │       └── <expression>
+│   │   │           └── <simple-expression>
+│   │   │               └── <term>
+│   │   │                   └── <factor>
+│   │   │                       └── intcon(1)
+│   │   ├── semicolon
+│   │   ├── <statement>
+│   │   │   └── <assignment-statement>
+│   │   │       ├── <variable>
+│   │   │       │   └── ident(sum)
+│   │   │       ├── becomes
+│   │   │       └── <expression>
+│   │   │           └── <simple-expression>
+│   │   │               └── <term>
+│   │   │                   └── <factor>
+│   │   │                       └── intcon(0)
+│   │   ├── semicolon
+│   │   ├── <statement>
+│   │   │   └── <while-statement>
+│   │   │       ├── whilesy
+│   │   │       ├── <expression>
+│   │   │       │   ├── <simple-expression>
+│   │   │       │   │   └── <term>
+│   │   │       │   │       └── <factor>
+│   │   │       │   │           └── ident(i)
+│   │   │       │   ├── <relational-operator>
+│   │   │       │   │   └── leq
+│   │   │       │   └── <simple-expression>
+│   │   │       │       └── <term>
+│   │   │       │           └── <factor>
+│   │   │       │               └── intcon(5)
+│   │   │       ├── dosy
+│   │   │       ├── <compound-statement>
+│   │   │       │   ├── beginsy
+│   │   │       │   ├── <statement-list>
+│   │   │       │   │   ├── <statement>
+│   │   │       │   │   │   └── <assignment-statement>
+│   │   │       │   │   │       ├── <variable>
+│   │   │       │   │   │       │   └── ident(sum)
+│   │   │       │   │   │       ├── becomes
+│   │   │       │   │   │       └── <expression>
+│   │   │       │   │   │           └── <simple-expression>
+│   │   │       │   │   │               ├── <term>
+│   │   │       │   │   │               │   └── <factor>
+│   │   │       │   │   │               │       └── ident(sum)
+│   │   │       │   │   │               ├── <additive-operator>
+│   │   │       │   │   │               │   └── plus
+│   │   │       │   │   │               └── <term>
+│   │   │       │   │   │                   └── <factor>
+│   │   │       │   │   │                       └── ident(i)
+│   │   │       │   │   ├── semicolon
+│   │   │       │   │   ├── <statement>
+│   │   │       │   │   │   └── <assignment-statement>
+│   │   │       │   │   │       ├── <variable>
+│   │   │       │   │   │       │   └── ident(i)
+│   │   │       │   │   │       ├── becomes
+│   │   │       │   │   │       └── <expression>
+│   │   │       │   │   │           └── <simple-expression>
+│   │   │       │   │   │               ├── <term>
+│   │   │       │   │   │               │   └── <factor>
+│   │   │       │   │   │               │       └── ident(i)
+│   │   │       │   │   │               ├── <additive-operator>
+│   │   │       │   │   │               │   └── plus
+│   │   │       │   │   │               └── <term>
+│   │   │       │   │   │                   └── <factor>
+│   │   │       │   │   │                       └── intcon(1)
+│   │   │       │   │   └── semicolon
+│   │   │       │   └── endsy
+│   │   │       └── semicolon
+│   │   ├── <statement>
+│   │   │   └── <procedure/function-call>
+│   │   │       ├── ident(writeln)
+│   │   │       ├── lparent
+│   │   │       ├── <parameter-list>
+│   │   │       │   └── <expression>
+│   │   │       │       └── <simple-expression>
+│   │   │       │           └── <term>
+│   │   │       │               └── <factor>
+│   │   │       │                   └── ident(sum)
+│   │   │       └── rparent
+│   │   └── semicolon
+│   └── endsy
+└── period
+
+=== Decorated AST ===
+Program('WhileLoop')  → type:Unknown, lev:0, block:0
+├── VarDecl('i')  → tab_index:43, type:Integer, lev:0, block:0
+│   └── Type('integer')
+├── VarDecl('sum')  → tab_index:44, type:Integer, lev:0, block:0
+│   └── Type('integer')
+└── Block  → type:Unknown, lev:0, block:0
+    ├── Assign  → type:Unknown, lev:0, block:0
+    │   ├── Var('i')  → tab_index:43, type:Integer, lev:0, block:0
+    │   └── Num(1)  → type:Integer, lev:0, block:0
+    ├── Assign  → type:Unknown, lev:0, block:0
+    │   ├── Var('sum')  → tab_index:44, type:Integer, lev:0, block:0
+    │   └── Num(0)  → type:Integer, lev:0, block:0
+    ├── While  → type:Unknown, lev:0, block:0
+    │   ├── BinOp('<=')  → type:Boolean, lev:0, block:0
+    │   │   ├── Var('i')  → tab_index:43, type:Integer, lev:0, block:0
+    │   │   └── Num(5)  → type:Integer, lev:0, block:0
+    │   └── Block  → type:Unknown, lev:0, block:0
+    │       ├── Assign  → type:Unknown, lev:0, block:0
+    │       │   ├── Var('sum')  → tab_index:44, type:Integer, lev:0, block:0
+    │       │   └── BinOp('+')  → type:Integer, lev:0, block:0
+    │       │       ├── Var('sum')  → tab_index:44, type:Integer, lev:0, block:0
+    │       │       └── Var('i')  → tab_index:43, type:Integer, lev:0, block:0
+    │       └── Assign  → type:Unknown, lev:0, block:0
+    │           ├── Var('i')  → tab_index:43, type:Integer, lev:0, block:0
+    │           └── BinOp('+')  → type:Integer, lev:0, block:0
+    │               ├── Var('i')  → tab_index:43, type:Integer, lev:0, block:0
+    │               └── Num(1)  → type:Integer, lev:0, block:0
+    └── ProcCall('writeln')  → type:Unknown, lev:0, block:0
+        └── Var('sum')  → tab_index:44, type:Integer, lev:0, block:0
+
+=== Intermediate Code ===
+0 INT 0 5
+1 JMP 0 2
+2 LIT 0 1
+3 STO 0 3
+4 LIT 0 0
+5 STO 0 4
+6 LOD 0 3
+7 LIT 0 5
+8 OPR 0 12
+9 JPC 0 19
+10 LOD 0 4
+11 LOD 0 3
+12 OPR 0 2
+13 STO 0 4
+14 LOD 0 3
+15 LIT 0 1
+16 OPR 0 2
+17 STO 0 3
+18 JMP 0 6
+19 LOD 0 4
+20 OPR 0 14
+21 RET 0 0
+
+=== Interpreter Output ===
+15

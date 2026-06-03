@@ -1,3 +1,4 @@
-\contentsline {algorithm}{\numberline {1}Manajemen scope dan lookup}{11}{algorithm.caption.7}%
-\contentsline {algorithm}{\numberline {2}Type checking ekspresi biner}{14}{algorithm.caption.9}%
-\contentsline {algorithm}{\numberline {3}Konversi ringkas parse tree ke AST}{15}{algorithm.caption.11}%
+\contentsline {algorithm}{\numberline {1}Fungsi base untuk Static Link Traversal}{9}{algorithm.caption.5}%
+\contentsline {algorithm}{\numberline {2}Validasi Sebelum Pembuatan Frame Baru}{12}{algorithm.caption.7}%
+\contentsline {algorithm}{\numberline {3}Validasi Target Jump Sebelum Eksekusi}{14}{algorithm.caption.8}%
+\contentsline {algorithm}{\numberline {4}Siklus Fetch-Decode-Execute}{22}{algorithm.caption.13}%

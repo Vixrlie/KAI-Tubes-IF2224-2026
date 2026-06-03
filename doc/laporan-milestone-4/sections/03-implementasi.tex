@@ -1,7 +1,7 @@
 \section{Gambaran Umum Program}
-Implementasi Milestone 3 melanjutkan pipeline Milestone 1 dan Milestone 2. Alur utama berada pada \texttt{src/main.cpp}. Program membaca file input, lalu menentukan bentuk input tersebut. Jika input adalah parse tree, program menggunakan \texttt{ParseTreeReader}. Jika input adalah token stream, program menggunakan \texttt{TokenStreamReader} lalu menjalankan parser. Jika input adalah source code Arion, program menjalankan lexer dan parser.
+Implementasi Milestone 4 melanjutkan pipeline Milestone 1, Milestone 2, dan Milestone 3. Alur utama berada pada \texttt{src/main.cpp}. Program membaca file input, lalu menentukan bentuk input tersebut. Jika input adalah parse tree, program menggunakan \texttt{ParseTreeReader}. Jika input adalah token stream, program menggunakan \texttt{TokenStreamReader} lalu menjalankan parser. Jika input adalah source code Arion, program menjalankan lexer dan parser.
 
-Setelah parse tree tersedia, program menjalankan \texttt{ASTBuilder} untuk membentuk AST. AST tersebut kemudian dianalisis oleh \texttt{SemanticAnalyzer}. Jika tidak ada error, program mencetak \texttt{tab}, \texttt{btab}, \texttt{atab}, parse tree, dan decorated AST.
+Setelah parse tree tersedia, program menjalankan \texttt{ASTBuilder} untuk membentuk AST. AST tersebut kemudian dianalisis oleh \texttt{SemanticAnalyzer}. Jika tidak ada error, program menjalankan \texttt{IntermediateCodeGenerator} untuk mengubah decorated AST menjadi daftar instruksi intermediate code. Terakhir, \texttt{Interpreter} mengeksekusi intermediate code tersebut dan menghasilkan output final.
 
 \begin{figure}[H]
     \centering
@@ -19,7 +19,9 @@ Setelah parse tree tersedia, program menjalankan \texttt{ASTBuilder} untuk membe
         \node (astbuilder) [below=of parsetree] {ASTBuilder};
         \node (ast) [below=of astbuilder] {AST};
         \node (sem) [below=of ast] {SemanticAnalyzer};
-        \node (out) [below=of sem] {Symbol Table + Decorated AST};
+        \node (codegen) [below=of sem] {IntermediateCodeGenerator};
+        \node (interpreter) [below=of codegen] {Interpreter};
+        \node (out) [below=of interpreter] {Output Final};
 
         \draw[arrow] (input) -- (lex);
         \draw[arrow] (lex) -- (parser);
@@ -27,99 +29,180 @@ Setelah parse tree tersedia, program menjalankan \texttt{ASTBuilder} untuk membe
         \draw[arrow] (parsetree) -- (astbuilder);
         \draw[arrow] (astbuilder) -- (ast);
         \draw[arrow] (ast) -- (sem);
-        \draw[arrow] (sem) -- (out);
+        \draw[arrow] (sem) -- (codegen);
+        \draw[arrow] (codegen) -- (interpreter);
+        \draw[arrow] (interpreter) -- (out);
     \end{tikzpicture}
-    \caption{Pipeline Program}
-    \label{fig:pipeline-program}
+    \caption{Pipeline Program Milestone 4}
+    \label{fig:pipeline-program-m4}
 \end{figure}
 
-\section{Struktur Direktori Program}
-Bagian Milestone 3 terutama berada pada direktori \texttt{src/semantic/}. Berkas utama yang digunakan adalah sebagai berikut.
+\section{Struktur Direktori dan Justifikasi Pilihan Implementasi}
+Bagian Milestone 4 terutama berada pada direktori \texttt{src/codegen/} dan \texttt{src/interpreter/}. Berkas utama yang digunakan adalah \texttt{intermediate\_code.h} dan \texttt{intermediate\_code.cpp} yang berisi definisi instruction set, intermediate code generator, dan konversi decorated AST menjadi daftar instruksi. Berkas \texttt{interpreter.h} dan \texttt{interpreter.cpp} mengimplementasikan virtual machine dengan siklus fetch-decode-execute, stack management, dan eksekusi instruksi. Berkas \texttt{runtime\_value.h} dan \texttt{runtime\_value.cpp} menyediakan representasi nilai runtime.
 
-\begin{itemize}
-    \item \texttt{ast\_node.h} dan \texttt{ast\_node.cpp}: definisi hierarchy node AST dan struktur anotasi.
-    \item \texttt{ast\_builder.h} dan \texttt{ast\_builder.cpp}: konversi parse tree menjadi AST dengan Syntax-Directed Translation.
-    \item \texttt{ast\_formatter.h} dan \texttt{ast\_formatter.cpp}: pencetakan decorated AST.
-    \item \texttt{symbol\_table.h} dan \texttt{symbol\_table.cpp}: implementasi \texttt{tab}, \texttt{btab}, \texttt{atab}, scope stack, registrasi identifier, dan lookup.
-    \item \texttt{semantic\_analyzer.h} dan \texttt{semantic\_analyzer.cpp}: traversal AST, type checking, scope checking, dan anotasi node.
-    \item \texttt{parse\_tree\_reader.h} dan \texttt{parse\_tree\_reader.cpp}: pembacaan parse tree hasil Milestone 2 sebagai input Milestone 3.
-\end{itemize}
+Pemilihan struktur data \texttt{std::vector} untuk stack didasarkan pada tiga pertimbangan. Pertama, \texttt{std::vector} menyediakan \textit{amortized constant time} untuk operasi \texttt{push\_back}, yang sebanding dengan kompleksitas operasi push pada stack. Kedua, memori yang dialokasikan bersifat \textit{contiguous}, sehingga memanfaatkan \textit{cache locality} pada modern CPU dan mempercepat akses berurutan. Ketiga, \texttt{std::vector} mendukung pertumbuhan dinamis sehingga interpreter tidak perlu mengalokasikan memori besar secara statis di awal eksekusi, melainkan dapat memperluas stack sesuai kebutuhan runtime.
 
-\section{Perancangan AST}
-AST dirancang sebagai hierarchy class berbasis polymorphism. Semua node mewarisi \texttt{ASTNode}, yang memiliki field \texttt{annotation}. Node AST yang digunakan mencakup \texttt{ProgramNode}, \texttt{VarDeclNode}, \texttt{ConstDeclNode}, \texttt{TypeDeclNode}, \texttt{ProcedureDeclNode}, \texttt{FunctionDeclNode}, \texttt{AssignNode}, \texttt{BinOpNode}, \texttt{UnaryOpNode}, \texttt{VarRefNode}, \texttt{Array AccessNode}, \texttt{FieldAccessNode}, \texttt{ProcCallNode}, \texttt{FuncCallNode}, \texttt{IfNode}, \texttt{WhileNode}, \texttt{RepeatNode}, \texttt{ForNode}, dan \texttt{CaseNode}.
+Pemilihan \texttt{std::variant} untuk \texttt{RuntimeValue} didasarkan pada kebutuhan type safety tanpa overhead manual tag management. Berbeda dengan \textit{union} tradisional dalam C, \texttt{std::variant} secara otomatis mengelola konstruksi dan destruksi objek serta menyediakan \textit{compile-time type checking} melalui \texttt{std::visit}. Hal ini mencegah bug \textit{type punning} yang umum terjadi pada union manual, sekaligus mendukung tipe heterogen (\texttt{int}, \texttt{double}, \texttt{char}, \texttt{bool}, \texttt{std::string}) dalam satu struktur data yang aman.
 
-Struktur anotasi pada node AST menyimpan \texttt{typeCode}, \texttt{typeName}, \texttt{tabIndex}, \texttt{blockIndex}, \texttt{level}, dan status inisialisasi. Informasi ini diisi oleh semantic analyzer setelah AST selesai dibangun.
+Antarmuka antara \texttt{IntermediateCodeGenerator} dan \texttt{Interpreter} didefinisikan melalui struktur data \texttt{Instruction} yang berisi tiga field: \texttt{opcode} (kode operasi), \texttt{level} (level leksikal untuk akses variabel non-lokal), dan \texttt{operand} (nilai literal, offset memori, atau alamat instruksi). Generator menghasilkan \texttt{std::vector<Instruction>} yang sepenuhnya terpisah dari logika eksekusi interpreter. Desain ini memastikan loose coupling: perubahan algoritma codegen tidak mempengaruhi interpreter selama format instruksi tetap sama, dan sebaliknya perubahan strategi eksekusi tidak mempengaruhi cara instruksi dihasilkan.
 
-\section{Syntax-Directed Translation}
-Konversi parse tree ke AST dilakukan oleh \texttt{ASTBuilder}. Setiap fungsi \texttt{visit} pada builder menerima node parse tree tertentu dan mengembalikan node AST yang relevan. Detail sintaksis yang tidak diperlukan, seperti \texttt{beginsy}, \texttt{endsy}, \texttt{semicolon}, dan node grammar perantara, tidak dimasukkan ke AST.
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[
+        scale=0.88,
+        transform shape,
+        node distance=14mm and 18mm,
+        class/.style={draw, rectangle split, rectangle split parts=2, align=left, minimum width=3.8cm, font=\small},
+        arrow/.style={-{Stealth[length=2.5mm]}, thick}
+        ]
+        \node[class] (codegen) {
+            \textbf{IntermediateCodeGenerator}
+            \nodepart{second}
+            + generate(ProgramNode, SymbolTable)\\
+            - visit*(node)\\
+            - emit*(...)\\
+            - backpatch(...)
+        };
+        \node[class, right=of codegen] (interp) {
+            \textbf{Interpreter}
+            \nodepart{second}
+            + run(vector<Instruction>)\\
+            - executeInstruction(...)\\
+            - push(...) / pop(...)\\
+            - base(l, b)
+        };
+        \node[class, below=of codegen] (instr) {
+            \textbf{Instruction}
+            \nodepart{second}
+            + opcode: Opcode\\
+            + level: int\\
+            + operand: int
+        };
+        \node[class, below=of interp] (rtval) {
+            \textbf{RuntimeValue}
+            \nodepart{second}
+            + value: variant<int,\\
+            \quad double, char, bool, string>
+        };
 
-Tabel berikut merangkum sebagian semantic action yang digunakan.
+        \draw[arrow] (codegen) -- node[above, font=\scriptsize]{\texttt{vector<Instruction>}} (interp);
+        \draw[arrow, dashed] (instr) -- node[left, font=\scriptsize]{uses} (codegen);
+        \draw[arrow, dashed] (instr) -- node[right, font=\scriptsize]{uses} (interp);
+        \draw[arrow, dashed] (rtval) -- node[right, font=\scriptsize]{uses} (interp);
+    \end{tikzpicture}
+    \caption{Diagram ketergantungan modul utama Milestone 4}
+    \label{fig:modul-dependency}
+\end{figure}
 
-\begin{longtable}{|p{5.2cm}|p{8.7cm}|}
-    \caption{Contoh Semantic Action ASTBuilder} \label{tab:astbuilder-semantic-action}                                                                                                                                                    \\
-    \hline
-    \textbf{Produksi}               & \textbf{Semantic Action}                                                                                                                                                                            \\
-    \hline
-    \endfirsthead
-    \hline
-    \textbf{Produksi}               & \textbf{Semantic Action}                                                                                                                                                                            \\
-    \hline
-    \endhead
-    \texttt{<program>}              & Membentuk \texttt{ProgramNode}, mengisi nama program dari header, daftar deklarasi dari declaration part, dan body dari compound statement.                                                         \\
-    \hline
-    \texttt{<var-declaration>}      & Untuk setiap identifier pada identifier-list, membentuk satu \texttt{VarDeclNode} dengan type specification yang sama.                                                                              \\
-    \hline
-    \texttt{<assignment-statement>} & Membentuk \texttt{AssignNode(target, value)} dari node variable dan expression.                                                                                                                     \\
-    \hline
-    \texttt{<expression>}           & Jika terdapat relational operator, membentuk \texttt{BinOpNode}; jika tidak, meneruskan hasil simple-expression.                                                                                    \\
-    \hline
-    \texttt{<simple-expression>}    & Membentuk rantai \texttt{BinOpNode} untuk operator aditif dan \texttt{UnaryOpNode} untuk tanda minus di depan.                                                                                      \\
-    \hline
-    \texttt{<factor>}               & Literal menjadi node literal, identifier menjadi \texttt{VarRefNode}, procedure/function call dalam expression menjadi \texttt{FuncCallNode}, dan \texttt{not factor} menjadi \texttt{UnaryOpNode}. \\
-    \hline
-    \texttt{<array-type>}           & Membentuk \texttt{ArrayTypeNode} berisi index type dan element type.                                                                                                                                \\
-    \hline
-    \texttt{<record-type>}          & Membentuk \texttt{RecordTypeNode} yang menyimpan field sebagai daftar \texttt{VarDeclNode}.                                                                                                         \\
-    \hline
-\end{longtable}
+\section{Instruction Set Arion}
+Instruction set yang diimplementasikan pada Arion Compiler terdiri dari sembilan instruksi utama. Setiap instruksi memiliki opcode, level, dan operand. Level merepresentasikan lexical level untuk akses variabel non-lokal, sedangkan operand menyimpan nilai literal, alamat memori, atau nomor operasi.
 
-\section{Implementasi Symbol Table}
-Symbol table diimplementasikan pada class \texttt{Semantic::SymbolTable}. Constructor symbol table membuat base scope dan mengisi predefined identifier. Scope dikelola dengan stack yang menyimpan \texttt{scopeLastStack} dan \texttt{scopeBlockStack}. Ketika masuk scope baru, program menambah entri \texttt{btab}; ketika keluar scope, stack dipop.
+\begin{table}[H]
+    \centering
+    \caption{Daftar instruksi intermediate code Arion}
+    \label{tab:instruction-set}
+    \begin{tabularx}{\textwidth}{L L C{2.8cm}}
+        \toprule
+        \textbf{Instruksi} & \textbf{Operasi} & \textbf{Keterangan} \\
+        \midrule
+        \texttt{LIT v} & Load Literal & Memasukkan nilai literal \texttt{v} ke dalam stack. \\
+        \texttt{LOD a} & Load Value & Memuat nilai dari alamat \texttt{a}. \\
+        \texttt{STO a} & Store Value & Menyimpan nilai ke alamat \texttt{a}. \\
+        \texttt{CAL l} & Call & Memanggil prosedur di alamat \texttt{l}. \\
+        \texttt{INT m} & Initiate Memory & Mengalokasikan atau dealokasikan \texttt{m} slot stack. \\
+        \texttt{JMP l} & Unconditional Jump & Lompat ke alamat \texttt{l} tanpa kondisi. \\
+        \texttt{JPC l} & Conditional Jump & Lompat ke alamat \texttt{l} bila kondisi tidak memenuhi. \\
+        \texttt{OPR o} & Operation & Memanggil operasi \texttt{o} (aritmatika, logika, I/O). \\
+        \texttt{RET} & Return & Keluar dari prosedur dan kembali ke pemanggil. \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
 
-Registrasi identifier dilakukan oleh \texttt{registerIdentifier}. Fungsi ini mengecek redeklarasi pada scope aktif, membuat entri \texttt{tab}, mengisi \texttt{link} ke identifier sebelumnya dalam scope yang sama, memperbarui \texttt{last} pada \texttt{btab}, dan menghitung ukuran parameter atau variabel lokal. Lookup dilakukan dari scope terdalam ke scope terluar.
+Instruksi \texttt{OPR} memiliki sub-operasi yang lebih spesifik. Sub-operasi yang didukung meliputi negasi, penjumlahan, pengurangan, perkalian, pembagian, modulo, perbandingan (equal, not equal, less, greater, less-equal, greater-equal), serta operasi I/O \texttt{WRT} dan \texttt{WRTLN}.
 
-\begin{tcolorbox}[title=Pseudocode Register Identifier,colback=gray!5,colframe=black!60,boxrule=0.5pt,arc=2mm]
-    \begin{verbatim}
-function registerIdentifier(name, obj, type, nrm, adr):
-    if name exists in current scope:
-        report redeclaration error
-    entry.identifier = name
-    entry.link = currentScopeLast
-    entry.obj = obj
-    entry.type = type
-    entry.lev = currentLevel
-    entry.adr = computed address
-    append entry to tab
-    current btab.last = new index
-\end{verbatim}
-\end{tcolorbox}
+\begin{table}[H]
+    \centering
+    \caption{Daftar sub-operasi instruksi \texttt{OPR}}
+    \label{tab:opr-set}
+    \begin{tabularx}{\textwidth}{C{1.2cm} L L}
+        \toprule
+        \textbf{No} & \textbf{Operation Name} & \textbf{Function} \\
+        \midrule
+        1 & \texttt{NEG} & Negasi nilai teratas dari stack. \\
+        2 & \texttt{ADD} & Menambah dua nilai teratas dari stack. \\
+        3 & \texttt{SUB} & Mengurangi dua nilai teratas dari stack. \\
+        4 & \texttt{MUL} & Mengali dua nilai teratas dari stack. \\
+        5 & \texttt{DIV} & Membagi dua nilai teratas dari stack. \\
+        6 & \texttt{MOD} & Modulus dua nilai teratas dari stack. \\
+        7 & \texttt{EQL} & Memeriksa kesamaan dua nilai teratas. \\
+        8 & \texttt{NEQ} & Memeriksa ketidaksamaan dua nilai teratas. \\
+        9 & \texttt{LSS} & Memeriksa apakah nilai pertama kurang dari kedua. \\
+        10 & \texttt{GEQ} & Memeriksa apakah nilai pertama lebih dari sama dengan kedua. \\
+        11 & \texttt{GTR} & Memeriksa apakah nilai pertama lebih dari kedua. \\
+        12 & \texttt{LEQ} & Memeriksa apakah nilai pertama kurang dari sama dengan kedua. \\
+        13 & \texttt{WRT} & Menulis output tanpa newline. \\
+        14 & \texttt{WRTLN} & Menulis output dengan newline. \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
 
-\section{Implementasi Semantic Analyzer}
-Semantic analyzer melakukan traversal depth-first terhadap AST. Fungsi utama \texttt{analyze} menginisialisasi ulang symbol table, predefined procedure, struktur pendukung subrange, enum, record field, signature procedure/function, dan stack function aktif. Setelah itu \texttt{visitProgram} memproses deklarasi dan body program.
+\section{Implementasi Intermediate Code Generator}
+Intermediate code generator diimplementasikan pada class \texttt{CodeGen::IntermediateCodeGenerator}. Fungsi utama \texttt{generate} menerima \texttt{ProgramNode} dari decorated AST dan \texttt{SymbolTable} hasil semantic analysis, kemudian menghasilkan \texttt{Result} yang berisi daftar instruksi dan error (jika ada).
 
-Setiap kategori node memiliki fungsi visit. Deklarasi diproses oleh \texttt{visitConstDecl}, \texttt{visitTypeDecl}, \texttt{visitVarDecl}, \texttt{visitProcedureDecl}, dan \texttt{visitFunctionDecl}. Statement diproses oleh \texttt{visitAssign}, \texttt{visitIf}, \texttt{visitWhile}, \texttt{visitRepeat}, \texttt{visitFor}, \texttt{visitCase}, dan \texttt{visitProcCall}. Ekspresi diproses oleh \texttt{visitExpression}, \texttt{visitVariable}, \texttt{visitConstant}, dan \texttt{visitFuncCall}.
+Generator bekerja secara top-down, mengunjungi setiap node AST dan mengeluarkan instruksi yang relevan. Detail implementasi meliputi beberapa aspek berikut.
 
-\subsection{Scope dan Block}
-Scope global dibuat saat symbol table diinisialisasi. Program didaftarkan sebagai object class \texttt{PROGRAM}. Main compound block dianalisis dalam scope baru sehingga output \texttt{btab} memiliki block terpisah untuk body utama. Procedure, function, dan record juga membuat scope baru untuk parameter, variabel lokal, atau field.
+\subsection{Inisialisasi Memori}
+Fungsi \texttt{initialFrameSize} menghitung ukuran frame awal berdasarkan informasi \texttt{btab} dari program. Frame size meliputi \texttt{kFrameHeaderSize} (3 slot untuk static link, dynamic link, dan return address) ditambah jumlah parameter \texttt{(psze)} dan variabel lokal \texttt{(vsze)}. Instruksi \texttt{INT} pertama yang dihasilkan adalah \texttt{INT 0 frameSize}.
 
-\subsection{Type Resolution}
-Tipe dasar diselesaikan melalui lookup predefined type. Tipe array menambahkan entri ke \texttt{atab}. Tipe record membuat block baru untuk field. Tipe subrange menyimpan base type dan batas bawah/atas. Tipe enumerated menyimpan daftar identifier dan mendaftarkan setiap enumerator sebagai konstanta.
+\subsection{Translasi Statement}
+Setiap jenis statement memiliki fungsi \texttt{visit} sendiri. Untuk \textbf{Assignment}, generator mengevaluasi ekspresi value terlebih dahulu, lalu memanggil \texttt{emitStore} untuk target. Target dapat berupa variabel sederhana atau array access. Untuk \textbf{If}, kondisi dievaluasi, diikuti \texttt{JPC} ke label else atau end. Blok then diterjemahkan, lalu \texttt{JMP} ke end. Jika ada else, blok else diterjemahkan, lalu label end dipasang. Untuk \textbf{While}, label loop start dipasang, kondisi dievaluasi, \texttt{JPC} ke end, body diterjemahkan, \texttt{JMP} kembali ke start, lalu label end dipasang. Untuk \textbf{Repeat}, label loop start dipasang, body diterjemahkan, kondisi dievaluasi, \texttt{JPC} kembali ke start. Untuk \textbf{For}, variabel loop diinisialisasi dengan start expression. Label loop start dipasang, variabel loop dan end expression dievaluasi, dibandingkan dengan \texttt{LEQ} atau \texttt{GEQ}, \texttt{JPC} ke end, body diterjemahkan, variabel loop diincrement atau decrement, \texttt{JMP} kembali ke start, lalu label end dipasang. Untuk \textbf{Case}, pada setiap branch selector dan label dievaluasi, dibandingkan dengan \texttt{EQL}, \texttt{JPC} ke label berikutnya jika tidak cocok. Jika cocok, eksekusi jatuh ke body branch. Setelah body, \texttt{JMP} ke end case. Semua \texttt{JMP} ke end di-backpatch setelah seluruh branch diproses.
 
-\subsection{Type Checking}
-Type checking dilakukan pada ekspresi dan statement. Operator aritmatika memerlukan tipe numerik. Operator Boolean memerlukan Boolean. Operator relasional memerlukan operand kompatibel dan menghasilkan Boolean. Assignment memerlukan target yang assignable dan value yang assignment-compatible terhadap target.
+\subsection{Translasi Ekspresi}
+Ekspresi diterjemahkan secara rekursif. Literal integer, real, char, string, dan Boolean menghasilkan \texttt{LIT}. Variabel menghasilkan \texttt{LOD}. Array access dengan satu atau dua dimensi menghasilkan \texttt{ALOD} dengan operand yang menyimpan metadata dimensi. Operator biner menghasilkan evaluasi kedua operand diikuti \texttt{OPR}. Unary minus menghasilkan evaluasi operand diikuti \texttt{OPR NEG}.
 
-\subsection{Procedure dan Function}
-Procedure dan function disimpan dalam \texttt{procSignatures}. Saat pemanggilan terjadi, analyzer mengecek jumlah argumen, tipe argumen, dan kebutuhan by-reference parameter. Function call pada expression menghasilkan tipe return function. Untuk function declaration, analyzer juga memeriksa apakah body function menjamin assignment ke nama function sebagai nilai return.
+\subsection{Translasi Procedure Call}
+Saat memanggil prosedur, generator mengevaluasi argumen (push ke stack), lalu mengeluarkan \texttt{CAL} dengan target alamat prosedur. Jika alamat belum diketahui saat pemanggilan, instruksi \texttt{CAL} menggunakan placeholder yang di-backpatch setelah seluruh deklarasi prosedur diproses. Setelah \texttt{CAL} selesai, generator mengeluarkan \texttt{INT} dengan nilai negatif untuk membersihkan argumen dari stack caller.
+
+\subsection{Backpatching}
+Beberapa instruksi seperti \texttt{JMP}, \texttt{JPC}, dan \texttt{CAL} memerlukan backpatching karena alamat tujuan belum diketahui saat instruksi pertama kali dihasilkan. Generator menyimpan indeks instruksi yang perlu di-backpatch dalam variabel sementara, lalu mengisi operandnya setelah alamat tujuan diketahui.
+
+\section{Implementasi Interpreter}
+Interpreter diimplementasikan pada class \texttt{Interpreter::Interpreter}. Fungsi utama \texttt{run} menerima daftar instruksi, menginisialisasi stack dan register, lalu mengeksekusi instruksi satu per satu dalam siklus fetch-decode-execute.
+
+\subsection{Siklus Eksekusi}
+Interpreter menggunakan variabel \texttt{ip} (instruction pointer), \texttt{bp} (base pointer), dan \texttt{sp} (stack pointer). Siklus berjalan selama \texttt{ip} masih dalam rentang valid dan tidak ada error.
+
+\begin{breakablealgorithm}[Siklus Fetch-Decode-Execute]
+    \label{alg:fde-cycle}
+    \begin{algorithmic}[1]
+        \Procedure{Run}{program}
+        \State \texttt{reset()}
+        \State \texttt{validateJumpTargets(program)}
+        \While{\texttt{not halted} \textbf{and} \texttt{ip} valid}
+            \State \texttt{inst = program[ip]}
+            \State \texttt{advance = true}
+            \If{\textbf{not} \Call{executeInstruction}{inst, program, advance}}
+                \State \Return \texttt{error}
+            \EndIf
+            \If{\texttt{advance}}
+                \State \texttt{ip += 1}
+            \EndIf
+        \EndWhile
+        \State \Return \texttt{result}
+        \EndProcedure
+    \end{algorithmic}
+\end{breakablealgorithm}
+
+\subsection{Manajemen Stack}
+Stack diimplementasikan menggunakan \texttt{std::vector<RuntimeValue>}. Fungsi \texttt{push} menambahkan nilai ke stack dengan pengecekan batas maksimal \texttt{kMaxStackSlots}. Fungsi \texttt{pop} mengambil nilai dari stack dengan pengecekan underflow. Fungsi \texttt{ensureStackSize} mengubah ukuran vector sesuai kebutuhan.
+
+Untuk instruksi \texttt{INT} dengan nilai negatif, interpreter menyusutkan stack dengan menghapus elemen dari belakang, asalkan tidak menyusut di bawah frame header saat ini.
+
+\subsection{Frame Management}
+Instruksi \texttt{CAL} membuat frame baru dengan menyimpan static link, dynamic link, dan return address. Static link dihitung berdasarkan lexical level delta menggunakan fungsi \texttt{base(l, b)} yang menelusuri static link chain sebanyak $l$ level. Dynamic link adalah \texttt{bp} saat ini. Return address adalah \texttt{ip + 1}. Instruksi \texttt{RET} memulihkan \texttt{ip} dari return address, \texttt{bp} dari dynamic link, dan menghapus frame saat ini.
+
+\subsection{Validasi Keamanan}
+Interpreter memvalidasi target jump sebelum eksekusi dimulai untuk memastikan semua \texttt{JMP}, \texttt{JPC}, dan \texttt{CAL} menunjuk ke alamat yang valid. Selama eksekusi, interpreter juga memvalidasi akses stack agar tidak out-of-bounds untuk \texttt{LOD} dan \texttt{STO}, melindungi penulisan ke slot frame header melalui \texttt{isProtectedFrameSlot}, memeriksa operasi aritmatika agar tidak menyebabkan overflow atau underflow menggunakan \texttt{checkedAdd}, \texttt{checkedSub}, \texttt{checkedMul}, dan \texttt{checkedNeg}, menjamin pembagian dan modulo tidak membagi dengan nol, serta memastikan kedalaman stack tidak melebihi batas maksimum untuk mencegah stack overflow.
 
 \section{Format Output}
-Output program Milestone 3 terdiri dari lima bagian: \texttt{tab}, \texttt{btab}, \texttt{atab}, parse tree, dan decorated AST. Label object class mencakup \texttt{program}, \texttt{const}, \texttt{variable}, \texttt{type}, \texttt{procedure}, dan \texttt{function}. Decorated AST menampilkan anotasi seperti \texttt{tab\_index}, \texttt{type}, \texttt{lev}, dan \texttt{block}.
+Output program Milestone 4 terdiri dari tujuh bagian: \texttt{tab}, \texttt{btab}, \texttt{atab}, parse tree, decorated AST, intermediate code, dan interpreter output (atau interpreter errors jika terjadi runtime error). Intermediate code ditampilkan dalam format baris demi baris dengan nomor instruksi, opcode, level, dan operand. Interpreter output menampilkan hasil eksekusi program, termasuk nilai yang ditulis oleh \texttt{writeln}.
