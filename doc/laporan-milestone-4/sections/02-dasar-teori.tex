@@ -198,6 +198,86 @@ Translasi \texttt{for} dan \texttt{case} juga bergantung pada backpatching. For 
 
 Interpreter yang mengeksekusi IR beroperasi pada level yang lebih dekat dengan mesin dibandingkan bahasa sumber, sehingga rentan terhadap kerentanan yang berkaitan dengan manajemen memori dan alur eksekusi. \textit{Memory safety} dalam konteks stack machine mencakup dua aspek: \textit{spatial safety} (memastikan setiap akses memori berada dalam batas yang valid) dan \textit{temporal safety} (memastikan memori tidak diakses setelah dilepaskan) \cite{aho2007compilers}.
 
-\textbf{Stack overflow} terjadi ketika kedalaman pemanggilan prosedur melampaui kapasitas stack yang dialokasikan, biasanya akibat rekursi tak terbatas. \textbf{Stack underflow} adalah kondisi inverse, yaitu ketika interpreter mencoba mengambil nilai dari stack operand yang kosong. \textbf{Stack smashing} merupakan bentuk korupsi memori di mana penulisan melebihi batas variabel lokal menimpa return address, menyebabkan eksekusi melompat ke alamat yang tidak valid. \textbf{Out-of-bounds access} terjadi ketika indeks array melebihi batas yang dideklarasikan, melanggar spatial safety.
+\subsection{Kerentanan pada Stack}
 
-\textbf{Numerical overflow dan underflow} melanggar safety aritmatika ketika hasil operasi melampaui kapasitas tipe data integer. Strategi penanganan yang paling aman bagi interpreter adalah penghentian dini (\textit{early termination}) dengan pesan error yang informatif, karena melanjutkan eksekusi dengan state mesin yang korup dapat menyebabkan perilaku tak terdefinisi yang lebih berbahaya. Interpreter yang \textit{well-formed} harus memverifikasi target setiap instruksi lompatan sebelum eksekusi dimulai untuk mencegah \textbf{invalid jump targets} yang dapat menyebabkan eksekusi melompat ke luar batas program.
+\textbf{Stack overflow} terjadi ketika kedalaman pemanggilan prosedur melampaui kapasitas maksimum stack yang dialokasikan. Kondisi ini paling umum disebabkan oleh rekursi tak terbatas, di mana sebuah fungsi terus memanggil dirinya sendiri tanpa kondisi berhenti. Dampaknya adalah interpreter kehabisan memori untuk menyimpan frame baru, yang pada akhirnya menyebabkan program crash atau hang. Sebagai contoh, prosedur \texttt{recur} yang memanggil dirinya sendiri secara langsung akan menghasilkan error \texttt{stack overflow} setelah kedalaman frame melebihi batas yang ditetapkan.
+
+\textbf{Stack underflow} merupakan kondisi inverse, yaitu ketika interpreter diinstruksikan untuk mengambil nilai dari stack operand yang sudah sepenuhnya kosong. Hal ini biasanya menandakan adanya cacat logika pada intermediate code generator, misalnya ketika sebuah operasi biner hanya memiliki satu operand di stack. Dampaknya adalah interpreter membaca nilai sampah atau memori yang tidak valid, yang dapat merusak seluruh komputasi selanjutnya.
+
+\textbf{Stack smashing} adalah bentuk klasik dari buffer overflow pada stack machine. Dalam arsitektur ini, frame header (static link, dynamic link, dan return address) diletakkan secara bersebelahan dengan variabel lokal. Jika interpreter mengizinkan penulisan data melebihi ukuran variabel lokalnya, data tersebut dapat meluber dan menimpa return address. Akibatnya, saat prosedur selesai dieksekusi, interpreter akan melompat ke alamat memori yang salah, yang berpotensi mengeksekusi kode berbahaya atau menyebabkan crash sistem.
+
+Pendekatan umum untuk menangani ketiga kerentanan stack adalah dengan menambahkan validasi sebelum setiap operasi yang berpotensi berbahaya. Sebelum membuat frame baru melalui instruksi \texttt{CAL}, interpreter harus memeriksa apakah kedalaman stack saat ini masih di bawah batas maksimum. Sebelum melakukan operasi \texttt{pop}, interpreter harus memastikan bahwa stack pointer masih berada di atas base pointer frame saat ini ditambah ukuran header. Sebelum menulis ke memori melalui \texttt{STO}, interpreter harus memverifikasi bahwa slot target bukan merupakan slot header yang dilindungi. Algoritma berikut mengilustrasikan validasi yang dilakukan sebelum pembuatan frame baru.
+
+\begin{breakablealgorithm}[Validasi Sebelum Pembuatan Frame Baru]
+    \label{alg:stack-validation}
+    \begin{algorithmic}[1]
+        \Procedure{validatePushFrame}{}
+        \If{$\text{currentDepth} \geq \text{kMaxStackFrames}$}
+            \State \textbf{error} \texttt{stack overflow}
+        \EndIf
+        \EndProcedure
+    \end{algorithmic}
+\end{breakablealgorithm}
+
+\subsection{Kerentanan Memori dan Akses: Out-of-Bounds Variable Access}
+
+\textbf{Out-of-bounds variable access} adalah kerentanan yang terjadi ketika program mencoba mengakses indeks array di luar batas yang dideklarasikan. Dalam konteks stack machine, setiap elemen array dialokasikan secara kontigu di dalam stack frame. Jika interpreter mengizinkan akses indeks melebihi batas atas atau kurang dari batas bawah, maka akses tersebut akan mengarah ke memori milik variabel lain atau bahkan frame header, yang melanggar \textit{spatial safety}.
+
+Dampak dari kerentanan ini dapat sangat serius. Penulisan ke indeks yang salah dapat merusak nilai variabel lain secara diam-diam, yang menyebabkan bug yang sulit dilacak. Dalam kasus ekstrem, penulisan tersebut dapat menimpa return address dan memicu stack smashing. Sebagai contoh, jika sebuah array dideklarasikan dengan batas \texttt{array[1..3]}, namun program mencoba mengakses \texttt{array[5]}, maka interpreter harus mencegat akses tersebut sebelum mencapai memori fisik.
+
+Pendekatan umum untuk menangani kerentanan ini adalah dengan melakukan \textit{bounds checking} pada setiap operasi akses array. Interpreter membandingkan indeks yang diminta dengan batas bawah (\texttt{low}) dan batas atas (\texttt{high}) yang tersimpan dalam metadata array. Jika indeks berada di luar rentang tersebut, interpreter menghentikan eksekusi dan melaporkan \texttt{IndexOutOfBoundsException}. Metadata array pada Arion disimpan dalam operand instruksi \texttt{ALOD} dan \texttt{ASTO}, yang berisi base offset, jumlah dimensi, batas rendah, dan batas tinggi untuk setiap dimensi.
+
+\begin{tcolorbox}[title=Contoh Bounds Checking pada Array Access,colback=gray!5,colframe=black!60,boxrule=0.5pt,arc=2mm]
+\begin{verbatim}
+if index < low || index > high then
+    error: IndexOutOfBoundsException
+else
+    address = base + (index - low)
+    access memory at address
+end
+\end{verbatim}
+\end{tcolorbox}
+
+\subsection{Kerentanan Alur Eksekusi: Invalid Jump Targets}
+
+\textbf{Invalid jump targets} terjadi ketika intermediate code generator menghasilkan instruksi lompatan (\texttt{JMP}, \texttt{JPC}, atau \texttt{CAL}) yang menuju ke alamat instruksi yang tidak pernah ada dalam daftar program. Kondisi ini dapat disebabkan oleh kesalahan pada mekanisme backpatching, di mana alamat target tidak diisi dengan benar setelah seluruh instruksi dihasilkan. Dampaknya adalah instruction pointer (IP) akan melompat ke luar batas vektor instruksi, yang menyebabkan interpreter membaca memori yang tidak valid dan crash secara tiba-tiba.
+
+Sebagai contoh, jika sebuah program memiliki 20 instruksi (indeks 0 hingga 19), namun instruksi ke-5 berisi \texttt{JMP 0 25}, maka lompatan tersebut akan mengarah ke alamat yang tidak pernah didefinisikan. Tanpa validasi, interpreter akan mencoba membaca instruksi ke-25 dan menghasilkan perilaku tak terdefinisi.
+
+Pendekatan umum untuk menangani kerentanan ini adalah dengan melakukan \textit{pre-execution validation} terhadap seluruh target lompatan sebelum siklus fetch-decode-execute dimulai. Interpreter melakukan satu kali traversal pada seluruh daftar instruksi untuk mengumpulkan semua alamat target yang direferensi oleh instruksi lompatan. Kemudian, setiap target tersebut diverifikasi agar berada dalam rentang valid (0 hingga program.size() - 1). Jika ada target yang tidak valid, interpreter langsung menghentikan eksekusi dan melaporkan \texttt{InvalidJumpTargetException} tanpa mengeksekusi satu instruksi pun. Strategi ini lebih aman karena mencegah state mesin menjadi korup sejak awal.
+
+\begin{breakablealgorithm}[Validasi Target Jump Sebelum Eksekusi]
+    \label{alg:jump-validation}
+    \begin{algorithmic}[1]
+        \Procedure{validateJumpTargets}{program}
+        \For{each inst in program}
+            \If{inst.opcode \textbf{in} \{JMP, JPC, CAL\}}
+                \If{inst.operand $<$ 0 \textbf{or} inst.operand $\geq$ program.size()}
+                    \State \textbf{error} \texttt{InvalidJumpTargetException}
+                \EndIf
+            \EndIf
+        \EndFor
+        \EndProcedure
+    \end{algorithmic}
+\end{breakablealgorithm}
+
+\subsection{Kerentanan Aritmatika: Numerical Overflow/Underflow}
+
+\textbf{Numerical overflow} terjadi ketika hasil operasi aritmatika melebihi nilai maksimum yang dapat ditampung oleh tipe data integer, sedangkan \textbf{numerical underflow} terjadi ketika hasil operasi jatuh di bawah nilai minimum. Dalam representasi signed integer 32-bit, nilai maksimum adalah sekitar 2.147.483.647 dan nilai minimum adalah sekitar -2.147.483.648. Jika sebuah operasi penjumlahan menghasilkan nilai di luar rentang tersebut, maka akan terjadi \textit{wrap-around}, di mana nilai positif besar tiba-tiba menjadi negatif, atau sebaliknya.
+
+Dampak dari kerentanan ini dapat sangat merusak logika program. Sebagai contoh, sebuah perulangan yang menggunakan variabel penghitung integer dapat menjadi infinite loop jika variabel tersebut overflow dari nilai positif maksimum kembali ke nilai negatif. Dalam aplikasi finansial atau ilmiah, hasil perhitungan yang salah karena overflow dapat menghasilkan keputusan yang fatal.
+
+Pendekatan umum untuk menangani kerentanan ini adalah dengan menggunakan \textit{checked arithmetic}. Sebelum melakukan operasi, interpreter memeriksa apakah hasil operasi akan melampaui batas tipe data. Untuk penjumlahan dua bilangan positif, interpreter memeriksa apakah \texttt{a > INT\_MAX - b}. Untuk pengurangan, interpreter memeriksa apakah \texttt{a < INT\_MIN + b}. Untuk perkalian, pemeriksaan lebih kompleks karena harus mempertimbangkan tanda kedua operand. Jika pemeriksaan menunjukkan bahwa overflow atau underflow akan terjadi, interpreter menghentikan eksekusi dan melaporkan \texttt{OverflowError} atau \texttt{UnderflowError}. Strategi ini lebih aman dibandingkan \textit{silent wrap-around} karena memberi tahu programmer bahwa ada kesalahan logika yang perlu diperbaiki.
+
+\begin{tcolorbox}[title=Contoh Checked Addition,colback=gray!5,colframe=black!60,boxrule=0.5pt,arc=2mm]
+\begin{verbatim}
+function checkedAdd(a, b):
+    if a > 0 and b > INT_MAX - a then
+        error: OverflowError
+    else if a < 0 and b < INT_MIN - a then
+        error: UnderflowError
+    else
+        return a + b
+    end
+\end{verbatim}
+\end{tcolorbox}
