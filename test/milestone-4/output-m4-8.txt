@@ -1,0 +1,165 @@
+=== tab ===
+idx  id        obj       type  ref  nrm  lev  adr  link
+-------------------------------------------------------
+...  (reserved words 0-32)
+ 33   Integer       type     0    0    1    0    0     0
+ 34      Real       type     1    0    1    0    0    33
+ 35      Char       type     2    0    1    0    0    34
+ 36   Boolean       type     3    0    1    0    0    35
+ 37    String       type     4    0    1    0    0    36
+ 38      True      const     3    0    1    0    1    37
+ 39     False      const     3    0    1    0    0    38
+ 40   writeln  procedure    10    0    1    0    0    39
+ 41    readln  procedure    10    0    1    0    0    40
+ 42  NestedProc    program    10    0    1    0    0    41
+ 43     outer  procedure    10    0    1    0    0    42
+ 44         x   variable     0    0    1    1    0     0
+ 45     inner  procedure    10    0    1    1    0    44
+
+=== btab ===
+idx  last  lpar  psze  vsze
+---------------------------
+  0    43     0     0     0
+  1    45     0     0     1
+  2     0     0     0     0
+
+=== atab ===
+(empty)
+
+=== Parse Tree ===
+<program>
+├── <program-header>
+│   ├── programsy
+│   ├── ident(NestedProc)
+│   └── semicolon
+├── <declaration-part>
+│   └── <subprogram-declaration>
+│       └── <procedure-declaration>
+│           ├── proceduresy
+│           ├── ident(outer)
+│           ├── semicolon
+│           ├── <block>
+│           │   ├── <declaration-part>
+│           │   │   ├── <var-declaration>
+│           │   │   │   ├── varsy
+│           │   │   │   ├── <identifier-list>
+│           │   │   │   │   └── ident(x)
+│           │   │   │   ├── colon
+│           │   │   │   ├── <type>
+│           │   │   │   │   └── ident(integer)
+│           │   │   │   └── semicolon
+│           │   │   └── <subprogram-declaration>
+│           │   │       └── <procedure-declaration>
+│           │   │           ├── proceduresy
+│           │   │           ├── ident(inner)
+│           │   │           ├── semicolon
+│           │   │           ├── <block>
+│           │   │           │   ├── <declaration-part>
+│           │   │           │   └── <compound-statement>
+│           │   │           │       ├── beginsy
+│           │   │           │       ├── <statement-list>
+│           │   │           │       │   ├── <statement>
+│           │   │           │       │   │   └── <assignment-statement>
+│           │   │           │       │   │       ├── <variable>
+│           │   │           │       │   │       │   └── ident(x)
+│           │   │           │       │   │       ├── becomes
+│           │   │           │       │   │       └── <expression>
+│           │   │           │       │   │           └── <simple-expression>
+│           │   │           │       │   │               ├── <term>
+│           │   │           │       │   │               │   └── <factor>
+│           │   │           │       │   │               │       └── ident(x)
+│           │   │           │       │   │               ├── <additive-operator>
+│           │   │           │       │   │               │   └── plus
+│           │   │           │       │   │               └── <term>
+│           │   │           │       │   │                   └── <factor>
+│           │   │           │       │   │                       └── intcon(1)
+│           │   │           │       │   ├── semicolon
+│           │   │           │       │   ├── <statement>
+│           │   │           │       │   │   └── <procedure/function-call>
+│           │   │           │       │   │       ├── ident(writeln)
+│           │   │           │       │   │       ├── lparent
+│           │   │           │       │   │       ├── <parameter-list>
+│           │   │           │       │   │       │   └── <expression>
+│           │   │           │       │   │       │       └── <simple-expression>
+│           │   │           │       │   │       │           └── <term>
+│           │   │           │       │   │       │               └── <factor>
+│           │   │           │       │   │       │                   └── ident(x)
+│           │   │           │       │   │       └── rparent
+│           │   │           │       │   └── semicolon
+│           │   │           │       └── endsy
+│           │   │           └── semicolon
+│           │   └── <compound-statement>
+│           │       ├── beginsy
+│           │       ├── <statement-list>
+│           │       │   ├── <statement>
+│           │       │   │   └── <assignment-statement>
+│           │       │   │       ├── <variable>
+│           │       │   │       │   └── ident(x)
+│           │       │   │       ├── becomes
+│           │       │   │       └── <expression>
+│           │       │   │           └── <simple-expression>
+│           │       │   │               └── <term>
+│           │       │   │                   └── <factor>
+│           │       │   │                       └── intcon(10)
+│           │       │   ├── semicolon
+│           │       │   ├── <statement>
+│           │       │   │   └── <procedure/function-call>
+│           │       │   │       └── ident(inner)
+│           │       │   └── semicolon
+│           │       └── endsy
+│           └── semicolon
+├── <compound-statement>
+│   ├── beginsy
+│   ├── <statement-list>
+│   │   ├── <statement>
+│   │   │   └── <procedure/function-call>
+│   │   │       └── ident(outer)
+│   │   └── semicolon
+│   └── endsy
+└── period
+
+=== Decorated AST ===
+Program('NestedProc')  → type:Unknown, lev:0, block:0
+├── ProcedureDecl('outer')  → type:Unknown, lev:1, block:1
+│   ├── VarDecl('x')  → tab_index:44, type:Integer, lev:1, block:1
+│   │   └── Type('integer')
+│   ├── ProcedureDecl('inner')  → type:Unknown, lev:2, block:2
+│   │   └── Block  → type:Unknown, lev:2, block:2
+│   │       ├── Assign  → type:Unknown, lev:2, block:2
+│   │       │   ├── Var('x')  → tab_index:44, type:Integer, lev:2, block:2
+│   │       │   └── BinOp('+')  → type:Integer, lev:2, block:2
+│   │       │       ├── Var('x')  → tab_index:44, type:Integer, lev:2, block:2
+│   │       │       └── Num(1)  → type:Integer, lev:2, block:2
+│   │       └── ProcCall('writeln')  → type:Unknown, lev:2, block:2
+│   │           └── Var('x')  → tab_index:44, type:Integer, lev:2, block:2
+│   └── Block  → type:Unknown, lev:1, block:1
+│       ├── Assign  → type:Unknown, lev:1, block:1
+│       │   ├── Var('x')  → tab_index:44, type:Integer, lev:1, block:1
+│       │   └── Num(10)  → type:Integer, lev:1, block:1
+│       └── ProcCall('inner')  → type:Unknown, lev:1, block:1
+└── Block  → type:Unknown, lev:0, block:0
+    └── ProcCall('outer')  → type:Unknown, lev:0, block:0
+
+=== Intermediate Code ===
+0 INT 0 3
+1 JMP 0 17
+2 JMP 0 12
+3 JMP 0 4
+4 INT 0 3
+5 LOD 1 3
+6 LIT 0 1
+7 OPR 0 2
+8 STO 1 3
+9 LOD 1 3
+10 OPR 0 14
+11 RET 0 0
+12 INT 0 4
+13 LIT 0 10
+14 STO 0 3
+15 CAL 0 3
+16 RET 0 0
+17 CAL 0 2
+18 RET 0 0
+
+=== Interpreter Output ===
+11

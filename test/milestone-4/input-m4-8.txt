@@ -1,0 +1,15 @@
+program NestedProc;
+procedure outer;
+  var x: integer;
+  procedure inner;
+  begin
+    x := x + 1;
+    writeln(x);
+  end;
+begin
+  x := 10;
+  inner;
+end;
+begin
+  outer;
+end.

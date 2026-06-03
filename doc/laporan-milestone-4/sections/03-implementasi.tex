@@ -37,8 +37,114 @@ Setelah parse tree tersedia, program menjalankan \texttt{ASTBuilder} untuk membe
     \label{fig:pipeline-program-m4}
 \end{figure}
 
-\section{Struktur Direktori Program}
-Bagian Milestone 4 terutama berada pada direktori \texttt{src/codegen/} dan \texttt{src/interpreter/}. Berkas utama yang digunakan adalah \texttt{intermediate\_code.h} dan \texttt{intermediate\_code.cpp} yang berisi definisi instruction set, intermediate code generator, dan konversi decorated AST menjadi daftar instruksi. Berkas \texttt{interpreter.h} dan \texttt{interpreter.cpp} mengimplementasikan virtual machine dengan siklus fetch-decode-execute, stack management, dan eksekusi instruksi. Berkas \texttt{runtime\_value.h} dan \texttt{runtime\_value.cpp} menyediakan representasi nilai runtime menggunakan \texttt{std::variant} untuk mendukung \texttt{int}, \texttt{double}, \texttt{char}, \texttt{bool}, dan \texttt{std::string}.
+\section{Struktur Direktori dan Justifikasi Pilihan Implementasi}
+Bagian Milestone 4 terutama berada pada direktori \texttt{src/codegen/} dan \texttt{src/interpreter/}. Berkas utama yang digunakan adalah \texttt{intermediate\_code.h} dan \texttt{intermediate\_code.cpp} yang berisi definisi instruction set, intermediate code generator, dan konversi decorated AST menjadi daftar instruksi. Berkas \texttt{interpreter.h} dan \texttt{interpreter.cpp} mengimplementasikan virtual machine dengan siklus fetch-decode-execute, stack management, dan eksekusi instruksi. Berkas \texttt{runtime\_value.h} dan \texttt{runtime\_value.cpp} menyediakan representasi nilai runtime.
+
+Pemilihan struktur data \texttt{std::vector} untuk stack didasarkan pada tiga pertimbangan. Pertama, \texttt{std::vector} menyediakan \textit{amortized constant time} untuk operasi \texttt{push\_back}, yang sebanding dengan kompleksitas operasi push pada stack. Kedua, memori yang dialokasikan bersifat \textit{contiguous}, sehingga memanfaatkan \textit{cache locality} pada modern CPU dan mempercepat akses berurutan. Ketiga, \texttt{std::vector} mendukung pertumbuhan dinamis sehingga interpreter tidak perlu mengalokasikan memori besar secara statis di awal eksekusi, melainkan dapat memperluas stack sesuai kebutuhan runtime.
+
+Pemilihan \texttt{std::variant} untuk \texttt{RuntimeValue} didasarkan pada kebutuhan type safety tanpa overhead manual tag management. Berbeda dengan \textit{union} tradisional dalam C, \texttt{std::variant} secara otomatis mengelola konstruksi dan destruksi objek serta menyediakan \textit{compile-time type checking} melalui \texttt{std::visit}. Hal ini mencegah bug \textit{type punning} yang umum terjadi pada union manual, sekaligus mendukung tipe heterogen (\texttt{int}, \texttt{double}, \texttt{char}, \texttt{bool}, \texttt{std::string}) dalam satu struktur data yang aman.
+
+Antarmuka antara \texttt{IntermediateCodeGenerator} dan \texttt{Interpreter} didefinisikan melalui struktur data \texttt{Instruction} yang berisi tiga field: \texttt{opcode} (kode operasi), \texttt{level} (level leksikal untuk akses variabel non-lokal), dan \texttt{operand} (nilai literal, offset memori, atau alamat instruksi). Generator menghasilkan \texttt{std::vector<Instruction>} yang sepenuhnya terpisah dari logika eksekusi interpreter. Desain ini memastikan loose coupling: perubahan algoritma codegen tidak mempengaruhi interpreter selama format instruksi tetap sama, dan sebaliknya perubahan strategi eksekusi tidak mempengaruhi cara instruksi dihasilkan.
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[
+        scale=0.88,
+        transform shape,
+        node distance=14mm and 18mm,
+        class/.style={draw, rectangle split, rectangle split parts=2, align=left, minimum width=3.8cm, font=\small},
+        arrow/.style={-{Stealth[length=2.5mm]}, thick}
+        ]
+        \node[class] (codegen) {
+            \textbf{IntermediateCodeGenerator}
+            \nodepart{second}
+            + generate(ProgramNode, SymbolTable)\\
+            - visit*(node)\\
+            - emit*(...)\\
+            - backpatch(...)
+        };
+        \node[class, right=of codegen] (interp) {
+            \textbf{Interpreter}
+            \nodepart{second}
+            + run(vector<Instruction>)\\
+            - executeInstruction(...)\\
+            - push(...) / pop(...)\\
+            - base(l, b)
+        };
+        \node[class, below=of codegen] (instr) {
+            \textbf{Instruction}
+            \nodepart{second}
+            + opcode: Opcode\\
+            + level: int\\
+            + operand: int
+        };
+        \node[class, below=of interp] (rtval) {
+            \textbf{RuntimeValue}
+            \nodepart{second}
+            + value: variant<int,\\
+            \quad double, char, bool, string>
+        };
+
+        \draw[arrow] (codegen) -- node[above, font=\scriptsize]{\texttt{vector<Instruction>}} (interp);
+        \draw[arrow, dashed] (instr) -- node[left, font=\scriptsize]{uses} (codegen);
+        \draw[arrow, dashed] (instr) -- node[right, font=\scriptsize]{uses} (interp);
+        \draw[arrow, dashed] (rtval) -- node[right, font=\scriptsize]{uses} (interp);
+    \end{tikzpicture}
+    \caption{Diagram ketergantungan modul utama Milestone 4}
+    \label{fig:modul-dependency}
+\end{figure}
+
+\section{Instruction Set Arion}
+Instruction set yang diimplementasikan pada Arion Compiler terdiri dari sembilan instruksi utama. Setiap instruksi memiliki opcode, level, dan operand. Level merepresentasikan lexical level untuk akses variabel non-lokal, sedangkan operand menyimpan nilai literal, alamat memori, atau nomor operasi.
+
+\begin{table}[H]
+    \centering
+    \caption{Daftar instruksi intermediate code Arion}
+    \label{tab:instruction-set}
+    \begin{tabularx}{\textwidth}{L L C{2.8cm}}
+        \toprule
+        \textbf{Instruksi} & \textbf{Operasi} & \textbf{Keterangan} \\
+        \midrule
+        \texttt{LIT v} & Load Literal & Memasukkan nilai literal \texttt{v} ke dalam stack. \\
+        \texttt{LOD a} & Load Value & Memuat nilai dari alamat \texttt{a}. \\
+        \texttt{STO a} & Store Value & Menyimpan nilai ke alamat \texttt{a}. \\
+        \texttt{CAL l} & Call & Memanggil prosedur di alamat \texttt{l}. \\
+        \texttt{INT m} & Initiate Memory & Mengalokasikan atau dealokasikan \texttt{m} slot stack. \\
+        \texttt{JMP l} & Unconditional Jump & Lompat ke alamat \texttt{l} tanpa kondisi. \\
+        \texttt{JPC l} & Conditional Jump & Lompat ke alamat \texttt{l} bila kondisi tidak memenuhi. \\
+        \texttt{OPR o} & Operation & Memanggil operasi \texttt{o} (aritmatika, logika, I/O). \\
+        \texttt{RET} & Return & Keluar dari prosedur dan kembali ke pemanggil. \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+Instruksi \texttt{OPR} memiliki sub-operasi yang lebih spesifik. Sub-operasi yang didukung meliputi negasi, penjumlahan, pengurangan, perkalian, pembagian, modulo, perbandingan (equal, not equal, less, greater, less-equal, greater-equal), serta operasi I/O \texttt{WRT} dan \texttt{WRTLN}.
+
+\begin{table}[H]
+    \centering
+    \caption{Daftar sub-operasi instruksi \texttt{OPR}}
+    \label{tab:opr-set}
+    \begin{tabularx}{\textwidth}{C{1.2cm} L L}
+        \toprule
+        \textbf{No} & \textbf{Operation Name} & \textbf{Function} \\
+        \midrule
+        1 & \texttt{NEG} & Negasi nilai teratas dari stack. \\
+        2 & \texttt{ADD} & Menambah dua nilai teratas dari stack. \\
+        3 & \texttt{SUB} & Mengurangi dua nilai teratas dari stack. \\
+        4 & \texttt{MUL} & Mengali dua nilai teratas dari stack. \\
+        5 & \texttt{DIV} & Membagi dua nilai teratas dari stack. \\
+        6 & \texttt{MOD} & Modulus dua nilai teratas dari stack. \\
+        7 & \texttt{EQL} & Memeriksa kesamaan dua nilai teratas. \\
+        8 & \texttt{NEQ} & Memeriksa ketidaksamaan dua nilai teratas. \\
+        9 & \texttt{LSS} & Memeriksa apakah nilai pertama kurang dari kedua. \\
+        10 & \texttt{GEQ} & Memeriksa apakah nilai pertama lebih dari sama dengan kedua. \\
+        11 & \texttt{GTR} & Memeriksa apakah nilai pertama lebih dari kedua. \\
+        12 & \texttt{LEQ} & Memeriksa apakah nilai pertama kurang dari sama dengan kedua. \\
+        13 & \texttt{WRT} & Menulis output tanpa newline. \\
+        14 & \texttt{WRTLN} & Menulis output dengan newline. \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
 
 \section{Implementasi Intermediate Code Generator}
 Intermediate code generator diimplementasikan pada class \texttt{CodeGen::IntermediateCodeGenerator}. Fungsi utama \texttt{generate} menerima \texttt{ProgramNode} dari decorated AST dan \texttt{SymbolTable} hasil semantic analysis, kemudian menghasilkan \texttt{Result} yang berisi daftar instruksi dan error (jika ada).
@@ -93,7 +199,7 @@ Stack diimplementasikan menggunakan \texttt{std::vector<RuntimeValue>}. Fungsi \
 Untuk instruksi \texttt{INT} dengan nilai negatif, interpreter menyusutkan stack dengan menghapus elemen dari belakang, asalkan tidak menyusut di bawah frame header saat ini.
 
 \subsection{Frame Management}
-Instruksi \texttt{CAL} membuat frame baru dengan menyimpan static link, dynamic link, dan return address. Static link dihitung berdasarkan lexical level delta. Dynamic link adalah \texttt{bp} saat ini. Return address adalah \texttt{ip + 1}. Instruksi \texttt{RET} memulihkan \texttt{ip} dari return address, \texttt{bp} dari dynamic link, dan menghapus frame saat ini.
+Instruksi \texttt{CAL} membuat frame baru dengan menyimpan static link, dynamic link, dan return address. Static link dihitung berdasarkan lexical level delta menggunakan fungsi \texttt{base(l, b)} yang menelusuri static link chain sebanyak $l$ level. Dynamic link adalah \texttt{bp} saat ini. Return address adalah \texttt{ip + 1}. Instruksi \texttt{RET} memulihkan \texttt{ip} dari return address, \texttt{bp} dari dynamic link, dan menghapus frame saat ini.
 
 \subsection{Validasi Keamanan}
 Interpreter memvalidasi target jump sebelum eksekusi dimulai untuk memastikan semua \texttt{JMP}, \texttt{JPC}, dan \texttt{CAL} menunjuk ke alamat yang valid. Selama eksekusi, interpreter juga memvalidasi akses stack agar tidak out-of-bounds untuk \texttt{LOD} dan \texttt{STO}, melindungi penulisan ke slot frame header melalui \texttt{isProtectedFrameSlot}, memeriksa operasi aritmatika agar tidak menyebabkan overflow atau underflow menggunakan \texttt{checkedAdd}, \texttt{checkedSub}, \texttt{checkedMul}, dan \texttt{checkedNeg}, menjamin pembagian dan modulo tidak membagi dengan nol, serta memastikan kedalaman stack tidak melebihi batas maksimum untuk mencegah stack overflow.

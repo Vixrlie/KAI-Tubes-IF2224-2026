@@ -11,9 +11,10 @@ done
 \end{verbatim}
 \end{tcolorbox}
 
-Seluruh test case yang digunakan berhasil menghasilkan output intermediate code dan interpreter output yang sesuai dengan ekspetasi. Laporan ini menampilkan tujuh kasus yang mewakili operasi dasar, control flow, perulangan, case statement, array, dan runtime error.
+Seluruh test case yang digunakan berhasil menghasilkan output intermediate code dan interpreter output yang sesuai dengan ekspetasi. Laporan ini menampilkan sembilan kasus yang mewakili operasi dasar, control flow, perulangan, case statement, array, runtime error, nested procedure, serta kasus yang mengungkapkan keterbatasan implementasi.
 
-\begin{longtable}{|c|p{4.8cm}|p{7.8cm}|}
+{\small
+\begin{longtable}{|c|>{\raggedright\arraybackslash}p{4.2cm}|>{\raggedright\arraybackslash}p{7.8cm}|}
   \caption{Ringkasan Pengujian Milestone 4} \label{tab:ringkasan-m4} \\
   \hline
   \textbf{No} & \textbf{File Input} & \textbf{Fokus Pengujian} \\
@@ -23,21 +24,26 @@ Seluruh test case yang digunakan berhasil menghasilkan output intermediate code 
   \textbf{No} & \textbf{File Input} & \textbf{Fokus Pengujian} \\
   \hline
   \endhead
-  1 & \texttt{test/milestone-4/input-m4-1.txt} & Operasi dasar: assignment, ekspresi aritmatika, \texttt{div}, dan \texttt{writeln}. \\
+  1 & input-m4-1.txt & Operasi dasar: assignment, ekspresi aritmatika, div, dan writeln. \\
   \hline
-  2 & \texttt{test/milestone-4/input-m4-2.txt} & Control flow bersarang: \texttt{if-then-else} dengan \texttt{if} di dalam \texttt{then}. \\
+  2 & input-m4-2.txt & Control flow bersarang: if-then-else dengan if di dalam then. \\
   \hline
-  3 & \texttt{test/milestone-4/input-m4-3.txt} & Perulangan \texttt{while} dengan akumulator dan counter. \\
+  3 & input-m4-3.txt & Perulangan while dengan akumulator dan counter. \\
   \hline
-  4 & \texttt{test/milestone-4/input-m4-4.txt} & Perulangan \texttt{for-to} dengan faktorial. \\
+  4 & input-m4-4.txt & Perulangan for-to dengan faktorial. \\
   \hline
-  5 & \texttt{test/milestone-4/input-m4-5.txt} & \texttt{case} statement dengan multiple branch. \\
+  5 & input-m4-5.txt & Case statement dengan multiple branch. \\
   \hline
-  6 & \texttt{test/milestone-4/input-m4-6.txt} & Array 2D: assignment dan access dengan \texttt{ASTO}/\texttt{ALOD}. \\
+  6 & input-m4-6.txt & Array 2D: assignment dan access dengan ASTO/ALOD. \\
   \hline
-  7 & \texttt{test/milestone-4/input-m4-7.txt} & Runtime error: division by zero detection. \\
+  7 & input-m4-7.txt & Runtime error: division by zero detection. \\
+  \hline
+  8 & input-m4-8.txt & Nested procedure dengan akses variabel non-lokal melalui static link. \\
+  \hline
+  9 & input-m4-9.txt & Mutual recursion (keterbatasan: tidak mendukung forward declaration). \\
   \hline
 \end{longtable}
+}
 
 \section{Detail Pengujian}
 
@@ -73,12 +79,6 @@ Seluruh test case yang digunakan berhasil menghasilkan output intermediate code 
 \end{lstlisting}
 
 Kasus ini menunjukkan bahwa operasi dasar assignment, load, store, dan ekspresi aritmatika berhasil diterjemahkan ke intermediate code. Ekspresi \texttt{(a + b) * (a - b) div 2} dievaluasi menjadi 39, sesuai dengan hasil perhitungan manual. Hal ini membuktikan bahwa intermediate code generator mampu meratakan ekspresi kompleks menjadi instruksi sekuensial dan interpreter mampu mengeksekusinya dengan benar.
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.95\linewidth]{04-eksperimen/tc1.png}
-  \caption{Bukti input dan output pengujian Kasus 1.}
-\end{figure}
 
 \subsection{Kasus 2: Control Flow Bersarang}
 \textbf{Input}\par
@@ -117,12 +117,6 @@ Kasus ini menunjukkan bahwa operasi dasar assignment, load, store, dan ekspresi 
 
 Kasus ini menguji nested \texttt{if-then-else}. Kondisi \texttt{x > 0} dan \texttt{y > 5} keduanya benar, sehingga interpreter mencetak 1. Instruksi \texttt{JMP} dan \texttt{JPC} berhasil melompati blok yang tidak perlu dieksekusi, yang membuktikan bahwa translasi control flow bersarang dari decorated AST ke instruksi lompatan telah berhasil dilakukan.
 
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.95\linewidth]{04-eksperimen/tc2.png}
-  \caption{Bukti input dan output pengujian Kasus 2.}
-\end{figure}
-
 \subsection{Kasus 3: Perulangan While}
 \textbf{Input}\par
 \lstinputlisting[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]{../../test/milestone-4/input-m4-3.txt}
@@ -158,12 +152,6 @@ Kasus ini menguji nested \texttt{if-then-else}. Kondisi \texttt{x > 0} dan \text
 \end{lstlisting}
 
 Kasus ini memvalidasi bahwa \texttt{while} loop berhasil diterjemahkan ke intermediate code dengan label dan jump. Loop menghitung jumlah \texttt{1 + 2 + 3 + 4 + 5 = 15}. Instruksi \texttt{JPC} keluar dari loop ketika \texttt{i > 5}, dan \texttt{JMP} kembali ke evaluasi kondisi, yang membuktikan bahwa mekanisme backpatching untuk perulangan while telah bekerja dengan tepat.
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.95\linewidth]{04-eksperimen/tc3.png}
-  \caption{Bukti input dan output pengujian Kasus 3.}
-\end{figure}
 
 \subsection{Kasus 4: Perulangan For}
 \textbf{Input}\par
@@ -201,12 +189,6 @@ Kasus ini memvalidasi bahwa \texttt{while} loop berhasil diterjemahkan ke interm
 \end{lstlisting}
 
 Kasus ini menunjukkan bahwa \texttt{for-to} loop berhasil menghitung faktorial 5 yaitu 120. Variabel loop \texttt{i} diinisialisasi dengan 1, diincrement setiap iterasi, dan loop berhenti ketika \texttt{i > 5}. Hal ini membuktikan bahwa translasi for loop dengan inisialisasi, evaluasi batas, body, dan increment telah berhasil dilakukan oleh intermediate code generator dan dieksekusi dengan benar oleh interpreter.
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.95\linewidth]{04-eksperimen/tc4.png}
-  \caption{Bukti input dan output pengujian Kasus 4.}
-\end{figure}
 
 \subsection{Kasus 5: Case Statement}
 \textbf{Input}\par
@@ -247,12 +229,6 @@ Kasus ini menunjukkan bahwa \texttt{for-to} loop berhasil menghitung faktorial 5
 \end{lstlisting}
 
 Kasus ini menguji \texttt{case} statement dengan tiga branch. Nilai \texttt{grade = 2} cocok dengan branch kedua, sehingga interpreter mencetak 20. Semua \texttt{JMP} ke akhir case di-backpatch dengan benar, memastikan eksekusi tidak jatuh ke branch berikutnya, yang membuktikan bahwa translasi case statement dengan backpatching seluruh branch exit telah berhasil dilakukan.
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.95\linewidth]{04-eksperimen/tc5.png}
-  \caption{Bukti input dan output pengujian Kasus 5.}
-\end{figure}
 
 \subsection{Kasus 6: Array Dua Dimensi}
 \textbf{Input}\par
@@ -306,6 +282,51 @@ Kasus ini menunjukkan bahwa array dua dimensi dapat diakses melalui instruksi \t
 
 Kasus ini menguji kemampuan interpreter mendeteksi runtime error. Saat mengeksekusi operasi pembagian \texttt{10 div 0}, interpreter menghentikan eksekusi dan melaporkan error informatif tanpa menyebabkan crash, yang membuktikan bahwa mekanisme proteksi runtime pada interpreter telah berhasil mengenali dan menangani kesalahan division by zero dengan aman.
 
+\subsection{Kasus 8: Nested Procedure dengan Static Link}
+\textbf{Input}\par
+\lstinputlisting[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]{../../test/milestone-4/input-m4-8.txt}
+
+\textbf{Cuplikan Output}\par
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]
+=== Intermediate Code ===
+0 INT 0 3
+1 JMP 0 17
+2 JMP 0 12
+3 JMP 0 4
+4 INT 0 3
+5 LOD 1 3
+6 LIT 0 1
+7 OPR 0 2
+8 STO 1 3
+9 LOD 1 3
+10 OPR 0 14
+11 RET 0 0
+12 INT 0 4
+13 LIT 0 10
+14 STO 0 3
+15 CAL 0 3
+16 RET 0 0
+17 CAL 0 2
+18 RET 0 0
+
+=== Interpreter Output ===
+11
+\end{lstlisting}
+
+Kasus ini menguji prosedur bersarang di mana prosedur \texttt{inner} didefinisikan di dalam prosedur \texttt{outer} dan mengakses variabel \texttt{x} milik \texttt{outer}. Instruksi \texttt{LOD 1 3} dan \texttt{STO 1 3} dengan level 1 membuktikan bahwa interpreter berhasil menelusuri static link chain menggunakan fungsi \texttt{base(l, b)} untuk mengakses variabel non-lokal pada scope induk. Output 11 sesuai dengan ekspetasi karena \texttt{x} diinisialisasi dengan 10, kemudian diincrement oleh \texttt{inner} sebelum dicetak.
+
+\subsection{Kasus 9: Mutual Recursion (Keterbatasan)}
+\textbf{Input}\par
+\lstinputlisting[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]{../../test/milestone-4/input-m4-9.txt}
+
+\textbf{Cuplikan Output}\par
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single,numbers=none]
+=== Semantic Errors ===
+- Undefined procedure: B
+\end{lstlisting}
+
+Kasus ini menguji mutual recursion, yaitu pemanggilan silang antara dua prosedur. Program gagal pada tahap semantic analysis dengan pesan \texttt{Undefined procedure: B} karena prosedur \texttt{B} belum dideklarasikan saat \texttt{A} mencoba memanggilnya. Hal ini menunjukkan bahwa compiler Arion saat ini tidak mendukung \textit{forward declaration}, yang diperlukan untuk mutual recursion dalam bahasa Pascal-like. Keterbatasan ini diakui dan direkomendasikan sebagai perbaikan pada pengembangan berikutnya.
+
 \section{Pengujian Error Runtime}
 Selain kasus valid, program juga diuji secara manual terhadap input yang mengandung kesalahan runtime. Contoh kesalahan yang berhasil dideteksi adalah stack overflow pada infinite recursion, array index out of bounds, invalid jump targets, dan integer overflow.
 
@@ -330,3 +351,15 @@ Output:
 === Interpreter Errors ===
 - Interpreter: IndexOutOfBoundsException
 \end{lstlisting}
+
+\section{Analisis Kegagalan dan Perbaikan}
+Selama pengembangan Milestone 4, ditemukan beberapa bug yang signifikan pada intermediate code generator dan interpreter. Berikut adalah analisis kegagalan dan langkah perbaikan yang dilakukan.
+
+\textbf{Bug 1: Infinite loop pada for statement.} Saat pertama kali diimplementasikan, for loop menghasilkan infinite loop karena optimasi \texttt{INT 0 1} untuk slot sementara batas akhir menyebabkan korupsi stack. Slot sementara ditulis tanpa alokasi memori yang cukup, sehingga nilai batas akhir menimpa data lain di stack. Perbaikan yang dilakukan adalah menghapus optimasi tersebut dan mengembalikan evaluasi batas akhir pada setiap iterasi, yang memastikan stack tetap konsisten.
+
+\textbf{Bug 2: Case statement backpatch leak.} Pada awalnya, hanya branch pertama pada case statement yang di-backpatch untuk melompat ke akhir case. Branch-branch berikutnya tidak di-backpatch, sehingga eksekusi jatuh ke branch berikutnya (\textit{fall-through}) secara tidak sengaja dan menyebabkan infinite loop. Perbaikan yang dilakukan adalah mengubah variabel \texttt{endJump} dari tipe integer tunggal menjadi \texttt{std::vector<int> endJumps}, sehingga setiap branch memiliki backpatch list sendiri yang semuanya diisi dengan alamat akhir case.
+
+\textbf{Bug 3: Negative INT pada procedure call.} Instruksi \texttt{INT} dengan nilai negatif digunakan untuk membersihkan argumen dari stack caller setelah \texttt{CAL}. Interpreter awalnya menolak nilai negatif dengan pesan \texttt{invalid stack size request}. Perbaikan yang dilakukan adalah menambahkan penanganan nilai negatif pada \texttt{INT}, yang menyusutkan stack dengan menghapus elemen dari belakang sesuai nilai absolutnya.
+
+\section{Analisis Keterbatasan Pengujian}
+Sembilan test case yang disusun telah mencakup fitur utama intermediate code generation dan interpreter, termasuk nested procedure dengan static link traversal yang membuktikan kebenaran fungsi \texttt{base(l, b)}. Namun masih terdapat skenario edge case yang belum diuji secara otomatis, antara lain mutual recursion yang memerlukan forward declaration, operasi modulo dengan variasi operand, perbandingan selain \texttt{>} dan \texttt{<=}, serta tipe data selain integer (misalnya real, char, boolean) pada level intermediate code. Kasus-kasus tersebut diakui sebagai keterbatasan pengujian saat ini dan direkomendasikan sebagai perluasan pengujian pada pengembangan berikutnya.

@@ -1,30 +1,60 @@
-\section{Intermediate Code Generation}
-Intermediate code generation adalah tahap backend compiler yang mengubah representasi pohon (decorated AST) menjadi daftar instruksi sekuensial yang dapat dieksekusi oleh mesin virtual. Tahap ini tidak lagi mempedulikan sintaks bahasa sumber, melainkan fokus pada sintesis dan komputasi. Tujuannya adalah meratakan struktur pohon yang rumit menjadi instruksi-instruksi primitif yang sangat sederhana \cite{aho2007compilers,cooper2011engineering}.
+\section{Intermediate Representation}
 
-Dalam arsitektur compiler modern, pemisahan frontend dan backend sangat penting. Frontend berurusan dengan source code, token, parse tree, dan semantic analysis. Backend berfokus pada konversi decorated AST menjadi intermediate code dan eksekusi oleh interpreter. Dengan desain ini, jika suatu saat bahasa Arion memiliki sintaks baru, hanya frontend yang perlu dirombak selama decorated AST yang dihasilkan tetap sama \cite{appel1998modern}.
+Intermediate representation (IR) adalah representasi internal program yang berada di antara bahasa sumber dan kode mesin target. Secara formal, IR dapat didefinisikan sebagai struktur data atau bahasa perantara yang menyimpan semantik program secara lengkap namun independen dari sintaks bahasa sumber maupun arsitektur mesin target \cite{aho2007compilers,cooper2011engineering}. Keberadaan IR memungkinkan pemisahan yang jelas antara frontend dan backend compiler.
+
+Dalam taksonomi compiler, IR diklasifikasikan berdasarkan kedekatannya dengan sumber atau mesin. High-level IR mempertahankan struktur kontrol dan tipe data tingkat tinggi sehingga cocok untuk optimasi berbasis sumber, seperti eliminasi subekspresi umum. Low-level IR mendekati bahasa mesin dengan register tak terbatas atau memori eksplisit sehingga memudahkan alokasi register dan penjadwalan instruksi. Beberapa bentuk IR yang dikenal dalam literatur adalah Three-Address Code (TAC), Static Single Assignment (SSA), bytecode (misalnya JVM), dan P-code yang dikembangkan oleh Wirth untuk mesin stack \cite{appel1998modern,wirth1976algorithms}.
+
+Ada tiga alasan fundamental mengapa compiler modern menggunakan IR. Pertama, \textit{machine independence}: frontend compiler tidak perlu mengetahui arsitektur target karena hasil analisis disimpan dalam IR. Kedua, \textit{optimization opportunity}: IR menyediakan level abstraksi yang lebih mudah dianalisis dan dioptimasi dibandingkan source code atau kode mesin. Ketiga, \textit{portability}: dengan IR yang sama, satu frontend dapat dipasangkan dengan banyak backend untuk mesin berbeda, dan sebaliknya satu backend dapat melayani banyak bahasa sumber.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.92\textwidth]{pipeline}
-    \caption{Alur umum intermediate code generation dalam compiler}
+    \begin{tikzpicture}[
+        scale=0.90,
+        transform shape,
+        node distance=8mm and 12mm,
+        every node/.style={draw, rounded corners, align=center, minimum width=2.6cm, minimum height=7mm, font=\small},
+        arrow/.style={-{Stealth[length=2.5mm]}, thick}
+        ]
+        \node (src) {Source Code};
+        \node (lex) [below=of src] {Lexer};
+        \node (tok) [below=of lex] {Token Stream};
+        \node (par) [below=of tok] {Parser};
+        \node (pt) [below=of par] {Parse Tree};
+        \node (astb) [below=of pt] {AST Builder};
+        \node (ast) [below=of astb] {AST};
+        \node (sem) [below=of ast] {Semantic Analyzer};
+        \node (da) [below=of sem] {Decorated AST};
+        \node (ir) [below=of da] {IR / TAC};
+        \node (opt) [right=of ir] {Optimizer};
+        \node (cg) [below=of ir] {Code Gen};
+        \node (vm) [below=of cg] {VM / Interpreter};
+
+        \draw[arrow] (src) -- (lex);
+        \draw[arrow] (lex) -- (tok);
+        \draw[arrow] (tok) -- (par);
+        \draw[arrow] (par) -- (pt);
+        \draw[arrow] (pt) -- (astb);
+        \draw[arrow] (astb) -- (ast);
+        \draw[arrow] (ast) -- (sem);
+        \draw[arrow] (sem) -- (da);
+        \draw[arrow] (da) -- (ir);
+        \draw[arrow] (ir) -- (opt);
+        \draw[arrow] (opt) -- (cg);
+        \draw[arrow] (ir) -- (cg);
+        \draw[arrow] (cg) -- (vm);
+    \end{tikzpicture}
+    \caption{Pipeline compiler lengkap dari source code hingga eksekusi mesin virtual}
     \label{fig:intermediate-pipeline}
 \end{figure}
 
-Gambar \ref{fig:intermediate-pipeline} menunjukkan bahwa intermediate code generation berada setelah semantic analysis dan sebelum eksekusi oleh interpreter. Pada posisi ini, compiler mulai mengonversi pemahaman konseptual program menjadi instruksi operasional.
+Gambar \ref{fig:intermediate-pipeline} menunjukkan pipeline compiler lengkap mulai dari source code hingga eksekusi oleh mesin virtual. Frontend meliputi lexer, parser, AST builder, dan semantic analyzer yang menghasilkan decorated AST. Backend dimulai dari intermediate code generator yang meratakan decorated AST menjadi IR berupa TAC. IR tersebut dapat dioptimasi sebelum diterjemahkan ke kode mesin target oleh code generator, atau dieksekusi langsung oleh virtual machine interpreter.
 
 
 \section{Three-Address Code}
-Three-Address Code (TAC) adalah format intermediate code yang paling luas digunakan di industri. Dinamakan ``three-address'' karena setiap baris instruksi didesain untuk sangat sederhana, di mana maksimal hanya boleh melibatkan tiga alamat memori: dua operand sumber dan satu lokasi tujuan \cite{aho2007compilers}. Struktur dasar TAC terlihat seperti berikut.
 
-\begin{tcolorbox}[title=Struktur Dasar TAC,colback=gray!5,colframe=black!60,boxrule=0.5pt,arc=2mm]
-\begin{verbatim}
-hasil = operand1 operator operand2
-\end{verbatim}
-\end{tcolorbox}
+Three-Address Code (TAC) adalah format IR yang setiap instruksinya melibatkan maksimal tiga alamat: dua operand sumber dan satu lokasi tujuan \cite{aho2007compilers}. Dalam konteks TAC, \textit{address} tidak selalu berupa alamat memori fisik, melainkan dapat berupa nama variabel, konstanta literal, atau variabel sementara yang dihasilkan compiler \cite{cooper2011engineering}. Variabel sementara ini biasanya dinamai \texttt{t1}, \texttt{t2}, \texttt{t3}, dan seterusnya, sesuai dengan urutan pembuatannya selama traversal ekspresi.
 
-Dalam bahasa tingkat tinggi, programmer dapat menulis ekspresi matematis yang sangat panjang dan kompleks. Namun, CPU tidak bisa menghitung semuanya sekaligus. CPU harus memecahnya menjadi operasi-operasi biner yang sederhana. TAC menyimulasikan batasan CPU ini dengan menggunakan variabel sementara, biasanya direpresentasikan sebagai \texttt{t1}, \texttt{t2}, \texttt{t3}, dan seterusnya.
-
-Sebagai contoh, ekspresi \texttt{x := (a + b) * (c - d)} akan dipecah menjadi empat instruksi TAC.
+Pembentukan TAC dari ekspresi kompleks dilakukan melalui traversal \textit{post-order} pada pohon ekspresi. Setiap node internal diterjemahkan menjadi satu instruksi TAC, sedangkan daun-daunnya menjadi operand. Sebagai contoh, ekspresi \texttt{x := (a + b) * (c - d)} menghasilkan empat instruksi TAC berikut.
 
 \begin{tcolorbox}[title=Contoh TAC,colback=gray!5,colframe=black!60,boxrule=0.5pt,arc=2mm]
 \begin{verbatim}
@@ -35,74 +65,58 @@ x  := t3
 \end{verbatim}
 \end{tcolorbox}
 
-Dengan memecah ekspresi menggunakan TAC, kompleksitas kode tingkat tinggi telah berhasil diturunkan menjadi barisan instruksi primitif yang sangat mudah dieksekusi oleh mesin.
+Nama variabel sementara umumnya mengikuti konvensi \texttt{t} yang diikuti nomor urut. Compiler dapat menggunakan berbagai strategi penamaan, namun yang paling penting adalah keunikan nama dalam satu prosedur dan tidak bertabrakan dengan nama variabel program. Setelah nilai variabel sementara tidak lagi dibutuhkan, nama tersebut dapat \textit{reuse}. Analisis \textit{liveness} digunakan untuk menentukan kapan variabel sementara masih \textit{hidup} (masih akan digunakan di masa depan) dan kapan sudah \textit{mati} (tidak akan digunakan lagi). Variabel yang sudah mati dapat di-assign ulang ke ekspresi baru tanpa kehilangan informasi.
 
-
-\section{Instruction Set}
-Instruction set yang digunakan pada Arion Compiler terdiri dari sembilan instruksi utama. Setiap instruksi memiliki opcode, level, dan operand. Level merepresentasikan lexical level untuk akses variabel non-lokal, sedangkan operand menyimpan nilai literal, alamat memori, atau nomor operasi.
+Dalam literatur compiler, TAC direpresentasikan dalam tiga bentuk utama: \textit{quadruples}, \textit{triples}, dan \textit{indirect triples} \cite{aho2007compilers}. Quadruples menyimpan setiap instruksi sebagai tupel empat elemen (op, arg1, arg2, result), sehingga setiap instruksi dapat diacu secara eksplisit. Triples menyimpan tiga elemen (op, arg1, arg2) dengan hasil implisit berupa indeks instruksi itu sendiri, yang mengurangi ruang penyimpanan namun mempersulit pemindahan kode. Indirect triples menambahkan tabel pointer ke triples, sehingga memungkinkan penyusunan ulang instruksi tanpa mengubah isi triples. Tabel \ref{tab:tac-repr} membandingkan ketiga representasi untuk ekspresi \texttt{x = a + b * c}.
 
 \begin{table}[H]
     \centering
-    \caption{Daftar instruksi intermediate code}
-    \label{tab:instruction-set}
-    \begin{tabularx}{\textwidth}{L L C{2.8cm}}
+    \caption{Perbandingan representasi TAC}
+    \label{tab:tac-repr}
+    \small
+    \begin{tabularx}{\textwidth}{c X X X}
         \toprule
-        \textbf{Instruksi} & \textbf{Operasi} & \textbf{Keterangan} \\
+        \textbf{No} & \textbf{Quadruples} & \textbf{Triples} & \textbf{Indirect Triples} \\
         \midrule
-        \texttt{LIT v} & Load Literal & Memasukkan nilai literal \texttt{v} ke dalam stack. \\
-        \texttt{LOD a} & Load Value & Memuat nilai dari alamat \texttt{a}. \\
-        \texttt{STO a} & Store Value & Menyimpan nilai ke alamat \texttt{a}. \\
-        \texttt{CAL l} & Call & Memanggil fungsi di garis \texttt{l}. \\
-        \texttt{INT m} & Initiate Memory & Membuat memori dengan ukuran \texttt{m}. \\
-        \texttt{JMP l} & Unconditional Jump & Lompat ke garis \texttt{l} tanpa kondisi. \\
-        \texttt{JPC l} & Conditional Jump & Lompat ke garis \texttt{l} bila kondisi tidak memenuhi. \\
-        \texttt{OPR o} & Operation & Memanggil operasi \texttt{o} (aritmatika, logika, I/O). \\
-        \texttt{RET} & Return & Keluar dari fungsi atau prosedur. \\
-        \bottomrule
-    \end{tabularx}
-\end{table}
-
-Instruksi \texttt{OPR} memiliki sub-operasi yang lebih spesifik. Sub-operasi yang didukung meliputi negasi, penjumlahan, pengurangan, perkalian, pembagian, modulo, perbandingan (equal, not equal, less, greater, less-equal, greater-equal), serta operasi I/O \texttt{WRT} dan \texttt{WRTLN}.
-
-\begin{table}[H]
-    \centering
-    \caption{Daftar sub-operasi instruksi \texttt{OPR}}
-    \label{tab:opr-set}
-    \begin{tabularx}{\textwidth}{C{1.2cm} L L}
-        \toprule
-        \textbf{No} & \textbf{Operation Name} & \textbf{Function} \\
-        \midrule
-        1 & \texttt{NEG} & Negasi nilai teratas dari stack. \\
-        2 & \texttt{ADD} & Menambah dua nilai teratas dari stack. \\
-        3 & \texttt{SUB} & Mengurangi dua nilai teratas dari stack. \\
-        4 & \texttt{MUL} & Mengali dua nilai teratas dari stack. \\
-        5 & \texttt{DIV} & Membagi dua nilai teratas dari stack. \\
-        6 & \texttt{MOD} & Modulus dua nilai teratas dari stack. \\
-        7 & \texttt{EQL} & Memeriksa kesamaan dua nilai teratas. \\
-        8 & \texttt{NEQ} & Memeriksa ketidaksamaan dua nilai teratas. \\
-        9 & \texttt{LSS} & Memeriksa apakah nilai pertama kurang dari kedua. \\
-        10 & \texttt{GEQ} & Memeriksa apakah nilai pertama lebih dari sama dengan kedua. \\
-        11 & \texttt{GTR} & Memeriksa apakah nilai pertama lebih dari kedua. \\
-        12 & \texttt{LEQ} & Memeriksa apakah nilai pertama kurang dari sama dengan kedua. \\
-        13 & \texttt{WRT} & Menulis output tanpa newline. \\
-        14 & \texttt{WRTLN} & Menulis output dengan newline. \\
+        0 & (MUL, b, c, t1) & (0) MUL b c & (0) $\rightarrow$ 100 \\
+        1 & (ADD, a, t1, t2) & (1) ADD a (0) & (1) $\rightarrow$ 101 \\
+        2 & (ASSIGN, t2, \_, x) & (2) ASSIGN x (1) & (2) $\rightarrow$ 102 \\
         \bottomrule
     \end{tabularx}
 \end{table}
 
 
-\section{Arsitektur Mesin Eksekusi: Stack Machine}
-Interpreter pada Arion Compiler bertindak sebagai virtual machine (VM) yang mengeksekusi intermediate code. VM ini tidak memiliki bentuk fisik, tetapi memiliki logika memori dan siklus kerja yang sama persis dengan CPU sungguhan.
+\section{Stack Machine dan Instruction Set Architecture}
 
-\subsection{Siklus Fetch-Decode-Execute}
-Sama seperti CPU sungguhan, interpreter membaca instruksi satu per satu menggunakan penunjuk khusus yang disebut Instruction Pointer (IP) atau Program Counter (PC). Interpreter beroperasi dalam siklus eksekusi yang terdiri dari tiga tahap utama \cite{cooper2011engineering}. Tahap pertama adalah \textbf{Fetch}, yaitu membaca baris instruksi TAC yang saat ini ditunjuk oleh IP. Tahap kedua adalah \textbf{Decode}, yaitu membedah baris tersebut untuk mengetahui perintahnya dan operand-nya. Tahap ketiga adalah \textbf{Execute}, yaitu melakukan aksi nyata, seperti menghitung nilai operasi matematika atau menyimpan nilai ke memori.
+Arsitektur mesin eksekusi untuk intermediate code dapat diklasifikasikan menjadi tiga paradigma utama: \textit{stack machine}, \textit{register machine}, dan \textit{accumulator machine}. Stack machine menggunakan struktur stack implisit sebagai tempat operan; setiap instruksi mempop operand dari stack, melakukan operasi, dan mempush hasilnya kembali \cite{wirth1976algorithms}. Register machine menggunakan register eksplisit sebagai operand (misalnya x86, ARM), sedangkan accumulator machine hanya memiliki satu register implisit sebagai akumulator. Stack machine dipilih secara luas pada compiler edukasional karena format instruksinya sangat sederhana dan codegen dari AST menjadi sangat langsung.
 
-Setelah tahap execute selesai, IP akan bergerak maju ke baris instruksi berikutnya, kecuali jika instruksi tersebut adalah \texttt{JMP} atau \texttt{JPC}, di mana IP akan melompat ke nomor baris yang dituju.
+Salah satu contoh klasik stack machine adalah P-code machine yang dikembangkan Niklaus Wirth untuk compiler Pascal. P-code menggunakan instruksi berbasis stack dengan format tiga field: opcode, level leksikal, dan operand \cite{wirth1976algorithms}. Level leksikal merepresentasikan kedalaman \textit{static scoping}, sedangkan operand menyimpan nilai literal, offset memori, atau alamat instruksi. Mekanisme ini memungkinkan akses variabel non-lokal melalui traversal \textit{static link chain}.
 
-\subsection{Memori Eksekusi: The Stack}
-Untuk bisa melakukan perhitungan dan menyimpan variabel, VM membutuhkan memori. Struktur memori yang paling vital adalah \textbf{stack}. Stack bekerja dengan prinsip LIFO (Last In, First Out). Mengapa menggunakan stack dan bukan array biasa? Jawabannya berkaitan erat dengan scope dan function call.
+Konsep \textit{lexical addressing} menjadi fondasi akses variabel dalam bahasa dengan \textit{static scoping}. Setiap variabel diakses melalui pasangan \texttt{(level, offset)}, di mana level menunjukkan jarak leksikal dari variabel terhadap scope saat ini, dan offset menunjukkan posisi relatif dalam frame memori. Static scoping berbeda dengan dynamic scoping: pada static scoping, ruang lingkup variabel ditentukan oleh struktur tekstual program (letak deklarasi), sedangkan pada dynamic scoping ditentukan oleh urutan pemanggilan fungsi pada runtime. Compiler modern hampir selalu menggunakan static scoping karena lebih mudah dianalisis dan diprediksi.
 
-Setiap kali program memasuki blok kode baru atau memanggil fungsi, interpreter akan membuat kotak memori baru di dalam stack yang disebut \textbf{stack frame}. Stack frame menyimpan semua variabel lokal milik fungsi tersebut, argumen yang di-passing, serta return address. Saat fungsi dipanggil, stack frame baru di-push ke pucuk tumpukan. Ketika fungsi selesai, frame tersebut di-pop dari stack, dan semua variabel lokalnya otomatis musnah.
+Fungsi standar untuk menelusuri static link dalam interpreter stack machine adalah \texttt{base(l, b)}, yang secara rekursif mengikuti static link sebanyak $l$ level dari base pointer $b$ saat ini. Fungsi ini didefinisikan sebagai berikut.
+
+\begin{breakablealgorithm}[Fungsi base untuk Static Link Traversal]
+    \label{alg:base-func}
+    \begin{algorithmic}[1]
+        \Function{base}{$l$, $b$}
+        \While{$l > 0$}
+            \State $b \gets \text{stack}[b]$ \Comment{static link ada di slot 0}
+            \State $l \gets l - 1$
+        \EndWhile
+        \State \Return $b$
+        \EndFunction
+    \end{algorithmic}
+\end{breakablealgorithm}
+
+Pada saat eksekusi, instruksi \texttt{LOD l a} (load) dan \texttt{STO l a} (store) menggunakan fungsi \texttt{base(l, b)} untuk menemukan base pointer frame yang tepat sebelum mengakses slot offset \texttt{a}. Jika \texttt{l = 0}, variabel berada pada frame saat ini sehingga tidak perlu traversal. Jika \texttt{l > 0}, interpreter mengikuti static link chain sebanyak \texttt{l} level, yang memungkinkan prosedur bersarang untuk mengakses variabel dari scope induk secara leksikal.
+
+
+\section{Activation Record dan Stack Frame}
+
+\textit{Activation record}, atau \textit{stack frame}, adalah blok memori kontigu yang dibuat setiap kali sebuah prosedur dipanggil. Blok ini menyimpan seluruh konteks eksekusi prosedur tersebut, termasuk variabel lokal, argumen, alamat pengembalian, serta tautan ke frame lain \cite{aho2007compilers}. Stack frame bekerja dengan prinsip LIFO (Last In, First Out): frame baru di-push ke pucuk stack saat pemanggilan, dan di-pop saat prosedur selesai, sehingga seluruh variabel lokalnya otomatis musnah.
+
+Setiap stack frame memiliki tiga slot header wajib. \textbf{Static link} (slot 0) menunjuk ke base pointer frame induk secara leksikal berdasarkan kedalaman \textit{static scoping}. \textbf{Dynamic link} (slot 1) menunjuk ke base pointer frame pemanggil pada runtime. \textbf{Return address} (slot 2) menyimpan indeks instruksi yang harus dieksekusi setelah prosedur selesai. Slot-slot setelah header digunakan untuk parameter, variabel lokal, dan operand sementara selama evaluasi ekspresi.
 
 \begin{figure}[H]
     \centering
@@ -125,77 +139,65 @@ Setiap kali program memasuki blok kode baru atau memanggil fungsi, interpreter a
     \label{fig:stack-frame}
 \end{figure}
 
-Setiap stack frame memiliki tiga slot header yang selalu diisi. \textbf{Static Link} pada slot 0 menunjuk ke base pointer frame induk secara statis berdasarkan lexical level. \textbf{Dynamic Link} pada slot 1 menunjuk ke base pointer frame pemanggil pada runtime. \textbf{Return Address} pada slot 2 menyimpan alamat instruksi yang harus dieksekusi setelah fungsi selesai. Slot-slot setelah header digunakan untuk variabel lokal dan operand sementara selama eksekusi.
+Pemilihan stack sebagai struktur memori eksekusi didasarkan pada kebutuhan scope dan pemanggilan prosedur. Array biasa tidak dapat secara otomatis mengelola siklus hidup variabel lokal karena tidak memiliki mekanisme push-pop yang terkait dengan aktivasi dan deaktivasi prosedur.
 
 
-\section{Translasi Control Flow}
-Mengubah ekspresi matematika menjadi TAC relatif mudah karena polanya pasti. Tantangan terbesar adalah meratakan control flow seperti \texttt{if-else} dan \texttt{while}. Caranya adalah dengan menggunakan kombinasi label dan jump.
+\section{Translasi Control Flow dan Backpatching}
 
-\subsection{Translasi IF-ELSE}
-Untuk percabangan \texttt{if-else}, generator membangun struktur berikut. Kondisi dievaluasi terlebih dahulu. Jika kondisi bernilai salah, \texttt{JPC} melompat ke blok \texttt{else}. Jika kondisi benar, eksekusi jatuh ke blok \texttt{then}. Setelah blok \texttt{then} selesai, \texttt{JMP} melompati blok \texttt{else} menuju akhir.
+Penerjemahan struktur kontrol seperti percabangan dan perulangan ke dalam IR memerlukan teknik \textit{syntax-directed translation} (SDT). SDT adalah metode code generation yang menggunakan atribut pada node pohon sintaks untuk membimbing pembentukan instruksi \cite{aho2007compilers}. Atribut \textit{synthesized} mengalir dari anak ke induk (misalnya fragmen kode yang dihasilkan oleh subekspresi), sedangkan atribut \textit{inherited} mengalir dari induk ke anak (misalnya label berikutnya yang harus dituju setelah suatu blok).
 
-\begin{tcolorbox}[title=Contoh TAC untuk IF-ELSE,colback=gray!5,colframe=black!60,boxrule=0.5pt,arc=2mm]
+Tantangan utama dalam translasi control flow adalah penanganan instruksi lompatan yang belum mengetahui targetnya pada saat instruksi tersebut dihasilkan. Solusinya adalah teknik \textit{backpatching}. Secara formal, backpatching bekerja dengan memelihara \textit{backpatch list}, yaitu himpunan indeks instruksi yang memiliki target lompatan kosong. Tiga operasi fundamental didefinisikan: \texttt{backpatch(L, i)} mengisi semua indeks dalam list $L$ dengan target $i$; \texttt{merge(L1, L2)} menggabungkan dua backpatch list; dan \texttt{makelist(i)} membuat list baru berisi indeks tunggal $i$ \cite{aho2007compilers}.
+
+Sebagai contoh, translasi \texttt{if-then-else} menggunakan dua backpatch list. List \texttt{falses} menyimpan indeks \texttt{JPC} yang melompat ke blok \texttt{else}, sedangkan list \texttt{nexts} menyimpan indeks \texttt{JMP} yang melompat ke akhir percabangan. Setelah posisi label \texttt{else} diketahui, \texttt{falses} di-backpatch. Setelah posisi label akhir diketahui, \texttt{nexts} di-backpatch.
+
+\begin{tcolorbox}[title=Contoh TAC untuk IF-ELSE dengan Backpatching,colback=gray!5,colframe=black!60,boxrule=0.5pt,arc=2mm]
 \begin{verbatim}
 { evaluasi kondisi }
-JPC 0 L_ELSE
+JPC 0 _        // falses = makelist(ip)
 { blok then }
-JMP 0 L_END
+JMP 0 _        // nexts = makelist(ip)
 L_ELSE:
 { blok else }
 L_END:
+backpatch(falses, L_ELSE)
+backpatch(nexts, L_END)
 \end{verbatim}
 \end{tcolorbox}
 
-\subsection{Translasi WHILE Loop}
-Perulangan memiliki kerumitan ekstra karena setelah blok kode selesai, alur program harus ``melompat mundur'' ke atas untuk mengevaluasi ulang kondisinya.
+Perulangan \texttt{while} menggunakan pola yang sama. Label \texttt{L\_START} dipasang sebelum evaluasi kondisi. Instruksi \texttt{JPC} keluar ke \texttt{L\_END} yang belum diketahui, sehingga indeksnya masuk ke backpatch list. Setelah body selesai, \texttt{JMP} kembali ke \texttt{L\_START}. Label \texttt{L\_END} dipasang setelah body, lalu backpatch list diisi.
 
 \begin{tcolorbox}[title=Contoh TAC untuk WHILE,colback=gray!5,colframe=black!60,boxrule=0.5pt,arc=2mm]
 \begin{verbatim}
 L_START:
 { evaluasi kondisi }
-JPC 0 L_END
+JPC 0 _        // exits = makelist(ip)
 { blok body }
 JMP 0 L_START
 L_END:
+backpatch(exits, L_END)
 \end{verbatim}
 \end{tcolorbox}
 
-\subsection{Translasi FOR Loop}
-For loop memerlukan inisialisasi variabel loop, evaluasi kondisi batas, eksekusi body, dan increment atau decrement variabel loop sebelum kembali ke evaluasi kondisi.
+Perulangan \texttt{repeat-until} memiliki karakteristik berbeda karena body selalu dieksekusi setidaknya sekali. Body diterjemahkan terlebih dahulu, kemudian kondisi dievaluasi. Jika kondisi bernilai salah (belum terpenuhi), \texttt{JPC} melompat kembali ke awal body menggunakan backpatch list.
 
-\begin{tcolorbox}[title=Contoh TAC untuk FOR,colback=gray!5,colframe=black!60,boxrule=0.5pt,arc=2mm]
+\begin{tcolorbox}[title=Contoh TAC untuk REPEAT-UNTIL,colback=gray!5,colframe=black!60,boxrule=0.5pt,arc=2mm]
 \begin{verbatim}
-{ inisialisasi variabel loop }
 L_START:
-{ load variabel loop }
-{ load batas akhir }
-{ compare: var <= end }
-JPC 0 L_END
 { blok body }
-{ load variabel loop }
-{ load 1 }
-{ add }
-{ store ke variabel loop }
-JMP 0 L_START
+{ evaluasi kondisi }
+JPC 0 _        // repeats = makelist(ip)
 L_END:
+backpatch(repeats, L_START)
 \end{verbatim}
 \end{tcolorbox}
 
-\subsection{Translasi CASE}
-Case statement memerlukan evaluasi selector untuk setiap label. Jika salah satu label cocok, eksekusi jatuh ke body branch tersebut. Setelah body selesai, \texttt{JMP} melompati sisa branch. Jika tidak ada label yang cocok, eksekusi melanjutkan ke instruksi setelah case.
+Translasi \texttt{for} dan \texttt{case} juga bergantung pada backpatching. For loop memerlukan backpatching untuk lompatan keluar dari loop, sedangkan case statement memerlukan backpatching untuk setiap branch agar tidak jatuh secara implisit ke branch berikutnya (\textit{fall-through}).
 
 
 \section{Runtime Vulnerabilities}
-Interpreter yang tangguh tidak hanya tahu cara menjalankan kode yang benar, tetapi juga tahu bagaimana bertahan hidup ketika diberikan kode yang salah atau berbahaya. Bahasa tingkat tinggi yang berjalan di atas VM harus memiliki mekanisme perlindungan internal.
 
-\subsection{Kerentanan pada Stack}
-\textbf{Stack Overflow} terjadi ketika program terus-menerus menambahkan stack frame baru hingga melampaui batas memori. Kasus paling umum adalah infinite recursion. Interpreter harus mampu menghitung kedalaman stack dan melempar error jika melebihi batas maksimal. \textbf{Stack Underflow} adalah kebalikan dari overflow, yaitu terjadi ketika interpreter diinstruksikan untuk pop data dari stack yang sudah sepenuhnya kosong. \textbf{Stack Smashing} merupakan bentuk klasik dari buffer overflow, di mana data yang ditulis melebihi ukuran variabel lokal dapat menimpa return address sehingga menyebabkan fungsi melompat ke memori yang salah. \textbf{Stack Corruption} terjadi ketika struktur stack kehilangan keseimbangan, misalnya jumlah operasi push dan pop tidak simetris.
+Interpreter yang mengeksekusi IR beroperasi pada level yang lebih dekat dengan mesin dibandingkan bahasa sumber, sehingga rentan terhadap kerentanan yang berkaitan dengan manajemen memori dan alur eksekusi. \textit{Memory safety} dalam konteks stack machine mencakup dua aspek: \textit{spatial safety} (memastikan setiap akses memori berada dalam batas yang valid) dan \textit{temporal safety} (memastikan memori tidak diakses setelah dilepaskan) \cite{aho2007compilers}.
 
-\subsection{Kerentanan Memori dan Akses}
-\textbf{Out-of-Bounds Variable Access} adalah kerentanan umum yang terjadi ketika program mencoba mengakses indeks array di luar batas yang didefinisikan. Interpreter wajib memvalidasi setiap akses indeks dan melempar \texttt{IndexOutOfBoundsException} jika indeks tidak valid.
+\textbf{Stack overflow} terjadi ketika kedalaman pemanggilan prosedur melampaui kapasitas stack yang dialokasikan, biasanya akibat rekursi tak terbatas. \textbf{Stack underflow} adalah kondisi inverse, yaitu ketika interpreter mencoba mengambil nilai dari stack operand yang kosong. \textbf{Stack smashing} merupakan bentuk korupsi memori di mana penulisan melebihi batas variabel lokal menimpa return address, menyebabkan eksekusi melompat ke alamat yang tidak valid. \textbf{Out-of-bounds access} terjadi ketika indeks array melebihi batas yang dideklarasikan, melanggar spatial safety.
 
-\subsection{Kerentanan Alur Eksekusi}
-\textbf{Invalid Jump Targets} terjadi jika intermediate code generator melakukan kesalahan dan menyuruh interpreter melompat ke label yang tidak pernah ada dalam daftar instruksi. Interpreter yang tangguh harus memverifikasi semua target jump sebelum atau saat dieksekusi.
-
-\subsection{Kerentanan Aritmatika}
-\textbf{Numerical Overflow atau Underflow} terjadi ketika nilai melampaui kapasitas tipe data. Misalnya, signed integer 32-bit hanya dapat menampung nilai maksimal sekitar 2,14 miliar. Jika nilai ini ditambah 1, terjadi wrap-around menjadi bilangan negatif. Interpreter harus mendeteksi operasi yang akan melampaui batas dan menghentikan program dengan \texttt{OverflowError} atau \texttt{UnderflowError}.
+\textbf{Numerical overflow dan underflow} melanggar safety aritmatika ketika hasil operasi melampaui kapasitas tipe data integer. Strategi penanganan yang paling aman bagi interpreter adalah penghentian dini (\textit{early termination}) dengan pesan error yang informatif, karena melanjutkan eksekusi dengan state mesin yang korup dapat menyebabkan perilaku tak terdefinisi yang lebih berbahaya. Interpreter yang \textit{well-formed} harus memverifikasi target setiap instruksi lompatan sebelum eksekusi dimulai untuk mencegah \textbf{invalid jump targets} yang dapat menyebabkan eksekusi melompat ke luar batas program.
